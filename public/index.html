@@ -130,6 +130,22 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 #figs small{font-size:.7rem}
 #pend{display:flex;gap:6px;padding:0 16px 6px;flex-wrap:wrap}
 #pend button{background:var(--input);padding:4px 10px;border-radius:12px;font-size:.85rem}
+.ico{display:inline-grid;place-items:center;line-height:0}
+.ico svg{width:var(--ic,20px);height:var(--ic,20px);display:block;fill:currentColor}
+.ch .ico svg,#top .ico svg{width:1.15em;height:1.15em}
+.ch .ico,#top .ico{margin-right:.35rem;vertical-align:middle}
+#bMic,#bCfg{display:grid;place-items:center}
+.vb button{display:grid;place-items:center}
+#chat button{display:grid;place-items:center}
+.u .kx{margin-left:auto;display:none;color:var(--mut);padding:2px 6px}
+.u:hover .kx{display:block}
+.u .kx:hover{color:var(--verm)}
+.sec{background:var(--input);padding:10px 14px;border-radius:6px;justify-self:start}
+.sec:hover{background:var(--hover)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+#vmenu{position:fixed;z-index:10;background:#111214;border-radius:8px;padding:12px;width:240px;box-shadow:0 2px 10px #000a;display:grid;gap:8px}
+#vmenu input[type=range]{padding:0}
+#vmenu .sec{justify-self:stretch}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111214;padding:10px 16px;border-radius:8px;z-index:9;box-shadow:0 2px 10px #0008}
 </style>
 </head>
@@ -141,7 +157,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     <small>Voz, câmera, tela e chat pra turma.</small>
     <label>Como a turma te chama?<input id="nome" maxlength="24" required autocomplete="nickname"></label>
     <button class="go">Entrar</button>
-    <button type="button" id="instalar" hidden>Instalar como app</button>
+    <button type="button" id="instalar">Instalar como app</button>
     <div id="erro" role="alert"></div>
   </div>
 </form>
@@ -192,6 +208,12 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       <label>Foto<input type="file" id="pFoto" accept="image/*"></label>
       <label>Fundo do perfil<input type="file" id="pBanner" accept="image/*"></label>
       <label>Cor do perfil<input type="color" id="pCor"></label>
+      <div class="row">
+        <button type="button" class="sec" id="pRmFoto">Remover foto</button>
+        <button type="button" class="sec" id="pRmBanner">Remover fundo</button>
+        <button type="button" class="sec" id="pRmCor">Cor padrão</button>
+        <button type="button" class="sec" id="pRmSobre">Limpar "sobre mim"</button>
+      </div>
       <div id="pPrev"></div><button class="go" id="pSalvar">Salvar perfil</button>
     </section>
     <section data-p="voz" hidden><h2>Voz</h2>
@@ -203,12 +225,13 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     </section>
     <section data-p="atalho" hidden><h2>Atalhos</h2>
       <p>Mutar / desmutar o microfone</p><button id="kMute"></button>
-      <small>O atalho só funciona com o app aberto e em foco. Para entrar em vigor, você precisa já estar em um canal de voz.</small>
+      <small>No app de computador o atalho funciona em qualquer lugar, até com o jogo aberto. No navegador só funciona com a janela em foco. Você precisa já estar em um canal de voz.</small>
     </section>
     <section data-p="visual" hidden><h2>Aparência</h2>
       <div id="presets"></div>
       <label>Cor de destaque<input type="color" id="cAc"></label>
       <label>Cor de fundo<input type="color" id="cBg"></label>
+      <label>Tamanho dos ícones<input type="range" id="icSz" min="16" max="36" step="2"></label>
     </section>
   </div>
 </div>
@@ -218,11 +241,16 @@ const $ = s => document.querySelector(s);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 let instPrompt;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); instPrompt = e; $('#instalar').hidden = false; });
-$('#instalar').onclick = async () => { if (!instPrompt) return; instPrompt.prompt(); await instPrompt.userChoice; instPrompt = null; $('#instalar').hidden = true; };
+$('#instalar').onclick = async () => {
+  if (!instPrompt) return toast('Para instalar: no Chrome/Edge use o menu ⋮ e escolha "Instalar app". No iPhone, toque em Compartilhar e "Adicionar à Tela de Início".');
+  instPrompt.prompt(); await instPrompt.userChoice; instPrompt = null;
+};
+addEventListener('appinstalled', () => { $('#instalar').hidden = true; });
+if (matchMedia('(display-mode: standalone)').matches) $('#instalar').hidden = true;
 
 const STK = [['🧉', 'Bah!'], ['🤠', 'Tchê!'], ['🔥', 'Tri legal'], ['😂', 'Kkkk'], ['👍', 'Beleza'], ['❤️', 'Gosto'], ['🥩', 'Churras'], ['😴', 'Sono']];
 const S = { mic: new MediaStream(), cam: new MediaStream(), screen: new MediaStream() };
-let ws, me, ICE = [], peers = {}, names = {}, myName = '', cur = null, view = null, st = { channels: [], users: [] }, micTried = false, hist = {}, unread = {}, pend = [];
+let kickedBy = '', ws, me, ICE = [], peers = {}, names = {}, myName = '', cur = null, view = null, st = { channels: [], users: [] }, micTried = false, hist = {}, unread = {}, pend = [];
 const send = m => ws.readyState === 1 && ws.send(JSON.stringify(m));
 const COLORS = ['#5865f2', '#23a559', '#c27c0e', '#eb459e', '#f23f43', '#0b8fd6'];
 const colorOf = n => COLORS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
@@ -238,6 +266,22 @@ const chan = id => st.channels.find(c => c.id === id);
 const label = id => chan(id)?.name || id;
 function toast(t) { const d = document.createElement('div'); d.id = 'toast'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 3500); }
 const note = toast;
+
+const P = {
+  mic: '<path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/>',
+  micoff: '<path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/>',
+  cam: '<path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"/>',
+  screen: '<path d="M20 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h6v2H8v2h8v-2h-2v-2h6a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12H4V5h16z"/>',
+  phone: '<path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85a.99.99 0 0 1-1.4-.02L.29 13.08a1 1 0 0 1-.29-.7c0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.3 11.3 0 0 0-2.67-1.85.996.996 0 0 1-.56-.9v-3.1A15.9 15.9 0 0 0 12 9z"/>',
+  gear: '<path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/>',
+  plus: '<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/>',
+  smile: '<path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm-7 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM12 17.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>',
+  speaker: '<path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>'
+};
+const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[n] + '</svg>';
+function ico(n) { const s = document.createElement('span'); s.className = 'ico'; s.innerHTML = svg(n); return s; }
+[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bCfg', 'gear'], ['#bAnexo', 'plus'], ['#bFig', 'smile']]
+  .forEach(([s, n]) => { const b = $(s); b.classList.add('ico'); b.innerHTML = svg(n); });
 
 let ac;
 function beep(seq) {
@@ -259,7 +303,10 @@ function emptyCheck() {
 }
 function renderTop() {
   const v = view;
-  $('#top').textContent = v ? (v.k === 't' ? '# ' : '🔊 ') + label(v.id) : 'Discord dos Pampas';
+  const tp = $('#top'); tp.replaceChildren();
+  if (!v) tp.append('Discord dos Pampas');
+  else if (v.k === 't') tp.append('# ' + label(v.id));
+  else tp.append(ico('speaker'), label(v.id));
   $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't');
   $('#vc').hidden = !cur; $('#vcn').textContent = cur ? label(cur) : '';
   $('#txt').placeholder = v && v.k === 't' ? 'Conversar em #' + label(v.id) : ''; emptyCheck();
@@ -275,17 +322,20 @@ function renderChans() {
     st.channels.filter(c => c.kind === k).forEach(c => {
       const b = document.createElement('button');
       b.className = 'ch' + (view?.id === c.id ? ' on' : '') + (unread[c.id] ? ' un' : '');
-      b.textContent = (k === 'text' ? '# ' : '🔊 ') + c.name;
+      if (k === 'text') b.textContent = '# ' + c.name; else b.append(ico('speaker'), c.name);
       b.onclick = () => k === 'text' ? openText(c.id) : joinCh(c.id);
-      if (!c.def) {
-        const x = document.createElement('span'); x.className = 'x'; x.textContent = '✕'; x.title = 'Apagar canal';
-        x.onclick = e => { e.stopPropagation(); if (confirm('Apagar o canal ' + c.name + '?')) send({ type: 'chan-del', id: c.id }); };
-        b.append(x);
-      }
+      const x = document.createElement('span'); x.className = 'x'; x.textContent = '✕'; x.title = 'Apagar canal';
+      x.onclick = e => {
+        e.stopPropagation();
+        if (st.users.some(u => u.room === c.id)) return toast('Tem gente nesse canal de voz. Espere sair para apagar.');
+        if (confirm('Apagar o canal ' + c.name + '?')) send({ type: 'chan-del', id: c.id });
+      };
+      b.append(x);
       box.append(b);
       if (k === 'voice') st.users.filter(u => u.room === c.id).forEach(u => {
         const m = document.createElement('div'); m.className = 'mem';
         const t2 = document.createElement('span'); t2.textContent = u.name + (u.id === me ? ' (você)' : '');
+        if (u.id !== me) m.oncontextmenu = e => volMenu(e, u.name);
         m.append(avatar(u.name, 1, u.id), t2); box.append(m);
       });
     });
@@ -298,7 +348,14 @@ function renderMem() {
     const d = document.createElement('div'); d.className = 'u'; const t = document.createElement('div');
     const n = document.createElement('span'); n.textContent = u.name + (u.id === me ? ' (você)' : ''); t.append(n);
     if (u.room) { const s = document.createElement('small'); s.textContent = '🔊 ' + label(u.room); t.append(s); }
-    d.append(avatar(u.name, 0, u.id), t); d.onclick = () => card(u.id); d.style.cursor = "pointer"; b.append(d);
+    d.append(avatar(u.name, 0, u.id), t); d.onclick = () => card(u.id); d.style.cursor = "pointer";
+    if (u.id !== me) {
+      d.oncontextmenu = e => volMenu(e, u.name);
+      const k = document.createElement('button'); k.className = 'kx'; k.textContent = '✕'; k.title = 'Remover do servidor';
+      k.onclick = e => { e.stopPropagation(); if (confirm('Remover ' + u.name + ' do servidor?')) send({ type: 'kick', id: u.id }); };
+      d.append(k);
+    }
+    b.append(d);
   });
 }
 
@@ -331,7 +388,7 @@ $('#login').onsubmit = e => {
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
   ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof });
   ws.onmessage = ev => handle(JSON.parse(ev.data));
-  ws.onclose = () => toast('Conexão perdida. Recarregue o app.');
+  ws.onclose = () => toast(kickedBy ? 'Você foi removido por ' + kickedBy + '. Recarregue para entrar de novo.' : 'Conexão perdida. Recarregue o app.');
 };
 try { $('#nome').value = localStorage.getItem('pampas-nome') || ''; } catch {}
 
@@ -365,7 +422,8 @@ function handle(m) {
   else if (m.type === 'msg') {
     (hist[m.channel] ||= []).push(m.msg);
     if (view?.k === 't' && view.id === m.channel) addMsg(m.msg); else { unread[m.channel] = 1; renderChans(); }
-  } else if (m.type === 'full') { toast('Esse canal está cheio (máximo de 8 pessoas).'); firstText(); }
+  } else if (m.type === 'kicked') { kickedBy = m.by || 'alguém'; dropAll(); }
+  else if (m.type === 'full') { toast('Esse canal está cheio (máximo de 8 pessoas).'); firstText(); }
   else if (m.type === 'joined') {
     cur = m.room; m.peers.forEach(p => { names[p.id] = p.name; makePeer(p.id); });
     sfx.join(); renderChans(); renderTop();
@@ -414,11 +472,38 @@ async function onSignal(from, data) {
     }
   } catch (e) { console.error(e); }
 }
+const gains = {};
+const getAC = () => { ac ||= new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); return ac; };
+const volOf = n => { const v = cfg.vol && cfg.vol[n]; return typeof v === 'number' ? v : 1; };
+function setVol(name, v) {
+  (cfg.vol ||= {})[name] = v; saveCfg();
+  Object.keys(gains).forEach(k => { if (names[k] === name) gains[k].forEach(x => x.g.gain.value = v); });
+}
+function volMenu(e, name) {
+  e.preventDefault(); $('#vmenu')?.remove();
+  const m = document.createElement('div'); m.id = 'vmenu';
+  const t = document.createElement('b'); t.textContent = name;
+  const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = 200; r.step = 5; r.value = Math.round(volOf(name) * 100);
+  const l = document.createElement('small'), show = () => l.textContent = 'Volume dele só para você: ' + r.value + '%';
+  const z = document.createElement('button'); z.className = 'sec'; z.textContent = 'Voltar para 100%';
+  show();
+  r.oninput = () => { setVol(name, r.value / 100); show(); };
+  z.onclick = () => { r.value = 100; setVol(name, 1); show(); };
+  m.append(t, r, l, z); document.body.append(m);
+  m.style.left = Math.max(4, Math.min(e.clientX, innerWidth - 250)) + 'px';
+  m.style.top = Math.max(4, Math.min(e.clientY, innerHeight - 160)) + 'px';
+  const off = ev => { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener('mousedown', off, true); } };
+  setTimeout(() => document.addEventListener('mousedown', off, true), 0);
+}
 function onTrack(id, e) {
   const st = e.streams[0]; if (!st) return;
   if (e.track.kind === 'audio') {
     if (!document.getElementById('a-' + id + '-' + st.id)) {
-      const a = new Audio(); a.id = 'a-' + id + '-' + st.id; a.autoplay = true; a.srcObject = st; $('#audios').append(a);
+      const a = new Audio(); a.id = 'a-' + id + '-' + st.id; a.autoplay = true; a.muted = true; a.srcObject = st; $('#audios').append(a);
+      try {
+        const c = getAC(), g = c.createGain(), src = c.createMediaStreamSource(st);
+        g.gain.value = volOf(names[id]); src.connect(g); g.connect(c.destination); (gains[id] ||= []).push({ g, src });
+      } catch { a.muted = false; }
     }
   } else tile(id + ':' + st.id, names[id] || '?', st);
   st.onremovetrack = () => {
@@ -428,6 +513,7 @@ function onTrack(id, e) {
 }
 function dropPeer(id) {
   peers[id]?.pc.close(); delete peers[id];
+  (gains[id] || []).forEach(x => { try { x.src.disconnect(); x.g.disconnect(); } catch {} }); delete gains[id];
   document.querySelectorAll('[id^="t-' + id + ':"],[id^="a-' + id + '-"]').forEach(n => n.remove());
   emptyCheck();
 }
@@ -443,10 +529,6 @@ function dropLocal(kind) {
 }
 const press = (b, on) => b.classList.toggle('on', on);
 
-$('#bMic').onclick = e => {
-  const t = S.mic.getAudioTracks()[0]; if (!t) return;
-  t.enabled = !t.enabled; e.currentTarget.textContent = t.enabled ? '🎤' : '🔇'; e.currentTarget.classList.toggle('off', !t.enabled);
-};
 $('#bCam').onclick = async e => {
   const b = e.currentTarget;
   if (S.cam.getTracks().length) { dropLocal('cam'); return press(b, false); }
@@ -497,7 +579,7 @@ STK.forEach((s, i) => {
 $('#bFig').onclick = () => { $('#figs').hidden = !$('#figs').hidden; };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
@@ -509,14 +591,14 @@ const PRE = { 'Discord': ['#5865f2', '#313338'], 'Pampa': ['#c8372d', '#243326']
 function applyTheme() {
   const r = document.documentElement.style, { accent, bg } = cfg.theme;
   const mx = (p, c) => `color-mix(in srgb, ${bg} ${100 - p}%, ${c} ${p}%)`;
-  r.setProperty('--blur', accent); r.setProperty('--main', bg); r.setProperty('--side', mx(12, '#000')); r.setProperty('--rail', mx(28, '#000'));
+  r.setProperty('--ic', (cfg.ic || 20) + 'px'); r.setProperty('--blur', accent); r.setProperty('--main', bg); r.setProperty('--side', mx(12, '#000')); r.setProperty('--rail', mx(28, '#000'));
   r.setProperty('--input', mx(8, '#fff')); r.setProperty('--hover', mx(5, '#fff')); $('meta[name=theme-color]').content = bg;
 }
 applyTheme();
 
 function toggleMute() {
   const t = S.mic.getAudioTracks()[0]; if (!t) return;
-  t.enabled = !t.enabled; const b = $('#bMic'); b.textContent = t.enabled ? '🎤' : '🔇'; b.classList.toggle('off', !t.enabled);
+  t.enabled = !t.enabled; const b = $('#bMic'); b.innerHTML = svg(t.enabled ? 'mic' : 'micoff'); b.classList.toggle('off', !t.enabled);
   beep(t.enabled ? [[660, .07], [880, .09]] : [[880, .07], [560, .1]]);
 }
 $('#bMic').onclick = toggleMute;
@@ -530,15 +612,21 @@ async function applyMic() {
 }
 
 let capt = false;
+if (window.pampas) {
+  const toAccel = c => c.split('+').map(k => ({ Meta: 'Super', ' ': 'Space', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Escape: 'Esc' }[k] || k)).join('+');
+  window.regMute = () => pampas.setMute(toAccel(cfg.mute)).then(ok => { if (!ok) toast('Não consegui registrar esse atalho. Tente outro.'); });
+  pampas.onMute(() => toggleMute()); window.regMute();
+  addEventListener('DOMContentLoaded', () => {});
+}
 const combo = e => ['Control', 'Alt', 'Shift', 'Meta'].includes(e.key) ? null :
   [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift', e.metaKey && 'Meta', e.key.length === 1 ? e.key.toUpperCase() : e.key].filter(Boolean).join('+');
 addEventListener('keydown', e => {
   const c = combo(e); if (!c) return;
-  if (capt) { e.preventDefault(); capt = false; if (c !== 'Escape') { cfg.mute = c; saveCfg(); } $('#kMute').textContent = cfg.mute; return; }
+  if (capt) { e.preventDefault(); capt = false; if (c !== 'Escape') { cfg.mute = c; saveCfg(); } $('#kMute').textContent = cfg.mute; window.regMute?.(); return; }
   const typing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
-  if (c === cfg.mute && (!typing || e.ctrlKey || e.altKey || e.metaKey)) { e.preventDefault(); toggleMute(); }
+  if (!window.pampas && c === cfg.mute && (!typing || e.ctrlKey || e.altKey || e.metaKey)) { e.preventDefault(); toggleMute(); }
 });
-$('#kMute').onclick = e => { capt = true; e.target.textContent = 'Pressione as teclas… (Esc cancela)'; };
+$('#kMute').onclick = e => { capt = true; window.pampas?.setMute(''); e.target.textContent = 'Pressione as teclas… (Esc cancela)'; };
 
 function resize(file, w, h, cb) {
   const img = new Image();
@@ -577,12 +665,17 @@ document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => ta
 $('#bCfg').onclick = () => {
   ed = { ...cfg.prof }; $('#pNome').value = myName; $('#pSobre').value = ed.about; $('#pCor').value = ed.color || colorOf(myName).slice(0, 7);
   ['ns', 'ec', 'agc'].forEach(k => $('#' + k).checked = cfg[k]); $('#kMute').textContent = cfg.mute;
-  $('#cAc').value = cfg.theme.accent; $('#cBg').value = cfg.theme.bg; renderPrev(); tab('perfil'); $('#cfg').hidden = false;
+  $('#icSz').value = cfg.ic || 20; $('#cAc').value = cfg.theme.accent; $('#cBg').value = cfg.theme.bg; renderPrev(); tab('perfil'); $('#cfg').hidden = false;
 };
 $('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; };
 $('#pNome').oninput = renderPrev;
 $('#pSobre').oninput = () => { ed.about = $('#pSobre').value; renderPrev(); };
 $('#pCor').oninput = () => { ed.color = $('#pCor').value; renderPrev(); };
+$('#pRmFoto').onclick = () => { ed.avatar = ''; $('#pFoto').value = ''; renderPrev(); };
+$('#pRmBanner').onclick = () => { ed.banner = ''; $('#pBanner').value = ''; renderPrev(); };
+$('#pRmCor').onclick = () => { ed.color = ''; $('#pCor').value = colorOf($('#pNome').value || myName).slice(0, 7); renderPrev(); };
+$('#pRmSobre').onclick = () => { ed.about = ''; $('#pSobre').value = ''; renderPrev(); };
+$('#icSz').oninput = e => { cfg.ic = +e.target.value; applyTheme(); saveCfg(); };
 $('#pFoto').onchange = e => { const f = e.target.files[0]; if (f) resize(f, 128, 128, d => { ed.avatar = d; renderPrev(); }); };
 $('#pBanner').onchange = e => { const f = e.target.files[0]; if (f) resize(f, 360, 130, d => { ed.banner = d; renderPrev(); }); };
 $('#pSalvar').onclick = () => {

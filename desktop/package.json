@@ -1,0 +1,18 @@
+{
+  "name": "discord-dos-pampas-desktop",
+  "version": "1.0.0",
+  "description": "App de computador do Discord dos Pampas",
+  "main": "main.js",
+  "author": "Turma dos Pampas",
+  "scripts": { "start": "electron .", "build": "electron-builder --win --publish never" },
+  "devDependencies": { "electron": "^33.0.0", "electron-builder": "^25.1.8" },
+  "build": {
+    "appId": "br.pampas.discord",
+    "productName": "Discord dos Pampas",
+    "files": ["main.js", "preload.js"],
+    "directories": { "buildResources": "build" },
+    "win": { "target": "nsis", "icon": "build/icon.png" },
+    "nsis": { "oneClick": true, "perMachine": false },
+    "artifactName": "Discord-dos-Pampas-Setup.exe"
+  }
+}
