@@ -1,0 +1,8 @@
+{
+  "name": "discord-dos-pampas",
+  "version": "1.0.0",
+  "description": "Voz, câmera, tela e chat para a turma",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "ws": "^8.18.0" }
+}

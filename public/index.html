@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discord dos Pampas</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="theme-color" content="#101821">
+<style>
+:root{--noite:#101821;--painel:#182430;--linha:#273749;--texto:#e8eef4;--suave:#93a4b5;--lenco:#c8372d;--erva:#7da340}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--noite);color:var(--texto);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+[hidden]{display:none!important}
+h1{font:700 1.7rem/1.1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:.01em}
+h1 i{color:var(--lenco);font-style:normal}
+button,input{font:inherit;color:inherit}
+input{background:var(--noite);border:1px solid var(--linha);border-radius:6px;padding:.6rem .7rem;width:100%}
+input:focus-visible,button:focus-visible{outline:2px solid var(--lenco);outline-offset:2px}
+button{cursor:pointer;border:1px solid var(--linha);background:var(--painel);border-radius:6px;padding:.6rem 1rem}
+button.go{background:var(--lenco);border-color:var(--lenco);color:#fff;font-weight:600}
+#login{max-width:380px;margin:12vh auto;padding:0 1.25rem;display:grid;gap:.9rem}
+#login p{margin:0;color:var(--suave)}
+#login label{display:grid;gap:.3rem;color:var(--suave);font-size:.9rem}
+#erro{color:#ff8a80;min-height:1.2em}
+#app{height:100%;display:grid;grid-template-columns:1fr 300px;grid-template-rows:auto 1fr auto}
+header{grid-column:1/3;display:flex;align-items:baseline;gap:.8rem;padding:.7rem 1rem;border-bottom:1px solid var(--linha)}
+header h1{font-size:1.2rem}
+header span{color:var(--suave)}
+main{padding:.8rem;overflow:auto}
+#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.tile{position:relative;background:#0a1017;border-radius:8px;overflow:hidden;aspect-ratio:16/9}
+.tile video{width:100%;height:100%;object-fit:contain}
+.tile span{position:absolute;left:8px;bottom:8px;background:#000a;padding:.1rem .5rem;border-radius:4px;font-size:.85rem}
+#vazio{color:var(--suave);padding:2rem 0}
+aside{grid-row:2/4;grid-column:2;border-left:1px solid var(--linha);background:var(--painel);display:grid;grid-template-rows:auto 1fr auto;min-height:0}
+#membros{padding:.8rem 1rem;border-bottom:1px solid var(--linha);display:grid;gap:.25rem}
+#membros b{color:var(--suave);font-weight:500;font-size:.85rem}
+#membros div::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--erva);margin-right:.5rem}
+#msgs{overflow:auto;padding:.8rem 1rem;display:grid;gap:.4rem;align-content:start}
+#msgs p{margin:0;overflow-wrap:anywhere}
+#msgs b{color:var(--lenco)}
+#msgs .sis{color:var(--suave);font-style:italic}
+#chat{padding:.8rem;border-top:1px solid var(--linha)}
+#barra{grid-column:1;display:flex;justify-content:center;gap:.6rem;padding:.7rem;border-top:1px solid var(--linha);flex-wrap:wrap}
+button[aria-pressed=true]{background:var(--erva);border-color:var(--erva);color:#0c1408;font-weight:600}
+button.mudo[aria-pressed=false]{background:var(--lenco);border-color:var(--lenco);color:#fff}
+@media(max-width:760px){
+ #app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto 260px}
+ header{grid-column:1}
+ aside{grid-row:4;grid-column:1;border-left:0;border-top:1px solid var(--linha)}
+}
+</style>
+</head>
+<body>
+<form id="login">
+  <h1>Discord dos <i>Pampas</i></h1>
+  <p>Voz, câmera, tela e chat pra turma. Sem enrolação.</p>
+  <label>Seu nome<input id="nome" maxlength="24" required autocomplete="nickname"></label>
+  <label>Sala<input id="sala" value="geral" maxlength="30" required></label>
+  <button class="go">Entrar na sala</button>
+  <button type="button" id="instalar" hidden>Instalar como app</button>
+  <div id="erro" role="alert"></div>
+</form>
+
+<div id="app" hidden>
+  <header><h1>Discord dos <i>Pampas</i></h1><span id="salaNome"></span></header>
+  <main>
+    <div id="grid"></div>
+    <div id="vazio">Ninguém com câmera ou tela ligada ainda. Ligue a sua.</div>
+  </main>
+  <div id="barra">
+    <button id="bMic" class="mudo" aria-pressed="true">Microfone</button>
+    <button id="bCam" aria-pressed="false">Câmera</button>
+    <button id="bTela" aria-pressed="false">Compartilhar tela</button>
+    <button id="bSair">Sair</button>
+  </div>
+  <aside>
+    <div id="membros"></div>
+    <div id="msgs" aria-live="polite"></div>
+    <form id="chat"><input id="txt" maxlength="500" placeholder="Escreva e dê Enter" autocomplete="off"></form>
+  </aside>
+  <div id="audios" hidden></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+let instPrompt;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); instPrompt = e; $('#instalar').hidden = false; });
+$('#instalar').onclick = async () => { if (!instPrompt) return; instPrompt.prompt(); await instPrompt.userChoice; instPrompt = null; $('#instalar').hidden = true; };
+const S = { mic: new MediaStream(), cam: new MediaStream(), screen: new MediaStream() };
+let ws, me, ICE = [], peers = {}, names = {}, myName = '';
+const send = m => ws.readyState === 1 && ws.send(JSON.stringify(m));
+
+function note(t) {
+  if (!$('#app').hidden) { const p = document.createElement('p'); p.className = 'sis'; p.textContent = t; $('#msgs').append(p); }
+  else $('#erro').textContent = t;
+}
+function emptyCheck() { $('#vazio').hidden = $('#grid').children.length > 0; }
+function tile(key, label, stream) {
+  if (document.getElementById('t-' + key)) return;
+  const d = document.createElement('div'); d.className = 'tile'; d.id = 't-' + key;
+  const v = document.createElement('video'); v.autoplay = true; v.playsInline = true; v.muted = true; v.srcObject = stream;
+  const l = document.createElement('span'); l.textContent = label;
+  d.append(v, l); $('#grid').append(d); emptyCheck();
+}
+function rmTile(key) { document.getElementById('t-' + key)?.remove(); emptyCheck(); }
+function members() {
+  const box = $('#membros'); box.replaceChildren();
+  const h = document.createElement('b'); h.textContent = 'Na sala'; box.append(h);
+  [myName + ' (você)', ...Object.values(names)].forEach(n => { const d = document.createElement('div'); d.textContent = n; box.append(d); });
+}
+
+$('#login').onsubmit = async e => {
+  e.preventDefault();
+  myName = $('#nome').value.trim() || 'Guri';
+  try { ICE = await (await fetch('/ice')).json(); } catch {}
+  try {
+    const m = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    m.getAudioTracks().forEach(t => S.mic.addTrack(t));
+  } catch { $('#erro').textContent = 'Sem microfone: você vai só ouvir.'; }
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+  ws.onopen = () => send({ type: 'join', room: $('#sala').value, name: myName });
+  ws.onmessage = ev => handle(JSON.parse(ev.data));
+  ws.onclose = () => note('Conexão perdida. Recarregue a página.');
+};
+
+function handle(m) {
+  if (m.type === 'full') return note('Sala cheia (máximo de 8 pessoas).');
+  if (m.type === 'joined') {
+    me = m.id; $('#login').hidden = true; $('#app').hidden = false; $('#salaNome').textContent = '#' + m.room;
+    if (!S.mic.getTracks().length) $('#bMic').disabled = true;
+    m.peers.forEach(p => { names[p.id] = p.name; makePeer(p.id); });
+    members();
+  } else if (m.type === 'peer-join') { names[m.id] = m.name; members(); note(m.name + ' entrou.'); }
+  else if (m.type === 'peer-leave') { note((names[m.id] || 'Alguém') + ' saiu.'); dropPeer(m.id); delete names[m.id]; members(); }
+  else if (m.type === 'signal') onSignal(m.from, m.data);
+  else if (m.type === 'chat') { const p = document.createElement('p'), b = document.createElement('b'); b.textContent = m.from + ' '; p.append(b, m.text); $('#msgs').append(p); $('#msgs').scrollTop = 1e9; }
+}
+
+function makePeer(id) {
+  const pc = new RTCPeerConnection({ iceServers: ICE });
+  const p = peers[id] = { pc, polite: me < id, making: false, ignore: false, snd: {} };
+  pc.onnegotiationneeded = async () => {
+    try { p.making = true; await pc.setLocalDescription(); send({ type: 'signal', to: id, data: { description: pc.localDescription } }); }
+    catch (e) { console.error(e); } finally { p.making = false; }
+  };
+  pc.onicecandidate = e => e.candidate && send({ type: 'signal', to: id, data: { candidate: e.candidate } });
+  pc.ontrack = e => onTrack(id, e);
+  for (const k in S) S[k].getTracks().forEach(t => (p.snd[k] ||= []).push(pc.addTrack(t, S[k])));
+  if (!S.mic.getTracks().length) pc.addTransceiver('audio', { direction: 'recvonly' });
+  return p;
+}
+async function onSignal(from, data) {
+  const p = peers[from] || makePeer(from);
+  try {
+    if (data.description) {
+      const d = data.description;
+      const clash = d.type === 'offer' && (p.making || p.pc.signalingState !== 'stable');
+      p.ignore = !p.polite && clash;
+      if (p.ignore) return;
+      await p.pc.setRemoteDescription(d);
+      if (d.type === 'offer') { await p.pc.setLocalDescription(); send({ type: 'signal', to: from, data: { description: p.pc.localDescription } }); }
+    } else if (data.candidate) {
+      try { await p.pc.addIceCandidate(data.candidate); } catch (e) { if (!p.ignore) throw e; }
+    }
+  } catch (e) { console.error(e); }
+}
+function onTrack(id, e) {
+  const st = e.streams[0]; if (!st) return;
+  if (e.track.kind === 'audio') {
+    if (!document.getElementById('a-' + id + '-' + st.id)) {
+      const a = new Audio(); a.id = 'a-' + id + '-' + st.id; a.autoplay = true; a.srcObject = st; $('#audios').append(a);
+    }
+  } else tile(id + ':' + st.id, names[id] || '?', st);
+  st.onremovetrack = () => {
+    if (!st.getVideoTracks().length) rmTile(id + ':' + st.id);
+    if (!st.getAudioTracks().length) document.getElementById('a-' + id + '-' + st.id)?.remove();
+  };
+}
+function dropPeer(id) {
+  peers[id]?.pc.close(); delete peers[id];
+  document.querySelectorAll('[id^="t-' + id + ':"],[id^="a-' + id + '-"]').forEach(n => n.remove());
+  emptyCheck();
+}
+
+function addLocal(kind, track) {
+  S[kind].addTrack(track);
+  for (const p of Object.values(peers)) (p.snd[kind] ||= []).push(p.pc.addTrack(track, S[kind]));
+}
+function dropLocal(kind) {
+  S[kind].getTracks().forEach(t => { t.stop(); S[kind].removeTrack(t); });
+  for (const p of Object.values(peers)) { (p.snd[kind] || []).forEach(s => p.pc.removeTrack(s)); p.snd[kind] = []; }
+  rmTile('me:' + kind);
+}
+const press = (b, on) => b.setAttribute('aria-pressed', on);
+
+$('#bMic').onclick = e => { const t = S.mic.getAudioTracks()[0]; if (!t) return; t.enabled = !t.enabled; press(e.target, t.enabled); };
+$('#bCam').onclick = async e => {
+  if (S.cam.getTracks().length) { dropLocal('cam'); return press(e.target, false); }
+  try {
+    const m = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
+    addLocal('cam', m.getVideoTracks()[0]); tile('me:cam', 'Você', S.cam); press(e.target, true);
+  } catch { note('Não consegui abrir a câmera. Confira a permissão do navegador.'); }
+};
+$('#bTela').onclick = async e => {
+  if (S.screen.getTracks().length) { dropLocal('screen'); return press(e.target, false); }
+  try {
+    const m = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    m.getTracks().forEach(t => addLocal('screen', t));
+    m.getVideoTracks()[0].onended = () => { dropLocal('screen'); press(e.target, false); };
+    tile('me:screen', 'Sua tela', S.screen); press(e.target, true);
+  } catch { note('Compartilhamento de tela cancelado.'); }
+};
+$('#bSair').onclick = () => location.reload();
+$('#chat').onsubmit = e => { e.preventDefault(); const t = $('#txt').value.trim(); if (t) send({ type: 'chat', text: t }); $('#txt').value = ''; };
+</script>
+</body>
+</html>
