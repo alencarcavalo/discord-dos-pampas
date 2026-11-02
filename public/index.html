@@ -31,7 +31,7 @@ small{color:var(--mut)}
 #instalar{background:var(--input);padding:.7rem}
 #erro{color:var(--verm);min-height:1.2em}
 
-#app{height:100%;display:grid;grid-template-columns:72px 240px 1fr;grid-template-rows:1fr}
+#app{height:100%;display:grid;grid-template-columns:72px 240px 1fr 240px;grid-template-rows:1fr}
 #rail{background:var(--rail);padding:12px 0;display:flex;flex-direction:column;align-items:center}
 #rail .av{width:48px;height:48px;background:var(--pampa);font-size:1.3rem;border-radius:16px;position:relative}
 #rail .av::before{content:"";position:absolute;left:-12px;top:12px;width:4px;height:24px;background:#fff;border-radius:0 4px 4px 0}
@@ -43,50 +43,100 @@ small{color:var(--mut)}
 .ch:hover{background:var(--hover);color:var(--txt)}
 .ch.on{background:#404249;color:#fff}
 .mem{display:flex;align-items:center;gap:.5rem;padding:3px 8px 3px 32px;color:var(--mut)}
-#vc{background:#232428;padding:8px 10px;border-top:1px solid #1f2023}
+#vc{background:var(--rail);padding:8px 10px;border-top:1px solid #1f2023}
 #vc b{color:var(--verde);display:block;font-size:.85rem}
 #vcn{display:block;margin-bottom:6px}
 .vb{display:flex;gap:6px}
-.vb button,#bMic{background:var(--input);padding:6px 10px;border-radius:6px}
+.vb button,#bMic,#bCfg{background:var(--input);padding:6px 10px;border-radius:6px}
 .vb button{flex:1}
-.vb button:hover,#bMic:hover{background:#4e5058}
+.vb button:hover,#bMic:hover,#bCfg:hover{background:#4e5058}
 .vb button.on{background:var(--verde)}
 .vb #bSair:hover{background:var(--verm)}
 #bMic.off{color:var(--verm)}
-#me{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#232428}
+#me{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--rail)}
 #me div:nth-child(2){flex:1;min-width:0;line-height:1.2}
 #meN{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-#main{display:grid;grid-template-columns:1fr 320px;grid-template-rows:48px 1fr;min-height:0;min-width:0}
-#top{grid-column:1/3;display:flex;align-items:center;padding:0 16px;font-weight:700;border-bottom:1px solid #26272b;box-shadow:0 1px 0 #0002}
-#stage{padding:12px;overflow:auto;min-height:0}
+#main{display:flex;flex-direction:column;min-height:0;min-width:0}
+#top{flex:none;display:flex;align-items:center;padding:0 16px;font-weight:700;border-bottom:1px solid #26272b;box-shadow:0 1px 0 #0002}
+#stage{padding:12px;overflow:auto;min-height:0;flex:1}
 #grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .tile{position:relative;background:#000;border-radius:8px;overflow:hidden;aspect-ratio:16/9}
 .tile video{width:100%;height:100%;object-fit:contain}
 .tile span{position:absolute;left:8px;bottom:8px;background:#000a;padding:2px 8px;border-radius:4px;font-size:.85rem}
 #vazio{color:var(--mut);text-align:center;padding:12vh 1rem}
 #vazio b{display:block;color:var(--txt);font-size:1.2rem;margin-bottom:.4rem}
-#chatw{border-left:1px solid #26272b;display:flex;flex-direction:column;min-height:0}
+#chatw{display:flex;flex-direction:column;min-height:0;flex:1}
 #msgs{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px}
 .m{display:flex;gap:12px}
 .m p{margin:0;overflow-wrap:anywhere}
 .m b{margin-right:.4rem}
 .sis{color:var(--mut);font-size:.85rem;font-style:italic}
 #chat{padding:0 16px 16px}
-@media(max-width:820px){
+@media(max-width:900px){
  #app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
- #rail{display:none}
- #side{max-height:46vh}
- #main{grid-template-columns:1fr;grid-template-rows:48px 1fr 240px}
- #top{grid-column:1}
- #chatw{border-left:0;border-top:1px solid #26272b}
+ #rail,#mem{display:none}
+ #side{max-height:40vh}
 }
+.go:hover{filter:brightness(.9)}
+select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:inherit;width:100%}
+#cfg{position:fixed;inset:0;background:var(--main);z-index:8;display:flex}
+#cfgtabs{background:var(--side);width:220px;padding:40px 12px;display:flex;flex-direction:column;gap:2px;flex:none}
+#cfgtabs button{text-align:left;padding:8px 10px;color:var(--mut)}
+#cfgtabs button:hover,#cfgtabs button.on{background:var(--hover);color:#fff}
+#cfgx{margin-top:auto;color:var(--verm)!important}
+#cfgbody{flex:1;overflow:auto;padding:40px;max-width:640px}
+#cfgbody section{display:grid;gap:14px}
+#cfgbody h2{margin:0}
+#cfgbody label{display:grid;gap:6px;color:var(--mut);font-size:.8rem;font-weight:700;text-transform:uppercase}
+#cfgbody label.ck{display:flex;gap:10px;align-items:center;font-size:.95rem;text-transform:none;color:var(--txt)}
+#cfgbody label.ck input{width:auto}
+#cfgbody input[type=color]{height:40px;padding:2px}
+#kMute,#presets button{background:var(--input);padding:10px 14px;border-radius:6px;justify-self:start}
+#presets{display:flex;gap:8px;flex-wrap:wrap}
+.pc{width:300px;max-width:100%;background:var(--side);border-radius:10px;overflow:hidden;box-shadow:0 2px 10px #0006}
+.pb{height:100px}
+.pc .big{width:80px;height:80px;font-size:2rem;margin:-40px 0 0 16px;border:6px solid var(--side)}
+.pc div.t{padding:6px 16px 16px}
+.pc b{font-size:1.2rem}
+#cardw{position:fixed;inset:0;background:#0008;z-index:9;display:grid;place-items:center}
+@media(max-width:700px){#cfg{flex-direction:column}#cfgtabs{width:auto;flex-direction:row;flex-wrap:wrap;padding:12px}#cfgx{margin-top:0}#cfgbody{padding:16px}}
+#loginc img.logo{width:150px;height:auto;margin:0 auto;border-radius:16px}
+#rail img{width:48px;height:48px;border-radius:16px;object-fit:cover}
+#mem{background:var(--side);padding:12px 8px;overflow:auto}
+#mem h3{margin:4px 8px 8px;font-size:.75rem;color:var(--mut);text-transform:uppercase}
+.u{display:flex;align-items:center;gap:10px;padding:5px 8px;border-radius:4px}
+.u:hover{background:var(--hover)}
+.u small{display:block;line-height:1.1}
+.cat{display:flex;align-items:center;justify-content:space-between;margin:14px 8px 4px;font-size:.75rem;color:var(--mut);text-transform:uppercase;font-weight:700}
+.cat button{color:var(--mut);font-size:1.2rem;line-height:1}
+.cat button:hover{color:#fff}
+.ch .x{margin-left:auto;display:none}
+.ch:hover .x{display:block}
+.ch.un{color:#fff;font-weight:700}
+.msg{display:flex;gap:12px}
+.msg p{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.msg b{margin-right:.2rem}
+.msg time{color:var(--mut);font-size:.75rem;margin-left:.4rem}
+.msg img.a{max-width:min(420px,100%);max-height:320px;border-radius:6px;display:block;margin-top:4px}
+.file{display:inline-block;margin-top:4px;padding:8px 12px;background:var(--side);border-radius:6px;color:#00a8fc;text-decoration:none}
+.stk{display:inline-grid;justify-items:center;margin-top:4px;padding:8px 14px;font-size:3.6rem;line-height:1.1;background:var(--side);border-radius:12px}
+.stk small{font-size:.9rem;color:var(--txt);font-weight:700}
+#chat{display:flex;gap:4px;align-items:center;background:var(--input);margin:0 16px 16px;border-radius:8px;padding:0 6px}
+#chat input{background:transparent}
+#chat button{font-size:1.3rem;padding:6px 8px}
+#figs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 16px 8px;padding:8px;background:var(--side);border-radius:8px}
+#figs button{display:grid;justify-items:center;font-size:2rem;padding:6px;background:var(--input);border-radius:8px}
+#figs small{font-size:.7rem}
+#pend{display:flex;gap:6px;padding:0 16px 6px;flex-wrap:wrap}
+#pend button{background:var(--input);padding:4px 10px;border-radius:12px;font-size:.85rem}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111214;padding:10px 16px;border-radius:8px;z-index:9;box-shadow:0 2px 10px #0008}
 </style>
 </head>
 <body>
 <form id="login">
   <div id="loginc">
-    <div class="av logo">P</div>
+    <img class="logo" src="/icon-512.png" alt="">
     <h1>Discord dos Pampas</h1>
     <small>Voz, câmera, tela e chat pra turma.</small>
     <label>Como a turma te chama?<input id="nome" maxlength="24" required autocomplete="nickname"></label>
@@ -97,7 +147,7 @@ small{color:var(--mut)}
 </form>
 
 <div id="app" hidden>
-  <nav id="rail"><div class="av" title="Discord dos Pampas">P</div></nav>
+  <nav id="rail"><img src="/icon-192.png" alt="Discord dos Pampas" title="Discord dos Pampas"></nav>
   <section id="side">
     <div id="sname">Discord dos Pampas</div>
     <div id="chans"></div>
@@ -109,17 +159,58 @@ small{color:var(--mut)}
         <button id="bSair" title="Desconectar">📞</button>
       </div>
     </div>
-    <div id="me"><div class="av" id="meav"></div><div><b id="meN"></b><small>Online</small></div><button id="bMic" title="Microfone">🎤</button></div>
+    <div id="me"><div class="av" id="meav"></div><div><b id="meN"></b><small>Online</small></div><button id="bMic" title="Microfone">🎤</button><button id="bCfg" title="Configurações">⚙️</button></div>
   </section>
   <section id="main">
     <div id="top"></div>
-    <div id="stage"><div id="grid"></div><div id="vazio"></div></div>
-    <div id="chatw">
+    <div id="stage" hidden><div id="grid"></div><div id="vazio"></div></div>
+    <div id="chatw" hidden>
       <div id="msgs" aria-live="polite"></div>
-      <form id="chat"><input id="txt" maxlength="500" placeholder="Conversar na sala" autocomplete="off"></form>
+      <div id="pend"></div>
+      <div id="figs" hidden></div>
+      <form id="chat">
+        <button type="button" id="bAnexo" title="Enviar imagem ou arquivo">➕</button>
+        <input id="txt" maxlength="2000" autocomplete="off">
+        <button type="button" id="bFig" title="Figurinhas">🧉</button>
+      </form>
+      <input type="file" id="arq" multiple hidden>
     </div>
   </section>
+  <aside id="mem"></aside>
   <div id="audios" hidden></div>
+</div>
+
+<div id="cfg" hidden>
+  <nav id="cfgtabs">
+    <button data-t="perfil">Meu perfil</button><button data-t="voz">Voz</button><button data-t="atalho">Atalhos</button><button data-t="visual">Aparência</button>
+    <button id="cfgx">Fechar ✕</button>
+  </nav>
+  <div id="cfgbody">
+    <section data-p="perfil"><h2>Meu perfil</h2>
+      <label>Nome<input id="pNome" maxlength="24"></label>
+      <label>Sobre mim<input id="pSobre" maxlength="120"></label>
+      <label>Foto<input type="file" id="pFoto" accept="image/*"></label>
+      <label>Fundo do perfil<input type="file" id="pBanner" accept="image/*"></label>
+      <label>Cor do perfil<input type="color" id="pCor"></label>
+      <div id="pPrev"></div><button class="go" id="pSalvar">Salvar perfil</button>
+    </section>
+    <section data-p="voz" hidden><h2>Voz</h2>
+      <label class="ck"><input type="checkbox" id="ns"> Supressão de ruído</label>
+      <label class="ck"><input type="checkbox" id="ec"> Cancelamento de eco</label>
+      <label class="ck"><input type="checkbox" id="agc"> Ajuste automático de volume</label>
+      <label>Microfone<select id="micSel"></select></label>
+      <small>As mudanças valem na hora, mesmo durante a chamada.</small>
+    </section>
+    <section data-p="atalho" hidden><h2>Atalhos</h2>
+      <p>Mutar / desmutar o microfone</p><button id="kMute"></button>
+      <small>O atalho só funciona com o app aberto e em foco. Para entrar em vigor, você precisa já estar em um canal de voz.</small>
+    </section>
+    <section data-p="visual" hidden><h2>Aparência</h2>
+      <div id="presets"></div>
+      <label>Cor de destaque<input type="color" id="cAc"></label>
+      <label>Cor de fundo<input type="color" id="cBg"></label>
+    </section>
+  </div>
 </div>
 
 <script>
@@ -129,47 +220,107 @@ let instPrompt;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); instPrompt = e; $('#instalar').hidden = false; });
 $('#instalar').onclick = async () => { if (!instPrompt) return; instPrompt.prompt(); await instPrompt.userChoice; instPrompt = null; $('#instalar').hidden = true; };
 
-const CHANNELS = [['geral', 'Geral'], ['jogatina', 'Jogatina'], ['resenha', 'Resenha'], ['sala-4', 'Sala 4']];
+const STK = [['🧉', 'Bah!'], ['🤠', 'Tchê!'], ['🔥', 'Tri legal'], ['😂', 'Kkkk'], ['👍', 'Beleza'], ['❤️', 'Gosto'], ['🥩', 'Churras'], ['😴', 'Sono']];
 const S = { mic: new MediaStream(), cam: new MediaStream(), screen: new MediaStream() };
-let ws, me, ICE = [], peers = {}, names = {}, myName = '', cur = null, lob = {}, micTried = false;
+let ws, me, ICE = [], peers = {}, names = {}, myName = '', cur = null, view = null, st = { channels: [], users: [] }, micTried = false, hist = {}, unread = {}, pend = [];
 const send = m => ws.readyState === 1 && ws.send(JSON.stringify(m));
 const COLORS = ['#5865f2', '#23a559', '#c27c0e', '#eb459e', '#f23f43', '#0b8fd6'];
 const colorOf = n => COLORS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
-function avatar(n, small) {
-  const d = document.createElement('div'); d.className = 'av' + (small ? ' s' : '');
-  d.style.background = colorOf(n); d.textContent = (n[0] || '?').toUpperCase(); return d;
+function paintAv(el, n, p) {
+  p = p || {};
+  el.style.background = p.avatar ? 'url("' + p.avatar + '") center/cover' : (p.color || colorOf(n));
+  el.textContent = p.avatar ? '' : (n[0] || '?').toUpperCase();
 }
-const label = id => (CHANNELS.find(c => c[0] === id) || [0, id])[1];
+function avatar(n, small, id) {
+  const d = document.createElement('div'); d.className = 'av' + (small ? ' s' : ''); paintAv(d, n, prof[id]); return d;
+}
+const chan = id => st.channels.find(c => c.id === id);
+const label = id => chan(id)?.name || id;
+function toast(t) { const d = document.createElement('div'); d.id = 'toast'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 3500); }
+const note = toast;
 
-function note(t) {
-  if ($('#app').hidden) { $('#erro').textContent = t; return; }
-  const p = document.createElement('p'); p.className = 'sis'; p.textContent = t; $('#msgs').append(p); $('#msgs').scrollTop = 1e9;
+let ac;
+function beep(seq) {
+  ac ||= new (window.AudioContext || window.webkitAudioContext)(); ac.resume();
+  let t = ac.currentTime;
+  for (const [f, d] of seq) {
+    const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.12, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + .02); t += d * .8;
+  }
 }
+const sfx = { join: () => beep([[523, .1], [784, .17]]), leave: () => beep([[659, .1], [392, .2]]) };
+
 function emptyCheck() {
   const v = $('#vazio'); v.hidden = $('#grid').children.length > 0; v.replaceChildren();
   const b = document.createElement('b'), t = document.createElement('span');
-  if (cur) { b.textContent = 'Você está em ' + label(cur); t.textContent = 'Ligue a câmera ou compartilhe a tela.'; }
-  else { b.textContent = 'Bem-vindo, ' + myName; t.textContent = 'Escolha um canal de voz na esquerda para entrar.'; }
+  b.textContent = cur ? 'Você está em ' + label(cur) : 'Canal de voz'; t.textContent = cur ? 'Ligue a câmera ou compartilhe a tela.' : 'Clique no canal para entrar.';
   v.append(b, t);
 }
 function renderTop() {
-  $('#top').textContent = cur ? '🔊 ' + label(cur) : 'Discord dos Pampas';
-  $('#vc').hidden = !cur; $('#vcn').textContent = cur ? label(cur) + ' / Pampas' : '';
-  $('#txt').placeholder = cur ? 'Conversar em ' + label(cur) : 'Entre num canal de voz';
-  $('#txt').disabled = !cur; emptyCheck();
+  const v = view;
+  $('#top').textContent = v ? (v.k === 't' ? '# ' : '🔊 ') + label(v.id) : 'Discord dos Pampas';
+  $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't');
+  $('#vc').hidden = !cur; $('#vcn').textContent = cur ? label(cur) : '';
+  $('#txt').placeholder = v && v.k === 't' ? 'Conversar em #' + label(v.id) : ''; emptyCheck();
 }
+function mk(kind) { const n = prompt(kind === 'text' ? 'Nome do novo canal de texto:' : 'Nome do novo canal de voz:'); if (n) send({ type: 'chan-add', kind, name: n }); }
 function renderChans() {
   const box = $('#chans'); box.replaceChildren();
-  const h = document.createElement('h3'); h.textContent = 'Canais de voz'; box.append(h);
-  CHANNELS.forEach(([id, nome]) => {
-    const b = document.createElement('button'); b.className = 'ch' + (cur === id ? ' on' : ''); b.textContent = '🔊 ' + nome;
-    b.onclick = () => joinCh(id); box.append(b);
-    (lob[id] || []).forEach(p => {
-      const m = document.createElement('div'); m.className = 'mem';
-      const t = document.createElement('span'); t.textContent = p.name + (p.id === me ? ' (você)' : '');
-      m.append(avatar(p.name, true), t); box.append(m);
+  [['text', 'Canais de texto'], ['voice', 'Canais de voz']].forEach(([k, t]) => {
+    const h = document.createElement('div'); h.className = 'cat';
+    const s = document.createElement('span'); s.textContent = t;
+    const a = document.createElement('button'); a.textContent = '+'; a.title = 'Criar canal'; a.onclick = () => mk(k);
+    h.append(s, a); box.append(h);
+    st.channels.filter(c => c.kind === k).forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'ch' + (view?.id === c.id ? ' on' : '') + (unread[c.id] ? ' un' : '');
+      b.textContent = (k === 'text' ? '# ' : '🔊 ') + c.name;
+      b.onclick = () => k === 'text' ? openText(c.id) : joinCh(c.id);
+      if (!c.def) {
+        const x = document.createElement('span'); x.className = 'x'; x.textContent = '✕'; x.title = 'Apagar canal';
+        x.onclick = e => { e.stopPropagation(); if (confirm('Apagar o canal ' + c.name + '?')) send({ type: 'chan-del', id: c.id }); };
+        b.append(x);
+      }
+      box.append(b);
+      if (k === 'voice') st.users.filter(u => u.room === c.id).forEach(u => {
+        const m = document.createElement('div'); m.className = 'mem';
+        const t2 = document.createElement('span'); t2.textContent = u.name + (u.id === me ? ' (você)' : '');
+        m.append(avatar(u.name, 1, u.id), t2); box.append(m);
+      });
     });
   });
+}
+function renderMem() {
+  const b = $('#mem'); b.replaceChildren();
+  const h = document.createElement('h3'); h.textContent = 'Online — ' + st.users.length; b.append(h);
+  st.users.forEach(u => {
+    const d = document.createElement('div'); d.className = 'u'; const t = document.createElement('div');
+    const n = document.createElement('span'); n.textContent = u.name + (u.id === me ? ' (você)' : ''); t.append(n);
+    if (u.room) { const s = document.createElement('small'); s.textContent = '🔊 ' + label(u.room); t.append(s); }
+    d.append(avatar(u.name, 0, u.id), t); d.onclick = () => card(u.id); d.style.cursor = "pointer"; b.append(d);
+  });
+}
+
+function firstText() { const c = st.channels.find(c => c.kind === 'text'); if (c) openText(c.id); }
+function openText(id) {
+  view = { k: 't', id }; unread[id] = 0;
+  if (!(id in hist)) { hist[id] = null; send({ type: 'history', channel: id }); }
+  renderMsgs(); renderChans(); renderTop();
+}
+function renderMsgs() { $('#msgs').replaceChildren(); (hist[view?.id] || []).forEach(addMsg); $('#msgs').scrollTop = 1e9; }
+function addMsg(m) {
+  const d = document.createElement('div'), c = document.createElement('div'), p = document.createElement('div'); d.className = 'msg';
+  const b = document.createElement('b'); b.textContent = m.from;
+  const tm = document.createElement('time'); tm.textContent = new Date(m.t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  p.append(b, tm); c.append(p);
+  if (m.text) { const t = document.createElement('p'); t.textContent = m.text; c.append(t); }
+  if (m.st != null && STK[m.st]) { const s = document.createElement('div'); s.className = 'stk'; s.textContent = STK[m.st][0]; const l = document.createElement('small'); l.textContent = STK[m.st][1]; s.append(l); c.append(s); }
+  (m.att || []).forEach(a => {
+    if (a.type.startsWith('image/')) { const i = document.createElement('img'); i.className = 'a'; i.src = a.data; c.append(i); }
+    else { const l = document.createElement('a'); l.className = 'file'; l.href = a.data; l.download = a.name; l.textContent = '📎 ' + a.name + ' (' + Math.ceil(a.size / 1024) + ' KB)'; c.append(l); }
+  });
+  d.append(avatar(m.from, 0, m.uid), c); $('#msgs').append(d); $('#msgs').scrollTop = 1e9;
 }
 
 $('#login').onsubmit = e => {
@@ -178,47 +329,51 @@ $('#login').onsubmit = e => {
   try { localStorage.setItem('pampas-nome', myName); } catch {}
   fetch('/ice').then(r => r.json()).then(j => ICE = j).catch(() => {});
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-  ws.onopen = () => send({ type: 'hello', name: myName });
+  ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof });
   ws.onmessage = ev => handle(JSON.parse(ev.data));
-  ws.onclose = () => note('Conexão perdida. Recarregue o app.');
+  ws.onclose = () => toast('Conexão perdida. Recarregue o app.');
 };
 try { $('#nome').value = localStorage.getItem('pampas-nome') || ''; } catch {}
 
 async function joinCh(id) {
-  if (cur === id) return;
+  if (cur === id) { view = { k: 'v', id }; renderChans(); return renderTop(); }
   if (!micTried) {
     micTried = true;
     try {
-      const m = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const m = await navigator.mediaDevices.getUserMedia({ audio: audioC() });
       m.getAudioTracks().forEach(t => S.mic.addTrack(t));
-    } catch { note('Sem microfone: você vai só ouvir.'); $('#bMic').disabled = true; }
+    } catch { toast('Sem microfone: você vai só ouvir.'); $('#bMic').disabled = true; }
   }
   if (cur) dropAll();
-  send({ type: 'join', room: id });
+  view = { k: 'v', id }; send({ type: 'join', room: id });
 }
 function dropAll() {
   Object.keys(peers).forEach(dropPeer); dropLocal('cam'); dropLocal('screen');
-  press($('#bCam'), false); press($('#bTela'), false);
-  names = {}; $('#msgs').replaceChildren(); cur = null;
+  press($('#bCam'), false); press($('#bTela'), false); names = {}; cur = null;
 }
 
 function handle(m) {
   if (m.type === 'hello-ok') {
     me = m.id; $('#login').hidden = true; $('#app').hidden = false;
-    $('#meN').textContent = myName; $('#meav').replaceChildren(); $('#meav').style.background = colorOf(myName); $('#meav').textContent = myName[0].toUpperCase();
-    renderChans(); renderTop();
-  } else if (m.type === 'lobby') { lob = m.rooms; renderChans(); }
-  else if (m.type === 'full') note('Esse canal está cheio (máximo de 8 pessoas).');
+    $('#meN').textContent = myName; prof[me] = cfg.prof; paintAv($('#meav'), myName, cfg.prof);
+  } else if (m.type === 'state') {
+    st = m;
+    if (cur && !chan(cur)) { dropAll(); }
+    if (!view || !chan(view.id)) { firstText(); } else { renderChans(); renderTop(); }
+    renderMem();
+  } else if (m.type === 'history') { hist[m.channel] = m.msgs; if (view?.k === 't' && view.id === m.channel) renderMsgs(); }
+  else if (m.type === 'msg') {
+    (hist[m.channel] ||= []).push(m.msg);
+    if (view?.k === 't' && view.id === m.channel) addMsg(m.msg); else { unread[m.channel] = 1; renderChans(); }
+  } else if (m.type === 'full') { toast('Esse canal está cheio (máximo de 8 pessoas).'); firstText(); }
   else if (m.type === 'joined') {
     cur = m.room; m.peers.forEach(p => { names[p.id] = p.name; makePeer(p.id); });
-    renderChans(); renderTop(); note('Você entrou em ' + label(cur) + '.');
-  } else if (m.type === 'peer-join') { names[m.id] = m.name; note(m.name + ' entrou.'); }
-  else if (m.type === 'peer-leave') { note((names[m.id] || 'Alguém') + ' saiu.'); dropPeer(m.id); delete names[m.id]; }
+    sfx.join(); renderChans(); renderTop();
+  } else if (m.type === 'peer-join') { names[m.id] = m.name; sfx.join(); }
+  else if (m.type === 'peer-leave') { dropPeer(m.id); delete names[m.id]; sfx.leave(); }
   else if (m.type === 'signal') onSignal(m.from, m.data);
-  else if (m.type === 'chat') {
-    const d = document.createElement('div'), p = document.createElement('p'), b = document.createElement('b'); d.className = 'm';
-    b.textContent = m.from; p.append(b, m.text); d.append(avatar(m.from), p); $('#msgs').append(d); $('#msgs').scrollTop = 1e9;
-  }
+  else if (m.type === 'profiles') m.list.forEach(p => { prof[p.id] = p.prof; renderMem(); renderChans(); })
+  else if (m.type === 'profile') { prof[m.id] = m.prof; renderMem(); renderChans(); }
 }
 
 function tile(key, lbl, stream) {
@@ -310,8 +465,140 @@ $('#bTela').onclick = async e => {
     tile('me:screen', 'Sua tela', S.screen); press(b, true);
   } catch { note('Compartilhamento de tela cancelado.'); }
 };
-$('#bSair').onclick = () => { dropAll(); send({ type: 'leave' }); renderChans(); renderTop(); };
-$('#chat').onsubmit = e => { e.preventDefault(); const t = $('#txt').value.trim(); if (t) send({ type: 'chat', text: t }); $('#txt').value = ''; };
+$('#bSair').onclick = () => { dropAll(); send({ type: 'leave' }); sfx.leave(); if (view?.k === 'v') firstText(); else { renderChans(); renderTop(); } };
+
+$('#chat').onsubmit = e => {
+  e.preventDefault(); const t = $('#txt').value.trim();
+  if (!view || view.k !== 't' || (!t && !pend.length)) return;
+  send({ type: 'msg', channel: view.id, text: t, att: pend }); pend = []; $('#txt').value = ''; renderPend();
+};
+async function addFiles(fs) {
+  for (const f of fs) {
+    if (f.size > 3e6) { toast(f.name + ' passa de 3 MB.'); continue; }
+    if (pend.length >= 4) break;
+    const data = await new Promise(r => { const x = new FileReader(); x.onload = () => r(x.result); x.readAsDataURL(f); });
+    pend.push({ name: f.name || 'imagem.png', type: f.type || 'application/octet-stream', size: f.size, data });
+  }
+  renderPend();
+}
+function renderPend() {
+  const b = $('#pend'); b.replaceChildren();
+  pend.forEach((a, i) => { const s = document.createElement('button'); s.textContent = '📎 ' + a.name + ' ✕'; s.onclick = () => { pend.splice(i, 1); renderPend(); }; b.append(s); });
+}
+$('#bAnexo').onclick = () => $('#arq').click();
+$('#arq').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
+$('#chatw').addEventListener('paste', e => { const f = [...e.clipboardData.files]; if (f.length) { e.preventDefault(); addFiles(f); } });
+$('#chatw').addEventListener('dragover', e => e.preventDefault());
+$('#chatw').addEventListener('drop', e => { e.preventDefault(); addFiles([...e.dataTransfer.files]); });
+STK.forEach((s, i) => {
+  const b = document.createElement('button'); b.textContent = s[0]; const l = document.createElement('small'); l.textContent = s[1]; b.append(l);
+  b.onclick = () => { if (view?.k === 't') send({ type: 'msg', channel: view.id, st: i }); $('#figs').hidden = true; }; $('#figs').append(b);
+});
+$('#bFig').onclick = () => { $('#figs').hidden = !$('#figs').hidden; };
+
+// ---------- configurações (salvas neste aparelho) ----------
+const DEF = { ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+let cfg = { ...DEF };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
+cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
+const saveCfg = () => { try { localStorage.setItem('pampas-cfg', JSON.stringify(cfg)); } catch { toast('Não consegui salvar as configurações.'); } };
+const prof = {};
+const audioC = () => ({ echoCancellation: cfg.ec, noiseSuppression: cfg.ns, autoGainControl: cfg.agc, ...(cfg.mic ? { deviceId: { exact: cfg.mic } } : {}) });
+
+const PRE = { 'Discord': ['#5865f2', '#313338'], 'Pampa': ['#c8372d', '#243326'], 'Chimarrão': ['#7da340', '#2b3328'], 'Azul': ['#4f7bd9', '#1d2740'], 'Noite': ['#a970ff', '#1e1b2e'] };
+function applyTheme() {
+  const r = document.documentElement.style, { accent, bg } = cfg.theme;
+  const mx = (p, c) => `color-mix(in srgb, ${bg} ${100 - p}%, ${c} ${p}%)`;
+  r.setProperty('--blur', accent); r.setProperty('--main', bg); r.setProperty('--side', mx(12, '#000')); r.setProperty('--rail', mx(28, '#000'));
+  r.setProperty('--input', mx(8, '#fff')); r.setProperty('--hover', mx(5, '#fff')); $('meta[name=theme-color]').content = bg;
+}
+applyTheme();
+
+function toggleMute() {
+  const t = S.mic.getAudioTracks()[0]; if (!t) return;
+  t.enabled = !t.enabled; const b = $('#bMic'); b.textContent = t.enabled ? '🎤' : '🔇'; b.classList.toggle('off', !t.enabled);
+  beep(t.enabled ? [[660, .07], [880, .09]] : [[880, .07], [560, .1]]);
+}
+$('#bMic').onclick = toggleMute;
+async function applyMic() {
+  if (!S.mic.getTracks().length) return;
+  try {
+    const old = S.mic.getAudioTracks()[0], m = await navigator.mediaDevices.getUserMedia({ audio: audioC() }), nt = m.getAudioTracks()[0];
+    nt.enabled = old.enabled; S.mic.addTrack(nt); S.mic.removeTrack(old); old.stop();
+    for (const p of Object.values(peers)) (p.snd.mic || []).forEach(s => s.replaceTrack(nt));
+  } catch { toast('Não consegui trocar o microfone.'); }
+}
+
+let capt = false;
+const combo = e => ['Control', 'Alt', 'Shift', 'Meta'].includes(e.key) ? null :
+  [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift', e.metaKey && 'Meta', e.key.length === 1 ? e.key.toUpperCase() : e.key].filter(Boolean).join('+');
+addEventListener('keydown', e => {
+  const c = combo(e); if (!c) return;
+  if (capt) { e.preventDefault(); capt = false; if (c !== 'Escape') { cfg.mute = c; saveCfg(); } $('#kMute').textContent = cfg.mute; return; }
+  const typing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
+  if (c === cfg.mute && (!typing || e.ctrlKey || e.altKey || e.metaKey)) { e.preventDefault(); toggleMute(); }
+});
+$('#kMute').onclick = e => { capt = true; e.target.textContent = 'Pressione as teclas… (Esc cancela)'; };
+
+function resize(file, w, h, cb) {
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const s = Math.max(w / img.width, h / img.height), dw = img.width * s, dh = img.height * s;
+    c.getContext('2d').drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh); cb(c.toDataURL('image/jpeg', .8)); URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(file);
+}
+function cardEl(name, p) {
+  p = p || {};
+  const c = document.createElement('div'); c.className = 'pc';
+  const b = document.createElement('div'); b.className = 'pb'; b.style.background = p.banner ? 'url("' + p.banner + '") center/cover' : (p.color || colorOf(name));
+  const a = document.createElement('div'); a.className = 'av big'; paintAv(a, name, p);
+  const t = document.createElement('div'); t.className = 't';
+  const n = document.createElement('b'); n.textContent = name; const s = document.createElement('p'); s.textContent = p.about || ''; s.style.margin = '4px 0 0';
+  t.append(n, s); c.append(b, a, t); return c;
+}
+function card(id) {
+  const u = st.users.find(u => u.id === id); if (!u) return;
+  const w = document.createElement('div'); w.id = 'cardw'; w.onclick = () => w.remove(); w.append(cardEl(u.name, prof[id])); document.body.append(w);
+}
+
+let ed = {};
+const renderPrev = () => $('#pPrev').replaceChildren(cardEl($('#pNome').value || myName, ed));
+function tab(t) {
+  document.querySelectorAll('#cfgbody section').forEach(s => s.hidden = s.dataset.p !== t);
+  document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  if (t === 'voz') navigator.mediaDevices.enumerateDevices().then(ds => {
+    const sel = $('#micSel'); sel.replaceChildren(new Option('Padrão do sistema', ''));
+    ds.filter(d => d.kind === 'audioinput' && d.deviceId && d.deviceId !== 'default').forEach(d => sel.append(new Option(d.label || 'Microfone', d.deviceId))); sel.value = cfg.mic;
+  }).catch(() => {});
+}
+document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => tab(b.dataset.t));
+$('#bCfg').onclick = () => {
+  ed = { ...cfg.prof }; $('#pNome').value = myName; $('#pSobre').value = ed.about; $('#pCor').value = ed.color || colorOf(myName).slice(0, 7);
+  ['ns', 'ec', 'agc'].forEach(k => $('#' + k).checked = cfg[k]); $('#kMute').textContent = cfg.mute;
+  $('#cAc').value = cfg.theme.accent; $('#cBg').value = cfg.theme.bg; renderPrev(); tab('perfil'); $('#cfg').hidden = false;
+};
+$('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; };
+$('#pNome').oninput = renderPrev;
+$('#pSobre').oninput = () => { ed.about = $('#pSobre').value; renderPrev(); };
+$('#pCor').oninput = () => { ed.color = $('#pCor').value; renderPrev(); };
+$('#pFoto').onchange = e => { const f = e.target.files[0]; if (f) resize(f, 128, 128, d => { ed.avatar = d; renderPrev(); }); };
+$('#pBanner').onchange = e => { const f = e.target.files[0]; if (f) resize(f, 360, 130, d => { ed.banner = d; renderPrev(); }); };
+$('#pSalvar').onclick = () => {
+  myName = $('#pNome').value.trim() || myName; ed.about = $('#pSobre').value; cfg.prof = { ...ed }; saveCfg();
+  try { localStorage.setItem('pampas-nome', myName); } catch {}
+  prof[me] = cfg.prof; $('#meN').textContent = myName; paintAv($('#meav'), myName, cfg.prof);
+  send({ type: 'profile', name: myName, prof: cfg.prof }); toast('Perfil salvo.');
+};
+['ns', 'ec', 'agc'].forEach(k => $('#' + k).onchange = e => { cfg[k] = e.target.checked; saveCfg(); applyMic(); });
+$('#micSel').onchange = e => { cfg.mic = e.target.value; saveCfg(); applyMic(); };
+Object.entries(PRE).forEach(([n, [a, b]]) => {
+  const x = document.createElement('button'); x.textContent = n; x.style.borderLeft = '8px solid ' + a;
+  x.onclick = () => { cfg.theme = { accent: a, bg: b }; $('#cAc').value = a; $('#cBg').value = b; applyTheme(); saveCfg(); }; $('#presets').append(x);
+});
+$('#cAc').oninput = e => { cfg.theme.accent = e.target.value; applyTheme(); saveCfg(); };
+$('#cBg').oninput = e => { cfg.theme.bg = e.target.value; applyTheme(); saveCfg(); };
 </script>
 </body>
 </html>
