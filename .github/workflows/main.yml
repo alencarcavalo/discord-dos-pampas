@@ -1,0 +1,21 @@
+name: Gerar app do Windows
+on:
+  workflow_dispatch:
+  push:
+    paths: ['desktop/**']
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Instalar e gerar
+        working-directory: desktop
+        run: |
+          npm install
+          npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Discord-dos-Pampas-Setup
+          path: desktop/dist/Discord-dos-Pampas-Setup.exe
