@@ -91,10 +91,16 @@ wss.on('connection', ws => {
       CH.push({ id, name: kind === 'text' ? slug(name) : name, kind });
       state();
     } else if (m.type === 'chan-del') {
-      const i = CH.findIndex(c => c.id === m.id && !c.def);
+      const i = CH.findIndex(c => c.id === m.id);
       if (i < 0 || (rooms.get(m.id) || { size: 0 }).size) return;
+      if (CH[i].kind === 'text' && CH.filter(c => c.kind === 'text').length <= 1) return; // sempre sobra 1 canal de texto
       CH.splice(i, 1); hist.delete(m.id);
       state();
+    } else if (m.type === 'kick') {
+      const t = [...clients].find(c => c.id === String(m.id) && c !== ws);
+      if (!t) return;
+      send(t, { type: 'kicked', by: ws.nick });
+      setTimeout(() => t.close(), 200);
     } else if (m.type === 'history') {
       send(ws, { type: 'history', channel: m.channel, msgs: hist.get(m.channel) || [] });
     } else if (m.type === 'msg') {
