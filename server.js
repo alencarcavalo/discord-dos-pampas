@@ -28,23 +28,50 @@ const srv = http.createServer((req, res) => {
 
 const wss = new WebSocketServer({ server: srv });
 const rooms = new Map();
+const clients = new Set();
 let next = 1;
 const send = (ws, m) => ws.readyState === 1 && ws.send(JSON.stringify(m));
 
+function lobby() {
+  const r = {};
+  rooms.forEach((set, name) => { r[name] = [...set.values()].map(p => ({ id: p.id, name: p.nick })); });
+  clients.forEach(c => c.nick && send(c, { type: 'lobby', rooms: r }));
+}
+function leave(ws) {
+  const set = rooms.get(ws.room);
+  if (!set) return;
+  set.delete(ws.id);
+  set.forEach(p => send(p, { type: 'peer-leave', id: ws.id }));
+  if (!set.size) rooms.delete(ws.room);
+  ws.room = null;
+  lobby();
+}
+
 wss.on('connection', ws => {
+  ws.id = String(next++);
+  clients.add(ws);
   ws.on('message', raw => {
     let m; try { m = JSON.parse(raw); } catch { return; }
-    if (m.type === 'join' && !ws.room) {
+    if (m.type === 'hello') {
+      ws.nick = String(m.name || 'Guri').slice(0, 24);
+      send(ws, { type: 'hello-ok', id: ws.id });
+      lobby();
+    } else if (!ws.nick) {
+      return;
+    } else if (m.type === 'join') {
       const room = String(m.room || 'geral').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 30) || 'geral';
+      if (ws.room === room) return;
       const set = rooms.get(room) || new Map();
       if (set.size >= MAX) return send(ws, { type: 'full' });
-      ws.id = String(next++);
-      ws.nick = String(m.name || 'Guri').slice(0, 24);
+      if (ws.room) leave(ws);
       ws.room = room;
       rooms.set(room, set);
-      send(ws, { type: 'joined', id: ws.id, room, peers: [...set.values()].map(p => ({ id: p.id, name: p.nick })) });
+      send(ws, { type: 'joined', room, peers: [...set.values()].map(p => ({ id: p.id, name: p.nick })) });
       set.forEach(p => send(p, { type: 'peer-join', id: ws.id, name: ws.nick }));
       set.set(ws.id, ws);
+      lobby();
+    } else if (m.type === 'leave') {
+      leave(ws);
     } else if (ws.room) {
       const set = rooms.get(ws.room);
       if (m.type === 'signal') {
@@ -56,13 +83,7 @@ wss.on('connection', ws => {
       }
     }
   });
-  ws.on('close', () => {
-    const set = rooms.get(ws.room);
-    if (!set) return;
-    set.delete(ws.id);
-    set.forEach(p => send(p, { type: 'peer-leave', id: ws.id }));
-    if (!set.size) rooms.delete(ws.room);
-  });
+  ws.on('close', () => { leave(ws); clients.delete(ws); });
 });
 
 srv.listen(PORT, () => console.log('Discord dos Pampas em http://localhost:' + PORT));
