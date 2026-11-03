@@ -603,7 +603,8 @@ function renderMem() {
     const d = document.createElement('div'); d.className = 'u'; const t = document.createElement('div');
     const n = document.createElement('span'); n.textContent = u.name + (u.id === me ? ' (você)' : ''); t.append(n);
     if (u.room) { const s = document.createElement('small'); s.textContent = '🔊 ' + label(u.room); t.append(s); }
-    d.append(avatar(u.name, 0, u.id), t, badges(u)); d.onclick = () => card(u.id); d.style.cursor = "pointer";
+    const av = avatar(u.name, 0, u.id); av.classList.remove('speaking'); delete av.dataset.uid; // sem borda piscando na lista da direita
+    d.append(av, t, badges(u)); d.onclick = () => card(u.id); d.style.cursor = "pointer";
     if (u.id !== me) {
       d.oncontextmenu = e => volMenu(e, u.name);
       const k = document.createElement('button'); k.className = 'kx'; k.textContent = '✕'; k.title = 'Remover do servidor';
