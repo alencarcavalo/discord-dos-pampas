@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     paths: ['desktop/**']
+permissions:
+  contents: write   # precisa para publicar a versão (Release) que o app usa para se atualizar
 jobs:
   build:
     runs-on: windows-latest
@@ -10,11 +12,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - name: Instalar e gerar
+      - name: Instalar e gerar (e publicar a atualização)
         working-directory: desktop
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install
-          npm run build
+          npx electron-builder --win --publish always \
+            -c.publish.provider=github \
+            -c.publish.owner=${{ github.repository_owner }} \
+            -c.publish.repo=${{ github.event.repository.name }} \
+            -c.publish.releaseType=release
       - uses: actions/upload-artifact@v4
         with:
           name: Discord-dos-Pampas-Setup
