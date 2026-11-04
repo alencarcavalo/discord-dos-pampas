@@ -65,10 +65,7 @@ const clients = new Set();
 const hist = new Map();
 const CH = [
   { id: 'geral', name: 'geral', kind: 'text', def: 1 },
-  { id: 'memes', name: 'memes', kind: 'text', def: 1 },
   { id: 'voz-geral', name: 'Geral', kind: 'voice', def: 1 },
-  { id: 'jogatina', name: 'Jogatina', kind: 'voice', def: 1 },
-  { id: 'resenha', name: 'Resenha', kind: 'voice', def: 1 },
 ];
 let next = 1;
 const send = (ws, m) => ws.readyState === 1 && ws.send(JSON.stringify(m));
