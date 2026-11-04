@@ -193,6 +193,9 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 #vmenu{position:fixed;z-index:10;background:#111214;border-radius:8px;padding:12px;width:240px;box-shadow:0 2px 10px #000a;display:grid;gap:8px}
 #vmenu input[type=range]{padding:0}
 #vmenu .sec{justify-self:stretch}
+#askw{position:fixed;inset:0;background:#0008;z-index:11;display:grid;place-items:center}
+#ask{background:var(--side);padding:20px;border-radius:10px;width:340px;max-width:92vw;display:grid;gap:12px;box-shadow:0 2px 10px #000a}
+#ask .row{justify-content:flex-end}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111214;padding:10px 16px;border-radius:8px;z-index:9;box-shadow:0 2px 10px #0008}
 </style>
 </head>
@@ -315,13 +318,13 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 const $ = s => document.querySelector(s);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 let instPrompt;
-addEventListener('beforeinstallprompt', e => { e.preventDefault(); instPrompt = e; $('#instalar').hidden = false; });
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); instPrompt = e; if (!window.pampas) $('#instalar').hidden = false; });
 $('#instalar').onclick = async () => {
   if (!instPrompt) return toast('Para instalar: no Chrome/Edge use o menu ⋮ e escolha "Instalar app". No iPhone, toque em Compartilhar e "Adicionar à Tela de Início".');
   instPrompt.prompt(); await instPrompt.userChoice; instPrompt = null;
 };
 addEventListener('appinstalled', () => { $('#instalar').hidden = true; });
-if (matchMedia('(display-mode: standalone)').matches) $('#instalar').hidden = true;
+if (matchMedia('(display-mode: standalone)').matches || window.pampas) $('#instalar').hidden = true; // já está no app
 
 const STK = [['🧉', 'Bah!'], ['🤠', 'Tchê!'], ['🔥', 'Tri legal'], ['😂', 'Kkkk'], ['👍', 'Beleza'], ['❤️', 'Gosto'], ['🥩', 'Churras'], ['😴', 'Sono']];
 const S = { mic: new MediaStream(), cam: new MediaStream(), screen: new MediaStream() };
@@ -570,7 +573,28 @@ function renderTop() {
   $('#vc').hidden = !cur; $('#vcn').textContent = cur ? label(cur) : '';
   $('#txt').placeholder = v && v.k === 't' ? 'Conversar em #' + label(v.id) : ''; emptyCheck();
 }
-function mk(kind) { const n = prompt(kind === 'text' ? 'Nome do novo canal de texto:' : 'Nome do novo canal de voz:'); if (n) send({ type: 'chan-add', kind, name: n }); }
+// caixinhas próprias: prompt() não funciona no app do Windows e confirm() pode travar o teclado
+function askBox(title, withInput, okLabel) {
+  return new Promise(res => {
+    const w = document.createElement('div'); w.id = 'askw';
+    const f = document.createElement('form'); f.id = 'ask';
+    const h = document.createElement('b'); h.textContent = title; f.append(h);
+    let i = null;
+    if (withInput) { i = document.createElement('input'); i.maxLength = 24; i.required = true; i.autocomplete = 'off'; f.append(i); }
+    const row = document.createElement('div'); row.className = 'row';
+    const ok = document.createElement('button'); ok.className = 'go'; ok.textContent = okLabel;
+    const no = document.createElement('button'); no.type = 'button'; no.className = 'sec'; no.textContent = 'Cancelar';
+    const done = v => { document.removeEventListener('keydown', esc, true); w.remove(); res(v); };
+    const esc = e => { if (e.key === 'Escape') { e.preventDefault(); done(null); } };
+    f.onsubmit = e => { e.preventDefault(); done(i ? i.value.trim() : true); };
+    no.onclick = () => done(null);
+    w.onmousedown = e => { if (e.target === w) done(null); };
+    document.addEventListener('keydown', esc, true);
+    row.append(no, ok); f.append(row); w.append(f); document.body.append(w); (i || ok).focus();
+  });
+}
+const askYes = (msg, okLabel) => askBox(msg, false, okLabel || 'Confirmar');
+function mk(kind) { askBox(kind === 'text' ? 'Nome do novo canal de texto' : 'Nome do novo canal de voz', true, 'Criar').then(n => { if (n) send({ type: 'chan-add', kind, name: n }); }); }
 function renderChans() {
   const box = $('#chans'); box.replaceChildren();
   [['text', 'Canais de texto'], ['voice', 'Canais de voz']].forEach(([k, t]) => {
@@ -587,7 +611,7 @@ function renderChans() {
       x.onclick = e => {
         e.stopPropagation();
         if (st.users.some(u => u.room === c.id)) return toast('Tem gente nesse canal de voz. Espere sair para apagar.');
-        if (confirm('Apagar o canal ' + c.name + '?')) send({ type: 'chan-del', id: c.id });
+        askYes('Apagar o canal ' + c.name + '?', 'Apagar').then(y => { if (y) send({ type: 'chan-del', id: c.id }); });
       };
       b.append(x);
       box.append(b);
@@ -613,7 +637,7 @@ function renderMem() {
     if (u.id !== me) {
       d.oncontextmenu = e => volMenu(e, u.name);
       const k = document.createElement('button'); k.className = 'kx'; k.textContent = '✕'; k.title = 'Remover do servidor';
-      k.onclick = e => { e.stopPropagation(); if (confirm('Remover ' + u.name + ' do servidor?')) send({ type: 'kick', id: u.id }); };
+      k.onclick = e => { e.stopPropagation(); askYes('Remover ' + u.name + ' do servidor?', 'Remover').then(y => { if (y) send({ type: 'kick', id: u.id }); }); };
       d.append(k);
     }
     b.append(d);
