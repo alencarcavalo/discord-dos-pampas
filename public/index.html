@@ -149,8 +149,11 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 #rail img{width:48px;height:48px;border-radius:16px;object-fit:cover}
 #mem{background:var(--side);padding:12px 8px;overflow:auto}
 #mem h3{margin:4px 8px 8px;font-size:.75rem;color:var(--mut);text-transform:uppercase}
-.u{display:flex;align-items:center;gap:10px;padding:5px 8px;border-radius:4px}
-.u:hover{background:var(--hover)}
+.u{display:flex;align-items:center;gap:10px;padding:10px 10px;min-height:64px;margin-bottom:6px;border-radius:8px;background-size:cover;background-position:center}
+.u:hover{background-color:var(--hover)}
+.u.hasb{color:#fff;text-shadow:0 1px 3px #000d}
+.u.hasb small{color:#e8e8ee}
+.u.hasb .av{box-shadow:0 0 0 2px #0008}
 .u small{display:block;line-height:1.1}
 .cat{display:flex;align-items:center;justify-content:space-between;margin:14px 8px 4px;font-size:.75rem;color:var(--mut);text-transform:uppercase;font-weight:700}
 .cat button{color:var(--mut);font-size:1.2rem;line-height:1}
@@ -604,6 +607,8 @@ function renderMem() {
     const d = document.createElement('div'); d.className = 'u'; const t = document.createElement('div');
     const n = document.createElement('span'); n.textContent = u.name + (u.id === me ? ' (você)' : ''); t.append(n);
     if (u.room) { const s = document.createElement('small'); s.textContent = '🔊 ' + label(u.room); t.append(s); }
+    const pr = prof[u.id] || {}; // fundo do perfil (imagem ou GIF) atrás do nome e da foto
+    if (pr.banner) { d.classList.add('hasb'); d.style.backgroundImage = 'linear-gradient(90deg,#000b 0%,#0005 70%,#0002 100%), url("' + pr.banner + '")'; }
     d.append(avatar(u.name, 0, u.id), t, badges(u)); d.onclick = () => card(u.id); d.style.cursor = "pointer";
     if (u.id !== me) {
       d.oncontextmenu = e => volMenu(e, u.name);
@@ -903,7 +908,7 @@ const saveCfg = () => {
 idb.get('prof-img').then(img => {
   if (img && (img.avatar || img.banner)) {
     cfg.prof.avatar = img.avatar || ''; cfg.prof.banner = img.banner || '';
-    if (typeof me !== 'undefined' && me) { prof[me] = cfg.prof; paintAv($('#meav'), myName, cfg.prof); }
+    if (typeof me !== 'undefined' && me) { prof[me] = cfg.prof; paintAv($('#meav'), myName, cfg.prof); renderMem(); }
   } else if (cfg.prof.avatar || cfg.prof.banner) saveCfg(); // passa a foto antiga para o lugar novo
 });
 const prof = {};
