@@ -1109,8 +1109,8 @@ function pickImg(e, key, w, h, maxGif) {
     const r = new FileReader(); r.onload = () => { ed[key] = r.result; renderPrev(); }; r.readAsDataURL(f);
   } else resize(f, w, h, d => { ed[key] = d; renderPrev(); });
 }
-$('#pFoto').onchange = e => pickImg(e, 'avatar', 128, 128, 3 * 1048576);
-$('#pBanner').onchange = e => pickImg(e, 'banner', 360, 130, 3 * 1048576);
+$('#pFoto').onchange = e => pickImg(e, 'avatar', 128, 128, 4 * 1048576);
+$('#pBanner').onchange = e => pickImg(e, 'banner', 360, 130, 4 * 1048576);
 $('#pSalvar').onclick = () => {
   myName = $('#pNome').value.trim() || myName; ed.about = $('#pSobre').value; cfg.prof = { ...ed }; saveCfg();
   try { localStorage.setItem('pampas-nome', myName); } catch {}
