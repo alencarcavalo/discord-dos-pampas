@@ -74,10 +74,11 @@ let next = 1;
 const send = (ws, m) => ws.readyState === 1 && ws.send(JSON.stringify(m));
 const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'canal';
 
-const okImg = (v, max) => typeof v === 'string' && v.startsWith('data:image/jpeg') && v.length < max ? v : '';
+// aceita JPEG (imagem reduzida) ou GIF animado (limite maior)
+const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:image/jpeg;base64,') && v.length < max) || (v.startsWith('data:image/gif;base64,') && v.length < maxGif)) ? v : '';
 function setProf(ws, p) {
   p = p || {};
-  ws.prof = { about: String(p.about || '').slice(0, 120), avatar: okImg(p.avatar, 60000), banner: okImg(p.banner, 120000),
+  ws.prof = { about: String(p.about || '').slice(0, 120), avatar: okImg(p.avatar, 60000, 1.2e6), banner: okImg(p.banner, 120000, 2.4e6),
     color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '' };
 }
 const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {} });
