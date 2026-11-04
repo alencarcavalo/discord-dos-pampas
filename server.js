@@ -78,7 +78,7 @@ const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '
 const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:image/jpeg;base64,') && v.length < max) || (v.startsWith('data:image/gif;base64,') && v.length < maxGif)) ? v : '';
 function setProf(ws, p) {
   p = p || {};
-  ws.prof = { about: String(p.about || '').slice(0, 120), avatar: okImg(p.avatar, 60000, 1.2e6), banner: okImg(p.banner, 120000, 2.4e6),
+  ws.prof = { about: String(p.about || '').slice(0, 120), avatar: okImg(p.avatar, 60000, 4.4e6), banner: okImg(p.banner, 120000, 4.4e6),
     color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '' };
 }
 const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {} });
@@ -107,7 +107,7 @@ wss.on('connection', ws => {
       ws.nick = String(m.name || 'Guri').slice(0, 24);
       setProf(ws, m.prof);
       send(ws, { type: 'hello-ok', id: ws.id });
-      send(ws, { type: 'profiles', list: [...clients].filter(c => c.nick && c !== ws).map(pj) });
+      [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
       state();
     } else if (m.type === 'profile' && ws.nick) {
