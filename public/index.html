@@ -887,7 +887,25 @@ const DEF = { app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: 
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
-const saveCfg = () => { try { localStorage.setItem('pampas-cfg', JSON.stringify(cfg)); } catch { toast('Não consegui salvar as configurações.'); } };
+// foto/fundo do perfil (GIFs grandes) ficam no IndexedDB; o localStorage é pequeno demais para isso
+const idb = {
+  open: () => new Promise((res, rej) => { const r = indexedDB.open('pampas', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }),
+  async get(k) { try { const db = await this.open(); return await new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(undefined); }); } catch { return undefined; } },
+  async set(k, v) { try { const db = await this.open(); await new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); }); return true; } catch { return false; } }
+};
+const saveCfg = () => {
+  const lite = { ...cfg, prof: { ...cfg.prof, avatar: '', banner: '' } };
+  try { localStorage.setItem('pampas-cfg', JSON.stringify(lite)); } catch { toast('Não consegui salvar as configurações.'); }
+  idb.set('prof-img', { avatar: cfg.prof.avatar || '', banner: cfg.prof.banner || '' }).then(ok => {
+    if (!ok) { try { localStorage.setItem('pampas-cfg', JSON.stringify(cfg)); } catch { toast('Não consegui guardar a foto/fundo neste aparelho.'); } }
+  });
+};
+idb.get('prof-img').then(img => {
+  if (img && (img.avatar || img.banner)) {
+    cfg.prof.avatar = img.avatar || ''; cfg.prof.banner = img.banner || '';
+    if (typeof me !== 'undefined' && me) { prof[me] = cfg.prof; paintAv($('#meav'), myName, cfg.prof); }
+  } else if (cfg.prof.avatar || cfg.prof.banner) saveCfg(); // passa a foto antiga para o lugar novo
+});
 const prof = {};
 const audioC = () => ({ echoCancellation: cfg.ec, noiseSuppression: cfg.ns, autoGainControl: cfg.agc, ...(cfg.mic ? { deviceId: { exact: cfg.mic } } : {}) });
 
@@ -1091,8 +1109,8 @@ function pickImg(e, key, w, h, maxGif) {
     const r = new FileReader(); r.onload = () => { ed[key] = r.result; renderPrev(); }; r.readAsDataURL(f);
   } else resize(f, w, h, d => { ed[key] = d; renderPrev(); });
 }
-$('#pFoto').onchange = e => pickImg(e, 'avatar', 128, 128, 800 * 1024);
-$('#pBanner').onchange = e => pickImg(e, 'banner', 360, 130, 1.5 * 1048576);
+$('#pFoto').onchange = e => pickImg(e, 'avatar', 128, 128, 3 * 1048576);
+$('#pBanner').onchange = e => pickImg(e, 'banner', 360, 130, 3 * 1048576);
 $('#pSalvar').onclick = () => {
   myName = $('#pNome').value.trim() || myName; ed.about = $('#pSobre').value; cfg.prof = { ...ed }; saveCfg();
   try { localStorage.setItem('pampas-nome', myName); } catch {}
