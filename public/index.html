@@ -331,8 +331,9 @@ function paintAv(el, n, p) {
   el.style.background = p.avatar ? 'url("' + p.avatar + '") center/cover' : (p.color || colorOf(n));
   el.textContent = p.avatar ? '' : (n[0] || '?').toUpperCase();
 }
-function avatar(n, small, id) {
-  const d = document.createElement('div'); d.className = 'av' + (small ? ' s' : '') + (speaking.has(id) ? ' speaking' : ''); d.dataset.uid = id; paintAv(d, n, prof[id]); return d;
+function avatar(n, small, id, live) { // live = true só na lista de voz da esquerda (borda pisca quando a pessoa fala)
+  const d = document.createElement('div'); d.className = 'av' + (small ? ' s' : '') + (live && speaking.has(id) ? ' speaking' : '');
+  if (live) d.dataset.uid = id; paintAv(d, n, prof[id]); return d;
 }
 const chan = id => st.channels.find(c => c.id === id);
 const label = id => chan(id)?.name || id;
@@ -591,7 +592,7 @@ function renderChans() {
         const m = document.createElement('div'); m.className = 'mem';
         const t2 = document.createElement('span'); t2.textContent = u.name + (u.id === me ? ' (você)' : '');
         if (u.id !== me) m.oncontextmenu = e => volMenu(e, u.name);
-        m.append(avatar(u.name, 1, u.id), t2, badges(u)); box.append(m);
+        m.append(avatar(u.name, 1, u.id, true), t2, badges(u)); box.append(m);
       });
     });
   });
@@ -603,8 +604,7 @@ function renderMem() {
     const d = document.createElement('div'); d.className = 'u'; const t = document.createElement('div');
     const n = document.createElement('span'); n.textContent = u.name + (u.id === me ? ' (você)' : ''); t.append(n);
     if (u.room) { const s = document.createElement('small'); s.textContent = '🔊 ' + label(u.room); t.append(s); }
-    const av = avatar(u.name, 0, u.id); av.classList.remove('speaking'); delete av.dataset.uid; // sem borda piscando na lista da direita
-    d.append(av, t, badges(u)); d.onclick = () => card(u.id); d.style.cursor = "pointer";
+    d.append(avatar(u.name, 0, u.id), t, badges(u)); d.onclick = () => card(u.id); d.style.cursor = "pointer";
     if (u.id !== me) {
       d.oncontextmenu = e => volMenu(e, u.name);
       const k = document.createElement('button'); k.className = 'kx'; k.textContent = '✕'; k.title = 'Remover do servidor';
@@ -1083,8 +1083,16 @@ $('#pRmBanner').onclick = () => { ed.banner = ''; $('#pBanner').value = ''; rend
 $('#pRmCor').onclick = () => { ed.color = ''; $('#pCor').value = colorOf($('#pNome').value || myName).slice(0, 7); renderPrev(); };
 $('#pRmSobre').onclick = () => { ed.about = ''; $('#pSobre').value = ''; renderPrev(); };
 $('#icSz').oninput = e => { cfg.ic = +e.target.value; applyTheme(); saveCfg(); };
-$('#pFoto').onchange = e => { const f = e.target.files[0]; if (f) resize(f, 128, 128, d => { ed.avatar = d; renderPrev(); }); };
-$('#pBanner').onchange = e => { const f = e.target.files[0]; if (f) resize(f, 360, 130, d => { ed.banner = d; renderPrev(); }); };
+// GIF fica animado (sem redimensionar). Outras imagens continuam sendo reduzidas.
+function pickImg(e, key, w, h, maxGif) {
+  const f = e.target.files[0]; if (!f) return;
+  if (f.type === 'image/gif') {
+    if (f.size > maxGif) { toast('Esse GIF tem ' + (f.size / 1048576).toFixed(1) + ' MB. O máximo é ' + (maxGif / 1048576).toFixed(1) + ' MB.'); e.target.value = ''; return; }
+    const r = new FileReader(); r.onload = () => { ed[key] = r.result; renderPrev(); }; r.readAsDataURL(f);
+  } else resize(f, w, h, d => { ed[key] = d; renderPrev(); });
+}
+$('#pFoto').onchange = e => pickImg(e, 'avatar', 128, 128, 800 * 1024);
+$('#pBanner').onchange = e => pickImg(e, 'banner', 360, 130, 1.5 * 1048576);
 $('#pSalvar').onclick = () => {
   myName = $('#pNome').value.trim() || myName; ed.about = $('#pSobre').value; cfg.prof = { ...ed }; saveCfg();
   try { localStorage.setItem('pampas-nome', myName); } catch {}
