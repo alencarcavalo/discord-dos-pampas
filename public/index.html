@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Discord dos Pampas</title>
+<title>Discord dos Guri</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="theme-color" content="#1e1f22">
@@ -31,7 +31,7 @@ small{color:var(--mut)}
 #instalar{background:var(--input);padding:.7rem}
 #erro{color:var(--verm);min-height:1.2em}
 
-#app{height:100%;display:grid;grid-template-columns:72px 240px 1fr 240px;grid-template-rows:1fr}
+#app{height:100%;display:grid;grid-template-columns:72px 268px 1fr 240px;grid-template-rows:1fr}
 #rail{background:var(--rail);padding:12px 0;display:flex;flex-direction:column;align-items:center}
 #rail .av{width:48px;height:48px;background:var(--pampa);font-size:1.3rem;border-radius:16px;position:relative}
 #rail .av::before{content:"";position:absolute;left:-12px;top:12px;width:4px;height:24px;background:#fff;border-radius:0 4px 4px 0}
@@ -45,7 +45,22 @@ small{color:var(--mut)}
 .mem{display:flex;align-items:center;gap:.5rem;padding:3px 8px 3px 32px;color:var(--mut)}
 #vc{background:var(--rail);padding:8px 10px;border-top:1px solid #1f2023}
 #vc b{color:var(--verde);display:block;font-size:.85rem}
-#vcn{display:block;margin-bottom:6px}
+#vcn{display:block}
+#vch{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+#vch>div:first-child{flex:1;min-width:0}
+#vch button{padding:6px 8px;border-radius:6px;display:grid;place-items:center;background:transparent}
+#vch button:hover{background:var(--hover)}
+#vch #bSair:hover{background:var(--verm)}
+#sig{cursor:default;color:var(--verde)}#sig svg{width:22px;height:22px}
+#sig.m{color:#f0b232}#sig.r{color:var(--verm)}#sig.n{color:var(--mut)}
+.sp{display:flex;align-items:center}
+.sp>button:first-child{border-radius:6px 0 0 6px}
+.sp>.ar{border-radius:0 6px 6px 0;padding:6px 2px;width:16px;display:grid;place-items:center;background:var(--input);align-self:stretch}
+.sp>.ar:hover{background:#4e5058}.sp>.ar svg{width:14px;height:14px}
+#me{gap:4px;padding:8px 8px}#me .sp{flex:none}#me .sp>button:first-child{padding:6px 6px}#me #bCfg{padding:6px 6px}
+#ptip{position:fixed;z-index:12;background:#111214;color:var(--txt);border-radius:6px;padding:6px 10px;font-size:.8rem;box-shadow:0 2px 10px #000a;pointer-events:none;white-space:nowrap}
+#ptip i{font-style:normal;font-weight:700}
+#vmenu select{width:100%}
 .vb{display:flex;gap:6px}
 .vb button,#bMic,#bCfg{background:var(--input);padding:6px 10px;border-radius:6px}
 .vb button{flex:1}
@@ -203,7 +218,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 <form id="login">
   <div id="loginc">
     <img class="logo" src="/icon-512.png" alt="">
-    <h1>Discord dos Pampas</h1>
+    <h1>Discord dos Guri</h1>
     <small>Voz, câmera, tela e chat pra turma.</small>
     <label>Como a turma te chama?<input id="nome" maxlength="24" required autocomplete="nickname"></label>
     <button class="go">Entrar</button>
@@ -213,19 +228,22 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 </form>
 
 <div id="app" hidden>
-  <nav id="rail"><img src="/icon-192.png" alt="Discord dos Pampas" title="Discord dos Pampas"></nav>
+  <nav id="rail"><img src="/icon-192.png" alt="Discord dos Guri" title="Discord dos Guri"></nav>
   <section id="side">
-    <div id="sname">Discord dos Pampas</div>
+    <div id="sname">Discord dos Guri</div>
     <div id="chans"></div>
     <div id="vc" hidden>
-      <b>Voz conectada</b><small id="vcn"></small>
+      <div id="vch">
+        <div><b>Voz conectada</b><small id="vcn"></small></div>
+        <button id="sig" class="n" type="button" data-pid="me" aria-label="Ping"></button>
+        <button id="bSair" title="Desconectar">📞</button>
+      </div>
       <div class="vb">
         <button id="bCam" title="Câmera">📷</button>
         <button id="bTela" title="Compartilhar tela">🖥️</button>
-        <button id="bSair" title="Desconectar">📞</button>
       </div>
     </div>
-    <div id="me"><div class="av" id="meav"></div><div><b id="meN"></b><small>Online</small></div><button id="bMic" title="Mutar / desmutar microfone">🎤</button><button id="bDeaf" title="Ficar sem áudio (fone mudo)">🎧</button><button id="bCfg" title="Configurações">⚙️</button></div>
+    <div id="me"><div class="av" id="meav"></div><div><b id="meN"></b><small>Online</small></div><div class="sp"><button id="bMic" title="Mutar / desmutar microfone">🎤</button><button class="ar" id="aMic" type="button" title="Opções do microfone"></button></div><div class="sp"><button id="bDeaf" title="Ficar sem áudio (fone mudo)">🎧</button><button class="ar" id="aDeaf" type="button" title="Opções de áudio"></button></div><button id="bCfg" title="Configurações">⚙️</button></div>
   </section>
   <section id="main">
     <div id="top"></div>
@@ -366,6 +384,8 @@ const P = {
   gear: '<path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/>',
   plus: '<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/>',
   smile: '<path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm-7 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM12 17.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>',
+  down: '<path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>',
+  sig: '<rect x="3" y="15" width="3.5" height="6" rx="1"/><rect x="8.5" y="11" width="3.5" height="10" rx="1"/><rect x="14" y="7" width="3.5" height="14" rx="1"/><rect x="19.5" y="3" width="2.5" height="18" rx="1"/>',
   speaker: '<path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>',
   volx: '<path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.8 8.8 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>',
   head: '<path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>',
@@ -375,7 +395,7 @@ const P = {
 };
 const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[n] + '</svg>';
 function ico(n) { const s = document.createElement('span'); s.className = 'ico'; s.innerHTML = svg(n); return s; }
-[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bDeaf', 'head'], ['#bCfg', 'gear'], ['#bAnexo', 'plus'], ['#bFig', 'smile']]
+[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bDeaf', 'head'], ['#bCfg', 'gear'], ['#aMic', 'down'], ['#aDeaf', 'down'], ['#sig', 'sig'], ['#bAnexo', 'plus'], ['#bFig', 'smile']]
   .forEach(([s, n]) => { const b = $(s); b.classList.add('ico'); b.innerHTML = svg(n); });
 
 // ---------- áudio: saída, volume do app e sons ----------
@@ -491,7 +511,7 @@ function applyPin() {
   for (const k in TL) TL[k].el.classList.toggle('pin', k === pinKey);
 }
 function mkTile(key, uid, kind) {
-  const el = document.createElement('div'); el.className = 'tile ' + kind; el.dataset.uid = uid;
+  const el = document.createElement('div'); el.className = 'tile ' + kind; el.dataset.uid = uid; el.dataset.pid = uid;
   if (kind === 'p' && speaking.has(uid)) el.classList.add('speaking');
   const v = document.createElement('video'); v.autoplay = true; v.playsInline = true; v.muted = true;
   const nm = document.createElement('div'); nm.className = 'nm';
@@ -578,7 +598,7 @@ function emptyCheck() { syncStage(); }
 function renderTop() {
   const v = view;
   const tp = $('#top'); tp.replaceChildren();
-  if (!v) tp.append('Discord dos Pampas');
+  if (!v) tp.append('Discord dos Guri');
   else if (v.k === 't') tp.append('# ' + label(v.id));
   else tp.append(ico('speaker'), label(v.id));
   $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't');
@@ -648,7 +668,7 @@ function renderChans() {
       b.append(x);
       box.append(b);
       if (k === 'voice') st.users.filter(u => u.room === c.id).forEach(u => {
-        const m = document.createElement('div'); m.className = 'mem';
+        const m = document.createElement('div'); m.className = 'mem'; m.dataset.pid = u.id;
         const t2 = document.createElement('span'); t2.textContent = u.name + (u.id === me ? ' (você)' : '');
         if (u.id !== me) m.oncontextmenu = e => volMenu(e, u.name);
         m.append(avatar(u.name, 1, u.id, true), t2, badges(u)); box.append(m);
@@ -660,7 +680,7 @@ function renderMem() {
   const b = $('#mem'); b.replaceChildren();
   const h = document.createElement('h3'); h.textContent = 'Online — ' + st.users.length; b.append(h);
   st.users.forEach(u => {
-    const d = document.createElement('div'); d.className = 'u'; const t = document.createElement('div');
+    const d = document.createElement('div'); d.className = 'u'; d.dataset.pid = u.id; const t = document.createElement('div');
     const n = document.createElement('span'); n.textContent = u.name + (u.id === me ? ' (você)' : ''); t.append(n);
     if (u.room) { const s = document.createElement('small'); s.textContent = '🔊 ' + label(u.room); t.append(s); }
     const pr = prof[u.id] || {}; // fundo do perfil (imagem ou GIF) atrás do nome e da foto
@@ -732,6 +752,9 @@ function handle(m) {
     if (cur && !chan(cur)) { dropAll(); }
     if (!view || !chan(view.id)) { firstText(); } else { renderChans(); renderTop(); }
     renderMem();
+  } else if (m.type === 'pong') {
+    myPing = Math.max(0, Math.round(performance.now() - m.t)); pings[me] = myPing; send({ type: 'ping-rep', ms: myPing }); paintPing();
+  } else if (m.type === 'pings') { Object.assign(pings, m.p, { [me]: myPing }); paintPing();
   } else if (m.type === 'history') { hist[m.channel] = m.msgs; if (view?.k === 't' && view.id === m.channel) renderMsgs(); }
   else if (m.type === 'msg') {
     (hist[m.channel] ||= []).push(m.msg);
@@ -1261,6 +1284,76 @@ async function applyMic() {       // trocou o microfone ou ligou/desligou um fil
     mic.src = mic.c.createMediaStreamSource(raw); wireMic();
   } catch { toast('Não consegui trocar o microfone.'); }
 }
+
+// ---------- ping ----------
+let myPing = -1; const pings = {}, p2p = {};
+const pingCls = v => v < 0 ? 'n' : v < 90 ? '' : v < 220 ? 'm' : 'r';
+function paintPing() { const b = $('#sig'); if (b) { b.classList.remove('n', 'm', 'r'); const c = pingCls(myPing); if (c) b.classList.add(c); } }
+async function measureP2P() {
+  for (const id of Object.keys(peers)) {
+    try {
+      const rs = await peers[id].pc.getStats(); let best = -1;
+      rs.forEach(r => { if (r.type === 'candidate-pair' && (r.nominated || r.state === 'succeeded') && r.currentRoundTripTime > 0) best = Math.round(r.currentRoundTripTime * 1000); });
+      if (best >= 0) p2p[id] = best;
+    } catch {}
+  }
+}
+setInterval(() => { if (ws && ws.readyState === 1 && me) { send({ type: 'ping', t: performance.now() }); measureP2P(); } }, 4000);
+const tip = document.createElement('div'); tip.id = 'ptip'; tip.hidden = true; document.body.append(tip);
+function tipFill(id) {
+  const self = id === 'me' || id === me, v = self ? myPing : pings[id];
+  tip.replaceChildren();
+  const a = document.createElement('div'); a.append(self ? 'Seu ping: ' : 'Ping dele: ');
+  const i = document.createElement('i'); i.textContent = v === undefined || v < 0 ? 'medindo…' : v + ' ms'; a.append(i); tip.append(a);
+  if (!self && p2p[id] !== undefined) { const b = document.createElement('div'); b.append('Direto com você: '); const j = document.createElement('i'); j.textContent = p2p[id] + ' ms'; b.append(j); tip.append(b); }
+}
+let tipId = null;
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest && e.target.closest('[data-pid]');
+  if (!el) { tip.hidden = true; tipId = null; return; }
+  tipId = el.dataset.pid; tipFill(tipId); tip.hidden = false; moveTip(e);
+});
+function moveTip(e) { tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 6) + 'px'; tip.style.top = Math.min(e.clientY + 16, innerHeight - tip.offsetHeight - 6) + 'px'; }
+document.addEventListener('mousemove', e => { if (!tip.hidden) { tipFill(tipId); moveTip(e); } });
+document.addEventListener('mouseleave', () => { tip.hidden = true; });
+
+// ---------- menus do microfone e do fone (setinha) ----------
+function popMenu(btn, build) {
+  const had = $('#vmenu') && $('#vmenu').dataset.o === btn.id; $('#vmenu')?.remove(); if (had) return;
+  const m = document.createElement('div'); m.id = 'vmenu'; m.dataset.o = btn.id; build(m); document.body.append(m);
+  const r = btn.getBoundingClientRect();
+  m.style.left = Math.max(4, Math.min(r.left, innerWidth - 250)) + 'px';
+  m.style.top = Math.max(4, r.top - m.offsetHeight - 8) + 'px';
+  const off = ev => { if (!m.contains(ev.target) && !btn.contains(ev.target)) { m.remove(); document.removeEventListener('mousedown', off, true); } };
+  setTimeout(() => document.addEventListener('mousedown', off, true), 0);
+}
+function devSel(kind, cur, onpick) {
+  const sel = document.createElement('select'); sel.append(new Option('Padrão do sistema', ''));
+  navigator.mediaDevices.enumerateDevices().then(ds => {
+    ds.filter(d => d.kind === kind && d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications').forEach(d => sel.append(new Option(d.label || (kind === 'audioinput' ? 'Microfone' : 'Saída de áudio'), d.deviceId)));
+    sel.value = cur;
+  }).catch(() => {});
+  sel.onchange = () => onpick(sel.value); return sel;
+}
+function volRow(label, val, oninput) {
+  const l = document.createElement('label'), t = document.createElement('small'); l.append(label + ' ');
+  const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = 100; r.value = Math.round(val * 100); t.textContent = r.value + '%';
+  r.oninput = () => { t.textContent = r.value + '%'; oninput(r.value / 100); }; l.append(t, r); return l;
+}
+function cfgBtn(m) {
+  const b = document.createElement('button'); b.className = 'sec'; b.textContent = 'Configurações de voz';
+  b.onclick = () => { m.remove(); $('#bCfg').click(); tab('voz'); }; return b;
+}
+$('#aMic').onclick = () => popMenu($('#aMic'), m => {
+  const t = document.createElement('b'); t.textContent = 'Microfone';
+  m.append(t, devSel('audioinput', cfg.mic, v => { cfg.mic = v; saveCfg(); applyMic(); }),
+    volRow('Volume do microfone', cfg.micv, v => { cfg.micv = v; saveCfg(); if (mic) mic.gain.gain.value = v; }), cfgBtn(m));
+});
+$('#aDeaf').onclick = () => popMenu($('#aDeaf'), m => {
+  const t = document.createElement('b'); t.textContent = 'Áudio';
+  m.append(t, devSel('audiooutput', cfg.out, v => { cfg.out = v; saveCfg(); applyOut(); }),
+    volRow('Volume do app', cfg.app, v => { cfg.app = v; saveCfg(); applyVol(); }), cfgBtn(m));
+});
 
 // ---------- mudo / fone mudo ----------
 function paintMic() {
