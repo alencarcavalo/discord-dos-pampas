@@ -605,6 +605,26 @@ function askBox(title, withInput, okLabel) {
     row.append(no, ok); f.append(row); w.append(f); document.body.append(w); (i || ok).focus();
   });
 }
+function askQuality() {
+  return new Promise(res => {
+    const w = document.createElement('div'); w.id = 'askw';
+    const f = document.createElement('form'); f.id = 'ask';
+    const h = document.createElement('b'); h.textContent = 'Qualidade da transmissão'; f.append(h);
+    const sel = document.createElement('select');
+    [['720p30', '720p · 30 fps (leve)'], ['720p60', '720p · 60 fps'], ['1080p30', '1080p · 30 fps'], ['1080p60', '1080p · 60 fps (pesada)']].forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.append(o); });
+    sel.value = cfg.sq || '720p30'; f.append(sel);
+    const row = document.createElement('div'); row.className = 'row';
+    const ok = document.createElement('button'); ok.className = 'go'; ok.textContent = 'Escolher tela';
+    const no = document.createElement('button'); no.type = 'button'; no.className = 'sec'; no.textContent = 'Cancelar';
+    const done = v => { document.removeEventListener('keydown', esc, true); w.remove(); res(v); };
+    const esc = e => { if (e.key === 'Escape') { e.preventDefault(); done(null); } };
+    f.onsubmit = e => { e.preventDefault(); done(sel.value); };
+    no.onclick = () => done(null);
+    w.onmousedown = e => { if (e.target === w) done(null); };
+    document.addEventListener('keydown', esc, true);
+    row.append(no, ok); f.append(row); w.append(f); document.body.append(w); ok.focus();
+  });
+}
 const askYes = (msg, okLabel) => askBox(msg, false, okLabel || 'Confirmar');
 function mk(kind) { askBox(kind === 'text' ? 'Nome do novo canal de texto' : 'Nome do novo canal de voz', true, 'Criar').then(n => { if (n) send({ type: 'chan-add', kind, name: n }); }); }
 function renderChans() {
@@ -940,6 +960,8 @@ $('#bCam').onclick = async e => {
 };
 $('#bTela').onclick = async () => {
   if (S.screen.getTracks().length) return stopShare();
+  const q = await askQuality(); if (!q) return;
+  cfg.sq = q; saveCfg(); if (!$('#cfg').hidden) fillVoz();
   try { await startShare(); } catch (e) { console.error(e); note('Compartilhamento de tela cancelado.'); }
 };
 $('#bSair').onclick = () => { dropAll(); send({ type: 'leave' }); sfx('eu_sai'); sendVs(); if (view?.k === 'v') firstText(); else { renderChans(); renderTop(); } };
