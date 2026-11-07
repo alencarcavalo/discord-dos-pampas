@@ -128,6 +128,10 @@ wss.on('connection', ws => {
       if (CH[i].kind === 'text' && CH.filter(c => c.kind === 'text').length <= 1) return; // sempre sobra 1 canal de texto
       CH.splice(i, 1); hist.delete(m.id);
       state();
+    } else if (m.type === 'ping') {
+      send(ws, { type: 'pong', t: m.t });
+    } else if (m.type === 'ping-rep') {
+      const v = Math.round(+m.ms); if (v >= 0 && v < 60000) ws.ping = v;
     } else if (m.type === 'vstate') {
       // mudo / fone mudo / câmera / tela: aparece ao lado do nome de quem está na chamada
       ws.vs = { mute: !!m.mute, deaf: !!m.deaf, cam: !!m.cam, screen: !!m.screen };
@@ -174,4 +178,10 @@ wss.on('connection', ws => {
   ws.on('close', () => { leave(ws); clients.delete(ws); state(); });
 });
 
-srv.listen(PORT, () => console.log('Discord dos Pampas em http://localhost:' + PORT));
+// a cada 4 s manda para todo mundo o ping de cada pessoa (medido por ela mesma até o servidor)
+setInterval(() => {
+  const p = {}; clients.forEach(c => { if (c.nick && c.ping !== undefined) p[c.id] = c.ping; });
+  clients.forEach(c => c.nick && send(c, { type: 'pings', p }));
+}, 4000);
+
+srv.listen(PORT, () => console.log('Discord dos Guri em http://localhost:' + PORT));
