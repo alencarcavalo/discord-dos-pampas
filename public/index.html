@@ -291,8 +291,11 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       <div id="meter"><div id="meterBar"></div><div id="meterThr"></div></div>
       <small>A barra mostra o seu microfone: quando passa do traço vermelho a porta abre e sua voz sai. Ela só mexe dentro de um canal de voz.</small>
       <h3>Transmissão de tela</h3>
-      <label class="ck"><input type="checkbox" id="duck"> Evitar eco: abafar o som da transmissão para quem está falando</label>
-      <small>O som do PC leva junto a voz de quem está na chamada e ela voltava para a pessoa. Com isso ligado, enquanto alguém fala, o som da transmissão que vai para ELA diminui (os outros continuam ouvindo normal).</small>
+      <label class="ck"><input type="checkbox" id="aec"> Anti-eco: tirar a voz da chamada do som do PC que você transmite</label>
+      <small>O som do PC leva junto a voz de quem está na chamada, e ela voltava para a pessoa. Com isso ligado, quem assiste ouve o som do seu PC normal, mas não a própria voz de volta.</small>
+      <small id="aecSt"></small>
+      <label class="ck"><input type="checkbox" id="duck"> Reserva: abafar o som da transmissão para quem está falando</label>
+      <small>Só funciona com o anti-eco desligado. Enquanto a pessoa fala, o som da transmissão que vai para ELA diminui (os outros continuam ouvindo normal).</small>
       <small>As mudanças valem na hora, mesmo durante a chamada.</small>
     </section>
     <section data-p="atalho" hidden><h2>Atalhos</h2>
@@ -368,12 +371,13 @@ function ico(n) { const s = document.createElement('span'); s.className = 'ico';
   .forEach(([s, n]) => { const b = $(s); b.classList.add('ico'); b.innerHTML = svg(n); });
 
 // ---------- áudio: saída, volume do app e sons ----------
-let ac, outG, fxG;
+let ac, outG, fxG, refTap;
 const getAC = () => {
   if (!ac) {
     try { ac = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive', sampleRate: 48000 }); }
     catch { ac = new (window.AudioContext || window.webkitAudioContext)(); }
     outG = ac.createGain(); fxG = ac.createGain(); outG.connect(ac.destination); fxG.connect(ac.destination);
+    refTap = ac.createGain(); outG.connect(refTap); fxG.connect(refTap);   // cópia do que o app toca (usada pelo anti-eco da transmissão)
     applyVol(); applyOut();
   }
   if (ac.state !== 'running') ac.resume().catch(() => {});
@@ -455,7 +459,7 @@ setInterval(() => {
   // Enquanto UMA pessoa fala, o som da transmissão que vai PARA ELA é abafado (só para ela).
   if (ac) for (const id in peers) {
     const sa = peers[id].sa; if (!sa) continue;
-    const dk = cfg.duck && t - (lastVoice[id] || 0) < 450 ? .07 : 1;
+    const dk = cfg.duck && !aecOn && t - (lastVoice[id] || 0) < 450 ? .07 : 1;
     if (dk !== sa.cur) { sa.cur = dk; sa.g.gain.setTargetAtTime(dk, ac.currentTime, dk < 1 ? .015 : .3); }
   }
   if (!$('#cfg').hidden) drawMeter();
@@ -837,18 +841,38 @@ function dropLocal(kind) {
 const press = (b, on) => b.classList.toggle('on', on);
 
 // som do PC na transmissão: uma faixa de áudio por pessoa (para poder abafar só para quem está falando)
+let aecMod = null, aecOn = false, aecInfo = null;
+function paintAec() {
+  const el = $('#aecSt'); if (!el) return;
+  el.textContent = !shareAud ? 'O anti-eco entra em ação quando você transmite a tela com som.'
+    : !aecOn ? 'Anti-eco desligado nesta transmissão.'
+    : (aecInfo && aecInfo.ms >= 0 ? 'Anti-eco ativo (atraso aprendido: ' + aecInfo.ms + ' ms).' : 'Anti-eco aprendendo... ele precisa que alguém fale na chamada.');
+}
+async function buildAec(src) {   // devolve o nó que sai sem a voz da chamada (ou o próprio src se não der)
+  aecOn = false; aecInfo = null;
+  if (cfg.aec === false || !window.AudioWorkletNode) return src;
+  try {
+    const c = getAC();
+    aecMod ||= c.audioWorklet.addModule(URL.createObjectURL(new Blob([AEC], { type: 'text/javascript' })));
+    await aecMod;
+    const n = new AudioWorkletNode(c, 'aec', { numberOfInputs: 2, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit', channelInterpretation: 'speakers' });
+    refTap.connect(n, 0, 0); src.connect(n, 0, 1);
+    n.port.onmessage = e => { aecInfo = e.data; paintAec(); };
+    aecOn = true; return n;
+  } catch (e) { console.error('anti-eco', e); aecMod = null; return src; }
+}
 function addShareAudio(id) {
   const p = peers[id]; if (!shareAud || !p || p.sa) return;
   const c = getAC(), dl = c.createDelay(.5), g = c.createGain(), d = c.createMediaStreamDestination();
   dl.delayTime.value = .06;   // pequena antecipação para o abafamento pegar o começo da fala
-  shareAud.src.connect(dl); dl.connect(g); g.connect(d);
+  shareAud.out.connect(dl); dl.connect(g); g.connect(d);
   p.sa = { dl, g, d, cur: 1, snd: p.pc.addTrack(d.stream.getAudioTracks()[0], S.screen) };
 }
 function dropShareAudio(id) {
   const p = peers[id]; if (!p || !p.sa) return;
   const sa = p.sa; p.sa = null;
   try { p.pc.removeTrack(sa.snd); } catch {}
-  try { shareAud && shareAud.src.disconnect(sa.dl); } catch {}
+  try { shareAud && shareAud.out.disconnect(sa.dl); } catch {}
   try { sa.dl.disconnect(); sa.g.disconnect(); } catch {}
 }
 async function startShare() {
@@ -856,13 +880,23 @@ async function startShare() {
   const v = m.getVideoTracks()[0]; v.contentHint = 'motion';
   addLocal('screen', v);
   const a = m.getAudioTracks()[0];
-  if (a) { shareAud = { track: a, src: getAC().createMediaStreamSource(new MediaStream([a])) }; Object.keys(peers).forEach(addShareAudio); }
+  if (a) {
+    const src = getAC().createMediaStreamSource(new MediaStream([a]));
+    shareAud = { track: a, src, out: src };
+    shareAud.out = await buildAec(src); paintAec();
+    Object.keys(peers).forEach(addShareAudio);
+  }
   v.onended = stopShare;
   addScreen(me, S.screen, true); syncStage(); press($('#bTela'), true); sendVs();
 }
 function stopShare() {
   Object.keys(peers).forEach(dropShareAudio);
-  if (shareAud) { try { shareAud.src.disconnect(); } catch {} shareAud.track.stop(); shareAud = null; }
+  if (shareAud) {
+    try { shareAud.src.disconnect(); } catch {}
+    if (shareAud.out !== shareAud.src) { try { refTap.disconnect(shareAud.out); shareAud.out.disconnect(); shareAud.out.port.onmessage = null; } catch {} }
+    shareAud.track.stop(); shareAud = null;
+  }
+  aecOn = false; aecInfo = null; paintAec();
   dropLocal('screen'); press($('#bTela'), false); sendVs();
 }
 
@@ -912,7 +946,7 @@ STK.forEach((s, i) => {
 $('#bFig').onclick = () => { $('#figs').hidden = !$('#figs').hidden; };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
@@ -989,6 +1023,138 @@ const GATE = `class Gate extends AudioWorkletProcessor {
   }
 }
 registerProcessor('gate', Gate);`;
+
+// Anti-eco da transmissão: o som do PC leva junto a voz dos amigos tocando no seu alto-falante. Aqui ela é subtraída
+// (o app sabe exatamente o que tocou), então quem assiste ouve o jogo mas não a própria voz de volta.
+const AEC = `// Anti-eco da transmissão (mix-minus): tira do som do PC o que o próprio app tocou (a voz dos amigos).
+// Entrada 0 = referência (tudo que o app toca). Entrada 1 = som do PC capturado. Saída = som do PC sem a voz.
+class Aec extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    const sr = sampleRate;
+    this.N = 48; this.DEC = 8; this.WIN = 4096;
+    this.maxLag = Math.round(0.6 * sr / this.DEC);
+    this.M = 65535; this.R = new Float32Array(65536); this.C = new Float32Array(65536); this.wp = 0; this.sinceRef = 0; this.rf = null;
+    this.w = [new Float32Array(this.N), new Float32Array(this.N)];
+    this.D = -1; this.D0 = 0; this.pow = 0;
+    this.HL = 16384; this.hr = new Float32Array(this.HL); this.hc = new Float32Array(this.HL); this.hp = 0; this.hn = 0;
+    this.accR = 0; this.accC = 0; this.cnt = 0;
+    this.est = null; this.since = 0; this.every = Math.round(0.8 * sr / this.DEC);
+    this.bCap = new Float32Array(this.WIN); this.bRef = new Float32Array(this.WIN + this.maxLag); this.bP = new Float64Array(this.WIN + this.maxLag + 1);
+    this.mu = 0.0015; this.adapt = 0; this.on = true;
+    this.score = 0; this.refAct = 0; this.stN = 0; this.stEvery = Math.round(sr);
+    this.port.onmessage = e => { if (e.data && e.data.off !== undefined) this.on = !e.data.off; };
+  }
+  startEst() {
+    const W = this.WIN, ML = this.maxLag, HL = this.HL;
+    const cap = this.bCap, ref = this.bRef, P = this.bP; P[0] = 0;   // buffers reaproveitados (sem alocar dentro do áudio)
+    let Ec = 0, Er = 0;
+    for (let i = 0; i < W; i++) { const v = this.hc[(this.hp - W + i + HL * 4) % HL]; cap[i] = v; Ec += v * v; }
+    for (let i = 0; i < W + ML; i++) { const v = this.hr[(this.hp - W - ML + i + HL * 4) % HL]; ref[i] = v; P[i + 1] = P[i] + v * v; }
+    for (let i = ML; i < W + ML; i++) Er += ref[i] * ref[i];
+    const rr = Math.sqrt(Er / W), cr = Math.sqrt(Ec / W);
+    this.refAct = rr;
+    if (rr < 0.004 || cr < 0.0005) return;          // ninguém falando: não há o que aprender
+    this.est = { cap, ref, P, Ec, L: 0, best: -1, bestL: 0 };
+  }
+  stepEst(lags) {
+    const e = this.est, W = this.WIN, ML = this.maxLag, cap = e.cap, ref = e.ref, P = e.P;
+    for (let k = 0; k < lags && e.L <= ML; k++, e.L++) {
+      const off = ML - e.L; let dot = 0;
+      for (let i = 0; i < W; i++) dot += cap[i] * ref[i + off];
+      const er = P[off + W] - P[off];
+      const s = dot / Math.sqrt(er * e.Ec + 1e-12);
+      if (s > e.best) { e.best = s; e.bestL = e.L; }
+    }
+    if (e.L > ML) {
+      this.est = null; this.score = e.best;
+      if (e.best >= 0.1) this.setDelay(e.bestL * this.DEC, 12);
+    }
+  }
+  // ajuste fino (1 amostra) em volta do atraso atual, feito aos poucos (alguns atrasos por bloco)
+  startRefine() {
+    if (this.D < 0 || this.rf) return;
+    const W = 8192, M = this.M, wp = this.wp, C = this.C;
+    let ec = 0; for (let i = 1; i <= W; i++) { const c = C[(wp - i) & M]; ec += c * c; }
+    this.rf = { wp, ec, d: this.D - 10, best: -1, bd: this.D, erC: 0 };
+  }
+  stepRefine(lags) {
+    const f = this.rf, W = 8192, M = this.M, R = this.R, C = this.C, wp = f.wp;
+    for (let k = 0; k < lags && f.d <= this.D + 10; k++, f.d++) {
+      if (f.d < 0) continue;
+      let dot = 0, er = 0;
+      for (let i = 1; i <= W; i++) { const r = R[(wp - i - f.d) & M]; dot += C[(wp - i) & M] * r; er += r * r; }
+      if (f.d === this.D) f.erC = er;
+      const sc = dot / Math.sqrt(er * f.ec + 1e-12);
+      if (sc > f.best) { f.best = sc; f.bd = f.d; }
+    }
+    if (f.d > this.D + 10) {
+      this.rf = null;
+      if (Math.sqrt(f.erC / W) < 0.004) return;       // sem voz na janela: não mexe
+      if (f.best >= 0.1) { this.score = f.best; this.setDelay(f.bd, 2); }
+    }
+  }
+  setDelay(D, thr) {
+    const jump = this.D < 0 ? 1e9 : Math.abs(D - this.D);
+    if (jump <= thr) return;
+    const dl = D - this.D, N = this.N, old = this.D0;
+    this.D = D; this.D0 = Math.max(0, D - (N >> 1));
+    const sh = this.D0 - old;                      // o atraso mudou 'sh' amostras: desloca os pesos junto
+    if (jump < N >> 1 && old > 0) {
+      for (const w of this.w) { const c = Float32Array.from(w); for (let k = 0; k < N; k++) { const j = k + sh; w[k] = j >= 0 && j < N ? c[j] : 0; } }
+    } else { this.w[0].fill(0); this.w[1].fill(0); this.adapt = 0; }
+    let p = 0; const base = this.wp - this.D0;
+    for (let k = 0; k < this.N; k++) { const v = this.R[(base - k) & this.M]; p += v * v; }
+    this.pow = p;
+  }
+  process(inputs, outputs) {
+    const rin = inputs[0] || [], cin = inputs[1] || [], out = outputs[0];
+    const len = out[0].length, R = this.R, M = this.M, N = this.N, DEC = this.DEC;
+    const r0 = rin[0], r1 = rin[1] || rin[0], c0a = cin[0], c1a = cin[1] || cin[0];
+    if (!c0a) { for (let c = 0; c < out.length; c++) out[c].fill(0); return true; }
+    const o0 = out[0], o1 = out[1] || out[0], w0 = this.w[0], w1 = this.w[1];
+    for (let n = 0; n < len; n++) {
+      const x = r0 ? (r0[n] + r1[n]) * 0.5 : 0, c0 = c0a[n], c1 = c1a[n];
+      R[this.wp] = x; this.C[this.wp] = (c0 + c1) * 0.5;
+      this.accR += x; this.accC += (c0 + c1) * 0.5;
+      if (++this.cnt === DEC) {
+        this.hr[this.hp] = this.accR / DEC; this.hc[this.hp] = this.accC / DEC;
+        this.hp = (this.hp + 1) % this.HL; this.hn++; this.since++;
+        this.accR = 0; this.accC = 0; this.cnt = 0;
+      }
+      if (this.D >= 0 && this.on) {
+        const base = this.wp - this.D0;
+        const nw = R[base & M], old = R[(base - N) & M];
+        this.pow += nw * nw - old * old; if (this.pow < 0) this.pow = 0;
+        let y0 = 0, y1 = 0;
+        for (let k = 0; k < N; k++) { const v = R[(base - k) & M]; y0 += w0[k] * v; y1 += w1[k] * v; }
+        const e0 = c0 - y0, e1 = c1 - y1;
+        o0[n] = e0; o1[n] = e1;
+        if (this.pow > N * 2.5e-5) {
+          // começa com passo grande (aprende rápido) e vai diminuindo (menos ruído residual)
+          const mu = this.mu * (1 + 9 * Math.max(0, 1 - this.adapt / 36000)); this.adapt++;
+          const g0 = mu * e0 / (this.pow + 1e-3), g1 = mu * e1 / (this.pow + 1e-3);
+          for (let k = 0; k < N; k++) { const v = R[(base - k) & M]; w0[k] += g0 * v; w1[k] += g1 * v; }
+        }
+      } else { o0[n] = c0; o1[n] = c1; }
+      this.wp = (this.wp + 1) & M;
+    }
+    // procura o atraso aos poucos (em fatias) para não estourar o tempo de cada bloco de áudio
+    if (this.est) this.stepEst(12);
+    else if (this.since >= this.every && this.hn > this.WIN + this.maxLag) { this.since = 0; this.startEst(); }
+    this.sinceRef += len;
+    if (this.rf) this.stepRefine(3);
+    else if (this.sinceRef >= sampleRate * 0.25) { this.sinceRef = 0; this.startRefine(); }
+    this.stN += len;
+    if (this.stN >= this.stEvery) {
+      this.stN = 0;
+      this.port.postMessage({ D: this.D, ms: this.D < 0 ? -1 : Math.round(this.D * 1000 / sampleRate), score: this.score, ref: this.refAct });
+    }
+    return true;
+  }
+}
+registerProcessor('aec', Aec);
+`;
 const RNN = 'https://cdn.jsdelivr.net/npm/@sapphi-red/web-noise-suppressor@0.3.5';   // supressor por IA (RNNoise), opcional
 async function getRaw() {
   try { return await navigator.mediaDevices.getUserMedia({ audio: audioC() }); }
@@ -1170,7 +1336,7 @@ function fillDevs() {
 }
 navigator.mediaDevices && navigator.mediaDevices.addEventListener('devicechange', () => { if (!$('#cfg').hidden) fillDevs(); });
 function fillVoz() {
-  ['ns', 'ec', 'agc', 'ai', 'gate', 'gAuto', 'duck'].forEach(k => $('#' + k).checked = !!cfg[k]);
+  ['ns', 'ec', 'agc', 'ai', 'gate', 'gAuto', 'duck', 'aec'].forEach(k => $('#' + k).checked = !!cfg[k]); paintAec();
   $('#appVol').value = Math.round(cfg.app * 100); $('#appVolT').textContent = Math.round(cfg.app * 100) + '%';
   $('#micVol').value = Math.round(cfg.micv * 100); $('#micVolT').textContent = Math.round(cfg.micv * 100) + '%';
   $('#gThr').value = cfg.gThr; $('#gThrT').textContent = cfg.gThr + ' dB';
@@ -1186,6 +1352,12 @@ $('#outSel').onchange = e => { cfg.out = e.target.value; saveCfg(); applyOut(); 
 $('#appVol').oninput = e => { cfg.app = e.target.value / 100; saveCfg(); applyVol(); $('#appVolT').textContent = e.target.value + '%'; };
 $('#micVol').oninput = e => { cfg.micv = e.target.value / 100; saveCfg(); if (mic) mic.gain.gain.value = cfg.micv; $('#micVolT').textContent = e.target.value + '%'; };
 $('#gThr').oninput = e => { cfg.gThr = +e.target.value; saveCfg(); pushGate(); $('#gThrT').textContent = cfg.gThr + ' dB'; };
+$('#aec').onchange = e => {
+  cfg.aec = e.target.checked; saveCfg();
+  if (shareAud && shareAud.out !== shareAud.src) { shareAud.out.port.postMessage({ off: !cfg.aec }); aecOn = cfg.aec; }
+  else if (shareAud && cfg.aec) toast('O anti-eco liga na próxima transmissão.');
+  paintAec();
+};
 ['gate', 'gAuto', 'duck'].forEach(k => $('#' + k).onchange = e => { cfg[k] = e.target.checked; saveCfg(); pushGate(); fillVoz(); });
 $('#ai').onchange = e => setAI(e.target.checked);
 
