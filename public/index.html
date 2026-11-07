@@ -291,6 +291,14 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       <div id="meter"><div id="meterBar"></div><div id="meterThr"></div></div>
       <small>A barra mostra o seu microfone: quando passa do traço vermelho a porta abre e sua voz sai. Ela só mexe dentro de um canal de voz.</small>
       <h3>Transmissão de tela</h3>
+      <label>Qualidade da transmissão
+        <select id="sq">
+          <option value="720p30">720p · 30 fps (leve)</option>
+          <option value="720p60">720p · 60 fps</option>
+          <option value="1080p30">1080p · 30 fps</option>
+          <option value="1080p60">1080p · 60 fps (pesada)</option>
+        </select></label>
+      <small>Vale na hora, mesmo durante a transmissão. 1080p e 60 fps pedem uma internet de envio boa, principalmente com mais gente assistindo.</small>
       <label class="ck"><input type="checkbox" id="aec"> Anti-eco: tirar a voz da chamada do som do PC que você transmite</label>
       <small>O som do PC leva junto a voz de quem está na chamada, e ela voltava para a pessoa. Com isso ligado, quem assiste ouve o som do seu PC normal, mas não a própria voz de volta.</small>
       <small id="aecSt"></small>
@@ -875,8 +883,26 @@ function dropShareAudio(id) {
   try { shareAud && shareAud.out.disconnect(sa.dl); } catch {}
   try { sa.dl.disconnect(); sa.g.disconnect(); } catch {}
 }
+const SQ = { '720p30': [1280, 720, 30, 2.5e6], '720p60': [1280, 720, 60, 4e6], '1080p30': [1920, 1080, 30, 5e6], '1080p60': [1920, 1080, 60, 8e6] };
+function sqNow() { return SQ[cfg.sq] || SQ['720p30']; }
+async function applyShareQ() {
+  const t = S.screen.getVideoTracks()[0]; if (!t) return;
+  const [w, h, fps, br] = sqNow();
+  try { await t.applyConstraints({ width: { ideal: w, max: w }, height: { ideal: h, max: h }, frameRate: { ideal: fps, max: fps } }); } catch (e) { console.warn('qualidade', e); }
+  for (const p of Object.values(peers)) for (const sn of (p.snd.screen || [])) {
+    if (!sn || !sn.track || sn.track.kind !== 'video') continue;
+    try {
+      const pr = sn.getParameters(); if (!pr.encodings || !pr.encodings.length) pr.encodings = [{}];
+      pr.encodings[0].maxBitrate = br; pr.encodings[0].maxFramerate = fps; pr.encodings[0].scaleResolutionDownBy = 1;
+      pr.degradationPreference = 'balanced';
+      await sn.setParameters(pr);
+    } catch (e) { console.warn('bitrate', e); }
+  }
+}
+let sqTimer = 0;
 async function startShare() {
-  const m = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: true });
+  const [qw, qh, qf] = sqNow();
+  const m = await navigator.mediaDevices.getDisplayMedia({ video: { width: { ideal: qw }, height: { ideal: qh }, frameRate: { ideal: qf } }, audio: true });
   const v = m.getVideoTracks()[0]; v.contentHint = 'motion';
   addLocal('screen', v);
   const a = m.getAudioTracks()[0];
@@ -888,8 +914,10 @@ async function startShare() {
   }
   v.onended = stopShare;
   addScreen(me, S.screen, true); syncStage(); press($('#bTela'), true); sendVs();
+  applyShareQ(); clearInterval(sqTimer); sqTimer = setInterval(applyShareQ, 4000);   // pega também quem entra depois
 }
 function stopShare() {
+  clearInterval(sqTimer);
   Object.keys(peers).forEach(dropShareAudio);
   if (shareAud) {
     try { shareAud.src.disconnect(); } catch {}
@@ -946,7 +974,7 @@ STK.forEach((s, i) => {
 $('#bFig').onclick = () => { $('#figs').hidden = !$('#figs').hidden; };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
@@ -1336,7 +1364,7 @@ function fillDevs() {
 }
 navigator.mediaDevices && navigator.mediaDevices.addEventListener('devicechange', () => { if (!$('#cfg').hidden) fillDevs(); });
 function fillVoz() {
-  ['ns', 'ec', 'agc', 'ai', 'gate', 'gAuto', 'duck', 'aec'].forEach(k => $('#' + k).checked = !!cfg[k]); paintAec();
+  ['ns', 'ec', 'agc', 'ai', 'gate', 'gAuto', 'duck', 'aec'].forEach(k => $('#' + k).checked = !!cfg[k]); paintAec(); $('#sq').value = cfg.sq || '720p30';
   $('#appVol').value = Math.round(cfg.app * 100); $('#appVolT').textContent = Math.round(cfg.app * 100) + '%';
   $('#micVol').value = Math.round(cfg.micv * 100); $('#micVolT').textContent = Math.round(cfg.micv * 100) + '%';
   $('#gThr').value = cfg.gThr; $('#gThrT').textContent = cfg.gThr + ' dB';
@@ -1360,6 +1388,7 @@ $('#aec').onchange = e => {
 };
 ['gate', 'gAuto', 'duck'].forEach(k => $('#' + k).onchange = e => { cfg[k] = e.target.checked; saveCfg(); pushGate(); fillVoz(); });
 $('#ai').onchange = e => setAI(e.target.checked);
+$('#sq').onchange = e => { cfg.sq = e.target.value; saveCfg(); applyShareQ(); };
 
 // seletor de tela / janela (app de computador)
 let pkList = [], pkSel = null, pkKind = 'screen';
