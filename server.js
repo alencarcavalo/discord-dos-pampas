@@ -81,7 +81,7 @@ function setProf(ws, p) {
 const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {} });
 
 function state() {
-  const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, room: c.room || null, vs: c.vs || {} }));
+  const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, room: c.room || null, vs: c.vs || {}, act: c.act || null }));
   clients.forEach(c => c.nick && send(c, { type: 'state', channels: CH, users }));
 }
 function leave(ws) {
@@ -127,6 +127,10 @@ wss.on('connection', ws => {
       if (i < 0 || (rooms.get(m.id) || { size: 0 }).size) return;
       if (CH[i].kind === 'text' && CH.filter(c => c.kind === 'text').length <= 1) return; // sempre sobra 1 canal de texto
       CH.splice(i, 1); hist.delete(m.id);
+      state();
+    } else if (m.type === 'act') {
+      const g = String(m.game || '').slice(0, 40), mu = String(m.music || '').slice(0, 80);
+      ws.act = g || mu ? { game: g, music: mu } : null;
       state();
     } else if (m.type === 'ping') {
       send(ws, { type: 'pong', t: m.t });
