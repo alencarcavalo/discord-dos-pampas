@@ -1,6 +1,6 @@
 {
   "name": "discord-dos-pampas-desktop",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "App de computador do Discord dos Pampas",
   "main": "main.js",
   "author": "Turma dos Pampas",
@@ -12,6 +12,7 @@
   "dependencies": { "electron-updater": "^6.3.9" },
   "devDependencies": { "electron": "^33.0.0", "electron-builder": "^25.1.8" },
   "build": {
+    "publish": { "provider": "github", "owner": "alencarcavalo", "repo": "discord-dos-pampas", "releaseType": "release" },
     "appId": "br.pampas.discord",
     "productName": "Discord dos Pampas",
     "files": ["main.js", "preload.js"],

@@ -61,9 +61,10 @@ const { execFile } = require('child_process');
 const PS_SCRIPT = [
   "[Console]::OutputEncoding=[Text.Encoding]::UTF8",
   "$ErrorActionPreference='SilentlyContinue'",
-  "$r=@{procs=@();java='';media=$null}",
+  "$r=@{procs=@();paths=@();java='';media=$null}",
   "$ps=Get-Process",
   "$r.procs=@($ps|Select-Object -ExpandProperty ProcessName -Unique)",
+  "$r.paths=@($ps|Where-Object{$p=$_.Path; $p -and (($p -like '*steamapps\\common\\*') -or ($p -like '*\\Epic Games\\*') -or ($p -like '*\\GOG Galaxy\\Games\\*') -or ($p -like '*\\GOG Games\\*') -or ($p -like '*\\Riot Games\\*') -or ($p -like '*\\XboxGames\\*') -or ($p -like '*\\Ubisoft Game Launcher\\games\\*') -or ($p -like '*\\EA Games\\*'))}|ForEach-Object{[string]$_.Path}|Select-Object -Unique)",
   "$r.java=[string](($ps|Where-Object{$_.ProcessName -like 'javaw*' -and $_.MainWindowTitle}|Select-Object -First 1).MainWindowTitle)",
   "try{",
   "Add-Type -AssemblyName System.Runtime.WindowsRuntime",
@@ -85,7 +86,7 @@ function pollActivity() {
     { windowsHide: true, timeout: 20000, maxBuffer: 4 * 1024 * 1024 }, (err, out) => {
       actBusy = false;
       if (err || !out || !win || win.isDestroyed()) return;
-      try { const j = JSON.parse(out.trim().split('\n').pop()); win.webContents.send('act', { procs: j.procs || [], java: j.java || '', media: j.media || null }); } catch {}
+      try { const j = JSON.parse(out.trim().split('\n').pop()); win.webContents.send('act', { procs: j.procs || [], paths: [].concat(j.paths || []), java: j.java || '', media: j.media || null }); } catch {}
     });
 }
 ipcMain.handle('act-enable', (e, on) => { actOn = !!on; if (actOn) pollActivity(); return process.platform === 'win32'; });
