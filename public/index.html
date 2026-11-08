@@ -638,12 +638,12 @@ function addScreen(uid, s, mine) {
 }
 function showScr(t) { t.el.classList.remove('waiting'); t.v.srcObject = t.s; t.v.play().catch(() => {}); }
 function hideScr(t) { t.el.classList.add('waiting'); t.v.srcObject = null; if (document.fullscreenElement === t.el) document.exitFullscreen().catch(() => {}); }
-function badges(u) {
+function badges(u, noMute) {
   const w = document.createElement('span'); w.className = 'bds'; const vs = u.vs || {};
   const add = (n, t, c) => { const s = ico(n); s.title = t; if (c) s.classList.add(c); w.append(s); };
   if (vs.screen) { const l = document.createElement('span'); l.className = 'live'; l.textContent = 'AO VIVO'; w.append(l); }
   if (vs.cam) add('cam', 'Câmera ligada');
-  if (u.room) { if (vs.deaf) add('headoff', 'Sem áudio (fone mudo)', 'bad'); else if (vs.mute) add('micoff', 'Microfone mutado', 'bad'); }   // mudo só aparece quem está na chamada
+  if (u.room && !noMute) { if (vs.deaf) add('headoff', 'Sem áudio (fone mudo)', 'bad'); else if (vs.mute) add('micoff', 'Microfone mutado', 'bad'); }   // mudo só aparece quem está na chamada
   return w;
 }
 function syncStage() {
@@ -762,7 +762,7 @@ function renderMem() {
     actLines(u).forEach(x => t.append(x));
     const pr = prof[u.id] || {}; // fundo do perfil (imagem ou GIF) atrás do nome e da foto
     if (pr.banner) { d.classList.add('hasb'); d.style.backgroundImage = 'linear-gradient(90deg,#000b 0%,#0005 70%,#0002 100%), url("' + pr.banner + '")'; }
-    d.append(avatar(u.name, 0, u.id), t, badges(u)); d.onclick = () => card(u.id, d); d.style.cursor = "pointer";
+    d.append(avatar(u.name, 0, u.id), t, badges(u, true)); d.onclick = () => card(u.id, d); d.style.cursor = "pointer";
     if (u.id !== me) {
       d.oncontextmenu = e => volMenu(e, u.name);
     }
