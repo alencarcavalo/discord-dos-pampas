@@ -10,5 +10,7 @@ contextBridge.exposeInMainWorld('pampas', {
   updState: () => ipcRenderer.invoke('upd-state'),
   onUpdate: cb => ipcRenderer.on('upd', (e, m) => cb(m)),
   checkUpdate: () => ipcRenderer.invoke('upd-check'),
+  actEnable: on => ipcRenderer.invoke('act-enable', on),
+  onAct: cb => ipcRenderer.on('act', (e, m) => cb(m)),
   installUpdate: () => ipcRenderer.invoke('upd-install'),
 });

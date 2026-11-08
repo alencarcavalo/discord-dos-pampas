@@ -55,10 +55,46 @@ ipcMain.handle('upd-state', () => lastUpd);
 ipcMain.handle('upd-install', () => { if (canUpdate && lastUpd.s === 'ready') autoUpdater.quitAndInstall(false, true); });
 ipcMain.handle('app-version', () => app.getVersion());
 
+
+// ---------- atividade: jogo aberto e música tocando (só Windows) ----------
+const { execFile } = require('child_process');
+const PS_SCRIPT = [
+  "[Console]::OutputEncoding=[Text.Encoding]::UTF8",
+  "$ErrorActionPreference='SilentlyContinue'",
+  "$r=@{procs=@();java='';media=$null}",
+  "$ps=Get-Process",
+  "$r.procs=@($ps|Select-Object -ExpandProperty ProcessName -Unique)",
+  "$r.java=[string](($ps|Where-Object{$_.ProcessName -like 'javaw*' -and $_.MainWindowTitle}|Select-Object -First 1).MainWindowTitle)",
+  "try{",
+  "Add-Type -AssemblyName System.Runtime.WindowsRuntime",
+  "$asTask=([System.WindowsRuntimeSystemExtensions].GetMethods()|Where-Object{$_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -like 'IAsyncOperation*'})[0]",
+  "function Await($t,$rt){$m=$asTask.MakeGenericMethod($rt);$n=$m.Invoke($null,@($t));$n.Wait(-1)|Out-Null;$n.Result}",
+  "$mt=[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager,Windows.Media.Control,ContentType=WindowsRuntime]",
+  "$pt=[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties,Windows.Media.Control,ContentType=WindowsRuntime]",
+  "$mgr=Await ($mt::RequestAsync()) $mt",
+  "foreach($s in $mgr.GetSessions()){ if([int]$s.GetPlaybackInfo().PlaybackStatus -eq 4){ $p=Await ($s.TryGetMediaPropertiesAsync()) $pt; $r.media=@{title=[string]$p.Title;artist=[string]$p.Artist;app=[string]$s.SourceAppUserModelId}; break } }",
+  "}catch{}",
+  "$r|ConvertTo-Json -Compress -Depth 4",
+].join('\n');
+const PS_ENC = Buffer.from(PS_SCRIPT, 'utf16le').toString('base64');
+let actOn = false, actBusy = false;
+function pollActivity() {
+  if (!actOn || actBusy || process.platform !== 'win32' || !win || win.isDestroyed()) return;
+  actBusy = true;
+  execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', PS_ENC],
+    { windowsHide: true, timeout: 20000, maxBuffer: 4 * 1024 * 1024 }, (err, out) => {
+      actBusy = false;
+      if (err || !out || !win || win.isDestroyed()) return;
+      try { const j = JSON.parse(out.trim().split('\n').pop()); win.webContents.send('act', { procs: j.procs || [], java: j.java || '', media: j.media || null }); } catch {}
+    });
+}
+ipcMain.handle('act-enable', (e, on) => { actOn = !!on; if (actOn) pollActivity(); return process.platform === 'win32'; });
+setInterval(pollActivity, 20000);
+
 app.whenReady().then(() => {
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 700, minHeight: 500,
-    title: 'Discord dos Pampas', backgroundColor: '#1e1f22', autoHideMenuBar: true,
+    title: 'Discord dos Guri', backgroundColor: '#1e1f22', autoHideMenuBar: true,
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
   });
