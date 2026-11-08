@@ -158,7 +158,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .pc .big{width:80px;height:80px;font-size:2rem;margin:-40px 0 0 16px;border:6px solid var(--side)}
 .pc div.t{padding:6px 16px 16px}
 .pc b{font-size:1.2rem}
-#cardw{position:fixed;inset:0;background:#0008;z-index:9;display:grid;place-items:center}
+#cardw{position:fixed;inset:0;z-index:9}
 @media(max-width:700px){#cfg{flex-direction:column}#cfgtabs{width:auto;flex-direction:row;flex-wrap:wrap;padding:12px}#cfgx{margin-top:0}#cfgbody{padding:16px}}
 #loginc img.logo{width:150px;height:auto;margin:0 auto;border-radius:16px}
 #rail img{width:48px;height:48px;border-radius:16px;object-fit:cover}
@@ -250,6 +250,17 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .tile.waiting{order:-2}
 .act{display:block;color:var(--mut);font-size:.72rem;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}.act.g{color:#9bd1a8}
 .pc .act{max-width:none;white-space:normal;margin-top:6px;font-size:.8rem}
+.pop{position:absolute;width:340px;max-width:calc(100vw - 16px);background:#111214;border-radius:10px;overflow:hidden;box-shadow:0 8px 24px #000b;animation:popin .12s ease-out}
+@keyframes popin{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.pop .pb{height:110px;background-size:cover;background-position:center}
+.pop .big{width:88px;height:88px;font-size:2.2rem;margin:-48px 0 0 16px;border:6px solid #111214;position:relative}
+.pop .bx{margin:8px 12px 12px;background:var(--side);border-radius:8px;padding:12px 14px;display:grid;gap:10px}
+.pop .bx b.nm{font-size:1.3rem;line-height:1.1}
+.pop .bx h4{margin:0 0 4px;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+.pop .bx hr{border:0;border-top:1px solid #3a3c43;margin:0}
+.pop .bx p{margin:0;font-size:.9rem;word-break:break-word}
+.pop .bx .act{max-width:none;white-space:normal;font-size:.88rem;color:var(--txt);margin:2px 0}
+.pop .bx .go,.pop .bx .sec{justify-self:stretch;padding:8px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -728,6 +739,7 @@ function renderChans() {
       if (k === 'voice') st.users.filter(u => u.room === c.id).forEach(u => {
         const m = document.createElement('div'); m.className = 'mem'; m.dataset.pid = u.id;
         const t2 = document.createElement('span'); t2.textContent = u.name + (u.id === me ? ' (você)' : '');
+        m.onclick = () => card(u.id, m); m.style.cursor = 'pointer';
         if (u.id !== me) m.oncontextmenu = e => volMenu(e, u.name);
         m.append(avatar(u.name, 1, u.id, true), t2, badges(u)); box.append(m);
       });
@@ -750,7 +762,7 @@ function renderMem() {
     actLines(u).forEach(x => t.append(x));
     const pr = prof[u.id] || {}; // fundo do perfil (imagem ou GIF) atrás do nome e da foto
     if (pr.banner) { d.classList.add('hasb'); d.style.backgroundImage = 'linear-gradient(90deg,#000b 0%,#0005 70%,#0002 100%), url("' + pr.banner + '")'; }
-    d.append(avatar(u.name, 0, u.id), t, badges(u)); d.onclick = () => card(u.id); d.style.cursor = "pointer";
+    d.append(avatar(u.name, 0, u.id), t, badges(u)); d.onclick = () => card(u.id, d); d.style.cursor = "pointer";
     if (u.id !== me) {
       d.oncontextmenu = e => volMenu(e, u.name);
       const k = document.createElement('button'); k.className = 'kx'; k.textContent = '✕'; k.title = 'Remover do servidor';
@@ -1517,9 +1529,34 @@ function cardEl(name, p) {
   const n = document.createElement('b'); n.textContent = name; const s = document.createElement('p'); s.textContent = p.about || ''; s.style.margin = '4px 0 0';
   t.append(n, s); c.append(b, a, t); return c;
 }
-function card(id) {
+function card(id, anchor) {
   const u = st.users.find(u => u.id === id); if (!u) return;
-  const w = document.createElement('div'); w.id = 'cardw'; w.onclick = () => w.remove(); const ce = cardEl(u.name, prof[id]); const tt = ce.querySelector('.t'); actLines(u).forEach(x => tt.append(x)); w.append(ce); document.body.append(w);
+  document.getElementById('cardw')?.remove();
+  const pr = prof[id] || {};
+  const w = document.createElement('div'); w.id = 'cardw';
+  const c = document.createElement('div'); c.className = 'pop';
+  const bn = document.createElement('div'); bn.className = 'pb'; bn.style.background = pr.banner ? 'url("' + pr.banner + '") center/cover' : (pr.color || colorOf(u.name));
+  const av = document.createElement('div'); av.className = 'av big'; paintAv(av, u.name, pr);
+  const bx = document.createElement('div'); bx.className = 'bx';
+  const nm = document.createElement('b'); nm.className = 'nm'; nm.textContent = u.name + (id === me ? ' (você)' : ''); bx.append(nm);
+  const sec = (title, ...els) => { const d = document.createElement('div'); const h = document.createElement('h4'); h.textContent = title; d.append(h, ...els); bx.append(document.createElement('hr'), d); };
+  if (pr.about) { const t = document.createElement('p'); t.textContent = pr.about; sec('Sobre mim', t); }
+  const al = actLines(u); if (al.length) sec('Atividade', ...al);
+  if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
+  const pv = id === me ? myPing : pings[id];
+  if (pv !== undefined && pv >= 0) { const t = document.createElement('p'); t.textContent = pv + ' ms'; sec('Ping', t); }
+  if (id === me) { const b = document.createElement('button'); b.className = 'go'; b.textContent = 'Editar perfil'; b.onclick = () => { w.remove(); $('#bCfg').click(); }; bx.append(b); }
+  c.append(bn, av, bx); w.append(c); document.body.append(w);
+  const close = () => { w.remove(); document.removeEventListener('keydown', esc, true); };
+  const esc = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', esc, true);
+  w.onmousedown = e => { if (e.target === w) close(); };
+  // fica pertinho de quem foi clicado: à esquerda se a pessoa está na lista da direita, senão à direita
+  const r = anchor ? anchor.getBoundingClientRect() : { left: innerWidth / 2 - 170, right: innerWidth / 2 + 170, top: innerHeight / 3 };
+  const cw = c.offsetWidth, ch = c.offsetHeight;
+  let x = r.left > innerWidth / 2 ? r.left - cw - 10 : r.right + 10;
+  c.style.left = Math.max(8, Math.min(x, innerWidth - cw - 8)) + 'px';
+  c.style.top = Math.max(8, Math.min(r.top, innerHeight - ch - 8)) + 'px';
 }
 
 let ed = {};
