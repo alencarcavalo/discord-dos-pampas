@@ -242,6 +242,12 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 #me .sp>button svg,#me #bCfg svg{width:22px;height:22px}
 #bMic.off,#bDeaf.off{color:#f23f43}
 #me .sp:has(.off){background:#f23f4326}
+.tile .wait{display:none}
+.tile.waiting .wait{display:grid;position:absolute;inset:0;place-content:center;justify-items:center;gap:12px;background:#1a1b1e;text-align:center;padding:12px}
+.tile.waiting .wait b{font-size:1rem}
+.tile.waiting .wait .go{padding:8px 22px;border-radius:6px}
+.tile.waiting .ctl{display:none}
+.tile.waiting{order:-2}
 </style>
 </head>
 <body>
@@ -414,6 +420,7 @@ const P = {
   gear: '<path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/>',
   plus: '<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/>',
   smile: '<path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm-7 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM12 17.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>',
+  x: '<path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>',
   down: '<path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>',
   sig: '<rect x="3" y="15" width="3.5" height="6" rx="1"/><rect x="8.5" y="11" width="3.5" height="10" rx="1"/><rect x="14" y="7" width="3.5" height="14" rx="1"/><rect x="19.5" y="3" width="2.5" height="18" rx="1"/>',
   speaker: '<path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>',
@@ -594,11 +601,23 @@ function addScreen(uid, s, mine) {
       rg.onclick = rg.ondblclick = e => e.stopPropagation();
       paintSp(); w.append(sp, rg); t.ctl.prepend(w);
     }
-    if (!mine && !pinKey) pinKey = key;   // transmissão de outra pessoa abre grande (clique de novo para voltar à grade)
+    if (!mine) {   // só abre quando eu clicar em "Assistir" (igual ao Discord)
+      const wt = document.createElement('div'); wt.className = 'wait'; t.wt = wt;
+      const nm = document.createElement('b'); nm.textContent = (names[uid] || 'Alguém') + ' está transmitindo a tela';
+      const go = document.createElement('button'); go.type = 'button'; go.className = 'go'; go.textContent = 'Assistir';
+      go.onclick = e => { e.stopPropagation(); watchUid.add(uid); applyGains(names[uid]); pinKey = key; showScr(t); applyPin(); };
+      go.ondblclick = e => e.stopPropagation(); wt.append(nm, go); t.el.append(wt);
+      const stop = btn('x', 'Parar de assistir', () => { watchUid.delete(uid); applyGains(names[uid]); if (pinKey === key) pinKey = null; hideScr(t); applyPin(); });
+      t.ctl.prepend(stop);
+    }
   }
-  t.v.srcObject = s; t.v.play().catch(() => {});
+  t.s = s;
+  if (mine) { t.v.srcObject = s; t.v.play().catch(() => {}); }
+  else if (watchUid.has(uid)) showScr(t); else hideScr(t);
   applyPin(); return t;
 }
+function showScr(t) { t.el.classList.remove('waiting'); t.v.srcObject = t.s; t.v.play().catch(() => {}); }
+function hideScr(t) { t.el.classList.add('waiting'); t.v.srcObject = null; if (document.fullscreenElement === t.el) document.exitFullscreen().catch(() => {}); }
 function badges(u) {
   const w = document.createElement('span'); w.className = 'bds'; const vs = u.vs || {};
   const add = (n, t, c) => { const s = ico(n); s.title = t; if (c) s.classList.add(c); w.append(s); };
@@ -846,9 +865,10 @@ async function onSignal(from, data) {
 // volume por pessoa (voz) e, separado, volume da transmissão de cada pessoa
 const gains = {};
 const volOf = n => { const v = cfg.vol && cfg.vol[n]; return typeof v === 'number' ? v : 1; };
+const watchUid = new Set();   // de quem eu cliquei em "Assistir"
 const svolOf = n => { const v = cfg.svol && cfg.svol[n]; return typeof v === 'number' ? v : 1; };
 function applyGains(name) {
-  Object.keys(gains).forEach(k => { if (names[k] === name) gains[k].forEach(x => x.g.gain.value = volOf(name) * (x.kind === 'screen' ? svolOf(name) : 1)); });
+  Object.keys(gains).forEach(k => { if (names[k] === name) gains[k].forEach(x => x.g.gain.value = volOf(name) * (x.kind === 'screen' ? svolOf(name) * (watchUid.has(k) ? 1 : 0) : 1)); });
 }
 function setVol(name, v) { (cfg.vol ||= {})[name] = v; saveCfg(); applyGains(name); }
 function setSVol(name, v) { (cfg.svol ||= {})[name] = v; saveCfg(); applyGains(name); }
@@ -878,7 +898,7 @@ function onTrack(id, e) {
       const a = new Audio(); a.id = k; a.autoplay = true; a.muted = true; a.srcObject = s; $('#audios').append(a);   // (o elemento mudo "acorda" o fluxo; o som sai pelo Web Audio)
       try {
         const c = getAC(), g = c.createGain(), src = c.createMediaStreamSource(s);
-        g.gain.value = volOf(names[id]) * (kind === 'screen' ? svolOf(names[id]) : 1);
+        g.gain.value = volOf(names[id]) * (kind === 'screen' ? svolOf(names[id]) * (watchUid.has(id) ? 1 : 0) : 1);
         src.connect(g); g.connect(outG); (gains[id] ||= []).push({ g, src, kind, sid: s.id });
         if (kind === 'mic') { const n = c.createAnalyser(); n.fftSize = 512; src.connect(n); an[id] = n; }
       } catch { a.muted = false; }
