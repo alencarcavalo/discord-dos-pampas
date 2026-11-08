@@ -765,9 +765,6 @@ function renderMem() {
     d.append(avatar(u.name, 0, u.id), t, badges(u)); d.onclick = () => card(u.id, d); d.style.cursor = "pointer";
     if (u.id !== me) {
       d.oncontextmenu = e => volMenu(e, u.name);
-      const k = document.createElement('button'); k.className = 'kx'; k.textContent = '✕'; k.title = 'Remover do servidor';
-      k.onclick = e => { e.stopPropagation(); askYes('Remover ' + u.name + ' do servidor?', 'Remover').then(y => { if (y) send({ type: 'kick', id: u.id }); }); };
-      d.append(k);
     }
     b.append(d);
   });
