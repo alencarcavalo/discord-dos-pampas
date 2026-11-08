@@ -248,6 +248,8 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .tile.waiting .wait .go{padding:8px 22px;border-radius:6px}
 .tile.waiting .ctl{display:none}
 .tile.waiting{order:-2}
+.act{display:block;color:var(--mut);font-size:.72rem;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}.act.g{color:#9bd1a8}
+.pc .act{max-width:none;white-space:normal;margin-top:6px;font-size:.8rem}
 </style>
 </head>
 <body>
@@ -311,7 +313,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 
 <div id="cfg" hidden>
   <nav id="cfgtabs">
-    <button data-t="perfil">Meu perfil</button><button data-t="voz">Voz</button><button data-t="atalho">Atalhos</button><button data-t="visual">Aparência</button><button data-t="sobre">Atualizações</button>
+    <button data-t="perfil">Meu perfil</button><button data-t="voz">Voz</button><button data-t="ativ">Atividade</button><button data-t="atalho">Atalhos</button><button data-t="visual">Aparência</button><button data-t="sobre">Atualizações</button>
     <button id="cfgx">Fechar ✕</button>
   </nav>
   <div id="cfgbody">
@@ -328,6 +330,13 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
         <button type="button" class="sec" id="pRmSobre">Limpar "sobre mim"</button>
       </div>
       <div id="pPrev"></div><button class="go" id="pSalvar">Salvar perfil</button>
+    </section>
+    <section data-p="ativ" hidden><h2>Atividade</h2>
+      <small>Mostra para a turma, ao lado do seu nome, o jogo que você está jogando e a música que está tocando.</small>
+      <label class="ck"><input type="checkbox" id="actGame"> Mostrar o jogo que estou jogando</label>
+      <label class="ck"><input type="checkbox" id="actMusic"> Mostrar a música que estou ouvindo (YouTube Music, Spotify...)</label>
+      <small id="actSt"></small>
+      <label>Status manual (vale no lugar do jogo detectado)<input id="actManual" maxlength="40" placeholder="Ex.: Jogando CS2 · deixe vazio para automático"></label>
     </section>
     <section data-p="voz" hidden><h2>Voz e áudio</h2>
       <label>Volume do aplicativo <small id="appVolT"></small><input type="range" id="appVol" min="0" max="100" step="1"></label>
@@ -623,7 +632,7 @@ function badges(u) {
   const add = (n, t, c) => { const s = ico(n); s.title = t; if (c) s.classList.add(c); w.append(s); };
   if (vs.screen) { const l = document.createElement('span'); l.className = 'live'; l.textContent = 'AO VIVO'; w.append(l); }
   if (vs.cam) add('cam', 'Câmera ligada');
-  if (vs.deaf) add('headoff', 'Sem áudio (fone mudo)', 'bad'); else if (vs.mute) add('micoff', 'Microfone mutado', 'bad');
+  if (u.room) { if (vs.deaf) add('headoff', 'Sem áudio (fone mudo)', 'bad'); else if (vs.mute) add('micoff', 'Microfone mutado', 'bad'); }   // mudo só aparece quem está na chamada
   return w;
 }
 function syncStage() {
@@ -725,6 +734,12 @@ function renderChans() {
     });
   });
 }
+function actLines(u) {
+  const a = u.act, out = []; if (!a) return out;
+  if (a.game) { const e = document.createElement('small'); e.className = 'act g'; e.textContent = '🎮 ' + a.game; e.title = a.game; out.push(e); }
+  if (a.music) { const e = document.createElement('small'); e.className = 'act'; e.textContent = '🎵 ' + a.music; e.title = a.music; out.push(e); }
+  return out;
+}
 function renderMem() {
   const b = $('#mem'); b.replaceChildren();
   const h = document.createElement('h3'); h.textContent = 'Online — ' + st.users.length; b.append(h);
@@ -732,6 +747,7 @@ function renderMem() {
     const d = document.createElement('div'); d.className = 'u'; d.dataset.pid = u.id; const t = document.createElement('div');
     const n = document.createElement('span'); n.textContent = u.name + (u.id === me ? ' (você)' : ''); t.append(n);
     if (u.room) { const s = document.createElement('small'); s.textContent = '🔊 ' + label(u.room); t.append(s); }
+    actLines(u).forEach(x => t.append(x));
     const pr = prof[u.id] || {}; // fundo do perfil (imagem ou GIF) atrás do nome e da foto
     if (pr.banner) { d.classList.add('hasb'); d.style.backgroundImage = 'linear-gradient(90deg,#000b 0%,#0005 70%,#0002 100%), url("' + pr.banner + '")'; }
     d.append(avatar(u.name, 0, u.id), t, badges(u)); d.onclick = () => card(u.id); d.style.cursor = "pointer";
@@ -790,11 +806,13 @@ async function joinCh(id) {
 function dropAll() {
   Object.keys(peers).forEach(dropPeer); dropLocal('cam'); stopShare();
   press($('#bCam'), false); names = {}; cur = null; pinKey = null; syncStage();
+  muted = false; wasMuted = false; deaf = false; applyVol(); paintMic();   // ao sair da chamada o microfone volta ao normal
 }
 
 function handle(m) {
   if (m.type === 'hello-ok') {
     me = m.id; $('#login').hidden = true; $('#app').hidden = false;
+    lastAct = ''; setTimeout(() => pushAct(true), 500); paintMic();
     $('#meN').textContent = myName; prof[me] = cfg.prof; paintAv($('#meav'), myName, cfg.prof); loadCustom();
   } else if (m.type === 'state') {
     st = m;
@@ -1069,7 +1087,7 @@ STK.forEach((s, i) => {
 $('#bFig').onclick = () => { $('#figs').hidden = !$('#figs').hidden; };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
@@ -1335,6 +1353,44 @@ async function applyMic() {       // trocou o microfone ou ligou/desligou um fil
   } catch { toast('Não consegui trocar o microfone.'); }
 }
 
+// ---------- atividade (jogo e música) ----------
+const GAMES = { cs2: 'Counter-Strike 2', csgo: 'Counter-Strike: GO', 'valorant-win64-shipping': 'VALORANT', valorant: 'VALORANT', leagueclientux: 'League of Legends', 'league of legends': 'League of Legends',
+  fortniteclient: 'Fortnite', 'fortniteclient-win64-shipping': 'Fortnite', gta5: 'GTA V', gtav: 'GTA V', gta5_enhanced: 'GTA V', rocketleague: 'Rocket League', overwatch: 'Overwatch 2', r5apex: 'Apex Legends', rainbowsix: 'Rainbow Six Siege', rainbowsix_vulkan: 'Rainbow Six Siege',
+  destiny2: 'Destiny 2', dota2: 'Dota 2', eldenring: 'Elden Ring', cyberpunk2077: 'Cyberpunk 2077', rdr2: 'Red Dead Redemption 2', helldivers2: 'Helldivers 2', warframe: 'Warframe', 'warframe.x64': 'Warframe', tslgame: 'PUBG', robloxplayerbeta: 'Roblox', terraria: 'Terraria', 'stardew valley': 'Stardew Valley',
+  'palworld-win64-shipping': 'Palworld', rustclient: 'Rust', 'among us': 'Among Us', fc24: 'EA FC 24', fc25: 'EA FC 25', fc26: 'EA FC 26', fifa23: 'FIFA 23', marvel: 'Marvel Rivals', 'marvel-win64-shipping': 'Marvel Rivals', deadlock: 'Deadlock', fallguys_client_game: 'Fall Guys',
+  genshinimpact: 'Genshin Impact', yuanshen: 'Genshin Impact', osu: 'osu!', 'osu!': 'osu!', 'lethal company': 'Lethal Company', 'phasmophobia': 'Phasmophobia', sotgame: 'Sea of Thieves', 'deadbydaylight-win64-shipping': 'Dead by Daylight', valheim: 'Valheim', factorygame: 'Satisfactory',
+  bg3: 'Baldur\'s Gate 3', bg3_dx11: 'Baldur\'s Gate 3', forzahorizon5: 'Forza Horizon 5', projectzomboid64: 'Project Zomboid', left4dead2: 'Left 4 Dead 2', hl2: 'Half-Life 2', tf_win64: 'Team Fortress 2', 'wow': 'World of Warcraft', 'wowclassic': 'WoW Classic', diablo4: 'Diablo IV',
+  hearthstone: 'Hearthstone', 'starcraft ii': 'StarCraft II', eurotrucksimulator2: 'Euro Truck Simulator 2', eurotrucks2: 'Euro Truck Simulator 2', amtrucks: 'American Truck Simulator', fivem: 'FiveM', 'fivem_b2802_gtaprocess': 'FiveM', 'gta_sa': 'GTA San Andreas', 'ragemp_v': 'RAGE:MP', minecraft: 'Minecraft', 'minecraft.windows': 'Minecraft', 'rocketleague.exe': 'Rocket League',
+  'witcher3': 'The Witcher 3', hollowknight: 'Hollow Knight', celeste: 'Celeste', 'ready or not': 'Ready or Not', 'readyornot-win64-shipping': 'Ready or Not', 'squad': 'Squad', squad_be: 'Squad', 'thefinals': 'THE FINALS', 'discovery-win64-shipping': 'THE FINALS', 'hunt': 'Hunt: Showdown', 'bf2042': 'Battlefield 2042', bf1: 'Battlefield 1', 'codmw': 'Call of Duty', cod: 'Call of Duty', 'modernwarfare': 'Call of Duty', 'blackops6': 'Call of Duty: Black Ops 6', 'rainbow6': 'Rainbow Six Siege', 'pathofexile': 'Path of Exile', 'pathofexilesteam': 'Path of Exile', 'tarkov': 'Escape from Tarkov', escapefromtarkov: 'Escape from Tarkov' };
+let rawAct = null, lastAct = '';
+function detectGame() {
+  if (!rawAct) return '';
+  for (const n of rawAct.procs || []) { const g = GAMES[String(n).toLowerCase()]; if (g) return g; }
+  if (/minecraft/i.test(rawAct.java || '')) return 'Minecraft';
+  return '';
+}
+function pushAct(force) {
+  if (!ws || ws.readyState !== 1 || !me) return;
+  const game = (cfg.actManual || '').trim() || (cfg.actGame ? detectGame() : '');
+  const m = cfg.actMusic && rawAct && rawAct.media && rawAct.media.title ? rawAct.media : null;
+  const music = m ? (m.title + (m.artist ? ' — ' + m.artist : '')).slice(0, 80) : '';
+  const k = game + '|' + music; if (!force && k === lastAct) return; lastAct = k;
+  send({ type: 'act', game, music });
+}
+function actStatus() {
+  const el = $('#actSt'); if (!el) return;
+  if (!window.pampas || !pampas.actEnable) { el.textContent = 'A detecção automática só funciona no app de Windows. Aqui no navegador você pode usar o status manual.'; return; }
+  const g = detectGame(), m = rawAct && rawAct.media && rawAct.media.title;
+  el.textContent = 'Agora: ' + (g ? 'jogo ' + g : 'nenhum jogo conhecido') + ' · ' + (m ? 'música ' + rawAct.media.title : 'nenhuma música tocando');
+}
+if (window.pampas && pampas.actEnable) {
+  const on = () => pampas.actEnable(!!(cfg.actGame || cfg.actMusic)).catch(() => {});
+  on(); window.actToggle = on;
+  pampas.onAct(a => { rawAct = a; pushAct(); actStatus(); });
+}
+['actGame', 'actMusic'].forEach(k => { const e = $('#' + k); if (e) e.onchange = ev => { cfg[k] = ev.target.checked; saveCfg(); if (window.actToggle) window.actToggle(); pushAct(); actStatus(); }; });
+$('#actManual').oninput = e => { cfg.actManual = e.target.value.slice(0, 40); saveCfg(); pushAct(); };
+
 // ---------- ping ----------
 let myPing = -1; const pings = {}, p2p = {};
 const pingCls = v => v < 0 ? 'n' : v < 90 ? '' : v < 220 ? 'm' : 'r';
@@ -1463,7 +1519,7 @@ function cardEl(name, p) {
 }
 function card(id) {
   const u = st.users.find(u => u.id === id); if (!u) return;
-  const w = document.createElement('div'); w.id = 'cardw'; w.onclick = () => w.remove(); w.append(cardEl(u.name, prof[id])); document.body.append(w);
+  const w = document.createElement('div'); w.id = 'cardw'; w.onclick = () => w.remove(); const ce = cardEl(u.name, prof[id]); const tt = ce.querySelector('.t'); actLines(u).forEach(x => tt.append(x)); w.append(ce); document.body.append(w);
 }
 
 let ed = {};
@@ -1473,6 +1529,7 @@ function tab(t) {
   document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'voz') { fillVoz(); fillDevs(); }
   if (t === 'sobre') showAbout();
+  if (t === 'ativ') { $('#actGame').checked = !!cfg.actGame; $('#actMusic').checked = !!cfg.actMusic; $('#actManual').value = cfg.actManual || ''; actStatus(); }
 }
 document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => tab(b.dataset.t));
 $('#bCfg').onclick = () => {
