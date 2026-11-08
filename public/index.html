@@ -1022,7 +1022,7 @@ async function applyShareQ() {
 let sqTimer = 0;
 async function startShare() {
   const [qw, qh, qf] = sqNow();
-  const m = await navigator.mediaDevices.getDisplayMedia({ video: { width: { ideal: qw }, height: { ideal: qh }, frameRate: { ideal: qf } }, audio: true });
+  const m = await navigator.mediaDevices.getDisplayMedia({ video: { width: { ideal: qw }, height: { ideal: qh }, frameRate: { ideal: qf } }, audio: { restrictOwnAudio: true } });
   const v = m.getVideoTracks()[0]; v.contentHint = 'motion';
   addLocal('screen', v);
   const a = m.getAudioTracks()[0];
@@ -1414,7 +1414,11 @@ $('#actManual').oninput = e => { cfg.actManual = e.target.value.slice(0, 40); sa
 // ---------- ping ----------
 let myPing = -1; const pings = {}, p2p = {};
 const pingCls = v => v < 0 ? 'n' : v < 90 ? '' : v < 220 ? 'm' : 'r';
-function paintPing() { const b = $('#sig'); if (b) { b.classList.remove('n', 'm', 'r'); const c = pingCls(myPing); if (c) b.classList.add(c); } }
+function callPing() {   // atraso direto médio com quem está na chamada (-1 se ninguém)
+  const v = Object.keys(peers).map(id => p2p[id]).filter(x => x !== undefined);
+  return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : -1;
+}
+function paintPing() { const b = $('#sig'); if (b) { b.classList.remove('n', 'm', 'r'); const cp = callPing(), c = pingCls(cp >= 0 ? cp : myPing); if (c) b.classList.add(c); } }
 async function measureP2P() {
   for (const id of Object.keys(peers)) {
     try {
@@ -1423,13 +1427,15 @@ async function measureP2P() {
       if (best >= 0) p2p[id] = best;
     } catch {}
   }
+  paintPing();
 }
 setInterval(() => { if (ws && ws.readyState === 1 && me) { send({ type: 'ping', t: performance.now() }); measureP2P(); } }, 4000);
 const tip = document.createElement('div'); tip.id = 'ptip'; tip.hidden = true; document.body.append(tip);
 function tipFill(id) {
   const self = id === 'me' || id === me, v = self ? myPing : pings[id];
   tip.replaceChildren();
-  const a = document.createElement('div'); a.append(self ? 'Seu ping: ' : 'Ping dele: ');
+  if (self) { const cp = callPing(); if (cp >= 0) { const d = document.createElement('div'); d.append('Atraso na chamada: '); const k = document.createElement('i'); k.textContent = cp + ' ms'; d.append(k); tip.append(d); } }
+  const a = document.createElement('div'); a.append(self ? 'Seu ping até o servidor: ' : 'Ping dele: ');
   const i = document.createElement('i'); i.textContent = v === undefined || v < 0 ? 'medindo…' : v + ' ms'; a.append(i); tip.append(a);
   if (!self && p2p[id] !== undefined) { const b = document.createElement('div'); b.append('Direto com você: '); const j = document.createElement('i'); j.textContent = p2p[id] + ' ms'; b.append(j); tip.append(b); }
 }
