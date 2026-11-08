@@ -1378,6 +1378,17 @@ let rawAct = null, lastAct = '';
 function detectGame() {
   if (!rawAct) return '';
   for (const n of rawAct.procs || []) { const g = GAMES[String(n).toLowerCase()]; if (g) return g; }
+  // qualquer jogo instalado pelo Steam, Epic, GOG, Riot, Xbox, EA ou Ubisoft: usa o nome da pasta do jogo
+  const skipExe = /crash|anticheat|eac|redist|setup|unins|helper|bootstrap|launcher|installer|vcredist|dxsetup|webhelper/i, skipDir = /wallpaper|steamworks|steamvr|soundpad|^steam$|^launcher$|redist|epic online|^common$/i;
+  for (const path of rawAct.paths || []) {
+    const exe = String(path).split('\\').pop();
+    if (skipExe.test(exe)) continue;
+    const m = /steamapps\\common\\([^\\]+)/i.exec(path) || /\\(?:Epic Games|GOG Galaxy\\Games|GOG Games|XboxGames|EA Games|Ubisoft Game Launcher\\games|Riot Games)\\([^\\]+)/i.exec(path);
+    if (!m) continue;
+    const name = m[1].replace(/[_]+/g, ' ').trim();
+    if (name && !skipDir.test(name)) return name.slice(0, 40);
+  }
+  if ((rawAct.procs || []).some(n => /^robloxplayer/i.test(n))) return 'Roblox';
   if (/minecraft/i.test(rawAct.java || '')) return 'Minecraft';
   return '';
 }
