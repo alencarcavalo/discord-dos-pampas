@@ -31,7 +31,7 @@ small{color:var(--mut)}
 #instalar{background:var(--input);padding:.7rem}
 #erro{color:var(--verm);min-height:1.2em}
 
-#app{height:100%;display:grid;grid-template-columns:72px 300px 1fr 240px;grid-template-rows:1fr}
+#app{height:100%;display:grid;grid-template-columns:72px 280px 1fr 240px;grid-template-rows:1fr}
 #rail{background:var(--rail);padding:12px 0;display:flex;flex-direction:column;align-items:center}
 #rail .av{width:48px;height:48px;background:var(--pampa);font-size:1.3rem;border-radius:16px;position:relative}
 #rail .av::before{content:"";position:absolute;left:-12px;top:12px;width:4px;height:24px;background:#fff;border-radius:0 4px 4px 0}
@@ -212,6 +212,36 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 #ask{background:var(--side);padding:20px;border-radius:10px;width:340px;max-width:92vw;display:grid;gap:12px;box-shadow:0 2px 10px #000a}
 #ask .row{justify-content:flex-end}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111214;padding:10px 16px;border-radius:8px;z-index:9;box-shadow:0 2px 10px #0008}
+
+/* ---- painel de baixo estilo Discord ---- */
+#vc,#me{background:#232428;border:0}
+#vc{margin:0 8px;padding:10px 10px 4px;border-radius:8px 8px 0 0}
+#me{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;margin:0 8px 8px;padding:8px 8px;border-radius:0 0 8px 8px;min-height:52px}
+#vc[hidden]+#me{border-radius:8px}
+#vc:not([hidden])+#me{border-top:1px solid #3a3c43;border-radius:0 0 8px 8px}
+#side{padding-top:0}
+#vch{margin-bottom:10px}
+#vc b{font-size:.95rem}
+#vch button{width:34px;height:34px;padding:0;border-radius:6px}
+#sig svg{width:22px;height:22px}
+.vb{gap:8px;margin-bottom:6px}
+.vb button{height:38px;padding:0;border-radius:8px;background:#383a40}
+.vb button:hover{background:#4a4d55}
+#meav{width:34px;height:34px;flex:none;margin-right:6px}
+#me>div:nth-child(2){flex:1;min-width:0;line-height:1.25;margin-right:4px}
+#meN{font-weight:600;font-size:.95rem}
+#me small{color:var(--mut);font-size:.75rem}
+#me .sp{display:flex;align-items:center;flex:none;border-radius:6px}
+#me .sp:hover{background:#383a40}
+#me .sp>button,#me .sp>.ar{background:transparent!important;border-radius:6px;display:grid;place-items:center}
+#me .sp>button:first-child{width:32px;height:32px;padding:0;flex:none}
+#me .sp>.ar{width:16px;height:32px;padding:0;margin-left:-6px;color:var(--mut)}
+#me .sp>.ar svg{width:16px;height:16px}
+#me #bCfg{background:transparent;width:34px;height:34px;padding:0;flex:none;border-radius:6px;margin-left:2px}
+#me #bCfg:hover{background:#383a40}
+#me .sp>button svg,#me #bCfg svg{width:22px;height:22px}
+#bMic.off,#bDeaf.off{color:#f23f43}
+#me .sp:has(.off){background:#f23f4326}
 </style>
 </head>
 <body>
@@ -243,7 +273,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
         <button id="bTela" title="Compartilhar tela">🖥️</button>
       </div>
     </div>
-    <div id="me"><div class="av" id="meav"></div><div><b id="meN"></b><small>Online</small></div><div class="brk"></div><div class="sp"><button id="bMic" title="Mutar / desmutar microfone">🎤</button><button class="ar" id="aMic" type="button" title="Opções do microfone"></button></div><div class="sp"><button id="bDeaf" title="Ficar sem áudio (fone mudo)">🎧</button><button class="ar" id="aDeaf" type="button" title="Opções de áudio"></button></div><button id="bCfg" title="Configurações">⚙️</button></div>
+    <div id="me"><div class="av" id="meav"></div><div><b id="meN"></b><small>Online</small></div><div class="sp"><button id="bMic" title="Mutar / desmutar microfone">🎤</button><button class="ar" id="aMic" type="button" title="Opções do microfone"></button></div><div class="sp"><button id="bDeaf" title="Ficar sem áudio (fone mudo)">🎧</button><button class="ar" id="aDeaf" type="button" title="Opções de áudio"></button></div><button id="bCfg" title="Configurações">⚙️</button></div>
   </section>
   <section id="main">
     <div id="top"></div>
