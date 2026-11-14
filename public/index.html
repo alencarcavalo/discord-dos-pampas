@@ -9,10 +9,11 @@
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="theme-color" content="#1e1f22">
 <style>
-:root{--rail:#1e1f22;--side:#2b2d31;--main:#313338;--input:#383a40;--hover:#35373c;--txt:#dbdee1;--mut:#949ba4;--blur:#5865f2;--verde:#23a559;--verm:#f23f43;--pampa:#c8372d}
+:root{--rail:#1e1f22;--side:#2b2d31;--main:#313338;--input:#383a40;--hover:#35373c;--txt:#dbdee1;--mut:#949ba4;--blur:#5865f2;--verde:#23a559;--verm:#f23f43;--pampa:#c8372d;--fala:#5865f2;--onac:#fff}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{background:var(--main);color:var(--txt);font:15px/1.4 "gg sans","Segoe UI",system-ui,-apple-system,sans-serif}
+html{font-size:calc(16px*var(--fsc,1))}
+body{background:var(--main);color:var(--txt);font:calc(15px*var(--fsc,1))/1.4 var(--ff,"gg sans","Segoe UI",system-ui,-apple-system,sans-serif)}
 [hidden]{display:none!important}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer;border:0;border-radius:4px;background:transparent}
@@ -43,8 +44,7 @@ small{color:var(--mut)}
 #loginc .logo{width:72px;height:72px;margin:0 auto;font-size:2rem;background:var(--pampa)}
 #loginc h1{margin:0;font-size:1.5rem}
 #loginc label{text-align:left;display:grid;gap:.4rem;color:var(--mut);font-size:.8rem;font-weight:700;text-transform:uppercase}
-.go{background:var(--blur);color:#fff;padding:.75rem;font-weight:600}
-.go:hover{background:#4752c4}
+.go{background:var(--blur);color:var(--onac,#fff);padding:.75rem;font-weight:600}
 #instalar{background:var(--input);padding:.7rem}
 #erro{color:var(--verm);min-height:1.2em}
 
@@ -102,10 +102,10 @@ small{color:var(--mut)}
 .pbg{position:absolute;inset:0;background-size:cover;background-position:center}.tile.p.hascam .pbg{display:none}
 .pav{--s:min(46cqh,30cqw);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:var(--s);height:var(--s);font-size:calc(var(--s)*.42)}
 .tile .nm{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);display:flex;align-items:center;gap:6px;background:#000b;padding:2px 8px;border-radius:6px;font-size:.85rem;color:#fff;z-index:2;overflow:hidden;white-space:nowrap}
-.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;border:3px solid var(--blur);opacity:0;pointer-events:none;z-index:3}
+.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;border:3px solid var(--fala,var(--blur));opacity:0;pointer-events:none;z-index:3}
 .tile.speaking::after{animation:piscaB .9s ease-in-out infinite}
 .av.speaking{animation:pisca .9s ease-in-out infinite}
-@keyframes pisca{0%,100%{box-shadow:0 0 0 2px var(--blur),0 0 10px 2px var(--blur)}50%{box-shadow:0 0 0 2px color-mix(in srgb,var(--blur) 35%,transparent),0 0 2px 0 transparent}}
+@keyframes pisca{0%,100%{box-shadow:0 0 0 2px var(--fala,var(--blur)),0 0 10px 2px var(--fala,var(--blur))}50%{box-shadow:0 0 0 2px color-mix(in srgb,var(--fala,var(--blur)) 35%,transparent),0 0 2px 0 transparent}}
 @keyframes piscaB{0%,100%{opacity:1}50%{opacity:.3}}
 .ctl{position:absolute;top:8px;right:8px;display:flex;gap:6px;align-items:center;opacity:0;transition:opacity .15s;z-index:4}
 .tile:hover .ctl{opacity:1}
@@ -127,8 +127,113 @@ small{color:var(--mut)}
 #bDeaf{background:var(--input);padding:6px 8px;border-radius:6px;display:grid;place-items:center}
 #bDeaf:hover{background:#4e5058}#bDeaf.off{color:var(--verm)}
 #me button{padding:6px 7px}
-.sec.on{background:var(--blur);color:#fff}
-#cfgbody h3{margin:10px 0 0;font-size:1rem}
+.sec.on{background:var(--blur);color:var(--onac,#fff)}
+/* ===== configurações: visual novo ===== */
+#cfg{position:fixed;inset:0;background:var(--main);z-index:8;display:flex}
+#cfg:not([hidden]){animation:cfgin .18s ease-out}
+@keyframes cfgin{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+#cfgtabs{background:var(--side);width:270px;flex:none;padding:48px 14px 20px 22px;display:flex;flex-direction:column;gap:2px;overflow:auto}
+#cfgtabs h4{margin:20px 10px 6px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+#cfgtabs h4:first-child{margin-top:0}
+#cfgtabs button{display:flex;align-items:center;gap:10px;text-align:left;padding:9px 12px;color:var(--mut);border-radius:8px;font-weight:600;position:relative}
+#cfgtabs button span{width:22px;text-align:center;font-size:1.05rem}
+#cfgtabs button:hover{background:var(--hover);color:var(--txt)}
+#cfgtabs button.on{background:color-mix(in srgb,var(--blur) 24%,transparent);color:#fff}
+#cfgtabs button.on::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:4px;border-radius:4px;background:var(--blur)}
+#cfgx{position:absolute;top:22px;right:28px;z-index:2;display:grid;justify-items:center;gap:3px;color:var(--mut)}
+#cfgx b{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:2px solid color-mix(in srgb,var(--txt) 30%,transparent);font-size:1.1rem;font-weight:400;transition:.15s}
+#cfgx small{font-size:.65rem;font-weight:700}
+#cfgx:hover b{background:var(--hover);color:#fff;border-color:var(--txt)}
+#cfgbody{flex:1;overflow:auto;padding:48px 84px 90px 56px}
+#cfgbody>section{display:block;max-width:760px}
+#cfgbody>section[data-p=perfil]{max-width:960px}
+#cfgbody h2{margin:0 0 4px;font-size:1.65rem}
+#cfgbody .sub{margin:0 0 22px;color:var(--mut)}
+.cc{background:var(--side);border-radius:14px;padding:6px 20px;margin:0 0 18px;border:1px solid color-mix(in srgb,var(--txt) 7%,transparent)}
+.cc.pad{padding:18px 20px}
+.cc>h3{margin:14px 0 2px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.rw{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 0}
+.rw+.rw,.cfld+.cfld,.cc>h3+.rw{border-top:0}
+.rw+.rw,.cfld+.cfld{border-top:1px solid color-mix(in srgb,var(--txt) 8%,transparent)}
+.rt{min-width:0;flex:1}
+.rt b{display:block;font-weight:600}
+.rt small{display:block;margin-top:2px;font-size:.8rem;line-height:1.4}
+.rw.col{display:block}
+.rw.col>.rt{margin-bottom:8px}
+.rw.col>select,.rw.col>input:not([type=range]){margin-top:2px}
+.rw .rh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+.rw>select{width:230px;max-width:50%}
+.rw.col>select{width:100%;max-width:none}
+.rc{flex:none;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{background:color-mix(in srgb,var(--blur) 28%,transparent);color:#fff;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700;min-width:52px;text-align:center}
+.nt{margin:0;padding:0 0 14px;font-size:.8rem;line-height:1.45;color:var(--mut);display:block}
+#cfgbody select{border:1px solid transparent;border-radius:8px;padding:.65rem .7rem}
+#cfgbody select:focus-visible,#cfgbody input:focus-visible{outline:2px solid var(--blur);outline-offset:0}
+.fld{display:grid;gap:6px;margin:0 0 18px}
+.fld>span{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.fld>small{font-size:.78rem}
+.fld .rc{gap:10px}
+.sec.up{cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.sec.mini{padding:6px 12px;font-size:.85rem}
+.sw{position:relative;flex:none;width:44px;height:25px;display:block;cursor:pointer}
+.sw input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer;z-index:1}
+.sw i{display:block;width:44px;height:25px;border-radius:13px;background:color-mix(in srgb,var(--txt) 26%,transparent);transition:background .15s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0006;transition:transform .15s}
+.sw input:checked+i{background:var(--blur)}
+.sw input:checked+i::after{transform:translateX(19px)}
+.sw input:focus-visible+i{outline:2px solid var(--blur);outline-offset:2px}
+#cfgbody input[type=color].cpick{-webkit-appearance:none;appearance:none;width:44px;height:44px;padding:0;border:0;background:none;cursor:pointer}
+.cpick::-webkit-color-swatch-wrapper{padding:0}
+.cpick::-webkit-color-swatch{border:3px solid color-mix(in srgb,var(--txt) 35%,transparent);border-radius:50%}
+.cpick::-moz-color-swatch{border:3px solid color-mix(in srgb,var(--txt) 35%,transparent);border-radius:50%}
+#kMute{background:var(--input);padding:8px 16px;border-radius:8px;font-weight:700;font-family:ui-monospace,Consolas,monospace;border:1px solid color-mix(in srgb,var(--txt) 18%,transparent);border-bottom-width:3px}
+.pgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:26px;align-items:start}
+.pside{position:sticky;top:0;display:grid;gap:12px}
+#meter{margin-top:4px}
+.tp{display:grid;grid-template-columns:44px 150px 1fr;height:196px;border-radius:12px;overflow:hidden;border:1px solid color-mix(in srgb,var(--txt) 12%,transparent);font-size:.78rem;pointer-events:none;user-select:none}
+.tp-rail{background:var(--rail);display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0}
+.tp-rail i{width:26px;height:26px;border-radius:9px;background:var(--hover)}
+.tp-rail i:first-child{background:var(--blur)}
+.tp-side{background:var(--side);padding:10px 8px;display:grid;align-content:start;gap:3px}
+.tp-side b{padding:0 6px 6px;font-size:.75rem}
+.tp-side span{padding:3px 6px;border-radius:4px;color:var(--mut)}
+.tp-side span.on{background:var(--hover);color:#fff}
+.tp-main{background:var(--main);padding:12px;display:grid;gap:9px;align-content:start}
+.tp-msg{display:flex;gap:8px;align-items:center}
+.tp-tile{height:48px;border-radius:8px;background:var(--rail);box-shadow:inset 0 0 0 3px var(--fala);display:flex;align-items:center;gap:8px;padding:0 10px}
+.tp-row{display:flex;gap:10px;align-items:center}
+.tp-btn{background:var(--blur);color:var(--onac,#fff);padding:4px 14px;border-radius:6px;font-weight:700}
+.tp-bar{flex:1;height:6px;border-radius:3px;background:linear-gradient(to right,var(--blur) 62%,color-mix(in srgb,var(--txt) 22%,transparent) 62%)}
+#presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+#presets .pt{background:var(--pbg);border:2px solid transparent;border-radius:10px;padding:10px 10px 8px;text-align:left;color:#fff;display:grid;gap:7px;transition:transform .12s}
+#presets .pt:hover{transform:translateY(-2px)}
+#presets .pt.on{border-color:var(--pac)}
+#presets .pt i{display:block;height:8px;border-radius:4px;background:var(--pac)}
+#presets .pt i+i{width:60%;background:color-mix(in srgb,#fff 25%,transparent)}
+#presets .pt b{font-size:.85rem}
+.cfld{padding:14px 0;display:grid;gap:10px}
+.swr{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.dot{position:relative;width:28px;height:28px;border-radius:50%;border:2px solid color-mix(in srgb,#000 35%,transparent);cursor:pointer;padding:0;display:block;transition:transform .1s}
+.dot:hover{transform:scale(1.12)}
+.dot.on{box-shadow:0 0 0 2px var(--side),0 0 0 4px #fff}
+.dot.rb{background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.dot.rb::after{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--cur,#fff);border:1px solid #0006}
+.dot.rb input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:0}
+.seg{display:inline-flex;background:var(--input);border-radius:9px;padding:3px;gap:2px}
+.seg button{padding:6px 13px;border-radius:7px;color:var(--mut);font-weight:600}
+.seg button.on{background:var(--blur);color:var(--onac,#fff)}
+@media(max-width:820px){
+  #cfg{flex-direction:column}
+  #cfgtabs{width:auto;flex-direction:row;overflow-x:auto;padding:12px 56px 8px 12px;gap:4px;flex:none}
+  #cfgtabs h4{display:none}
+  #cfgtabs button{white-space:nowrap;padding:8px 12px}
+  #cfgtabs button.on::before{display:none}
+  #cfgx{top:8px;right:8px}#cfgx b{width:34px;height:34px}#cfgx small{display:none}
+  #cfgbody{padding:20px 14px 70px}
+  .pgrid{grid-template-columns:1fr}.pside{position:static}
+  .rw{flex-wrap:wrap}.rw>select{width:100%;max-width:100%}
+  .tp{grid-template-columns:40px 1fr}.tp-side{display:none}
+}
 #meter{position:relative;height:10px;background:var(--input);border-radius:6px;overflow:hidden}
 #meterBar{height:100%;width:0;background:#7a7f87}#meterBar.open{background:var(--verde)}
 #meterThr{position:absolute;top:0;bottom:0;width:2px;background:var(--verm);left:0}
@@ -158,27 +263,12 @@ small{color:var(--mut)}
 }
 .go:hover{filter:brightness(.9)}
 select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:inherit;width:100%}
-#cfg{position:fixed;inset:0;background:var(--main);z-index:8;display:flex}
-#cfgtabs{background:var(--side);width:220px;padding:40px 12px;display:flex;flex-direction:column;gap:2px;flex:none}
-#cfgtabs button{text-align:left;padding:8px 10px;color:var(--mut)}
-#cfgtabs button:hover,#cfgtabs button.on{background:var(--hover);color:#fff}
-#cfgx{margin-top:auto;color:var(--verm)!important}
-#cfgbody{flex:1;overflow:auto;padding:40px;max-width:640px}
-#cfgbody section{display:grid;gap:14px}
-#cfgbody h2{margin:0}
-#cfgbody label{display:grid;gap:6px;color:var(--mut);font-size:.8rem;font-weight:700;text-transform:uppercase}
-#cfgbody label.ck{display:flex;gap:10px;align-items:center;font-size:.95rem;text-transform:none;color:var(--txt)}
-#cfgbody label.ck input{width:auto}
-#cfgbody input[type=color]{height:40px;padding:2px}
-#kMute,#presets button{background:var(--input);padding:10px 14px;border-radius:6px;justify-self:start}
-#presets{display:flex;gap:8px;flex-wrap:wrap}
 .pc{width:300px;max-width:100%;background:var(--side);border-radius:10px;overflow:hidden;box-shadow:0 2px 10px #0006}
 .pb{height:100px}
 .pc .big{width:80px;height:80px;font-size:2rem;margin:-40px 0 0 16px;border:6px solid var(--side)}
 .pc div.t{padding:6px 16px 16px}
 .pc b{font-size:1.2rem}
 #cardw{position:fixed;inset:0;z-index:9}
-@media(max-width:700px){#cfg{flex-direction:column}#cfgtabs{width:auto;flex-direction:row;flex-wrap:wrap;padding:12px}#cfgx{margin-top:0}#cfgbody{padding:16px}}
 #loginc img.logo{width:150px;height:auto;margin:0 auto;border-radius:0;background:none}
 #rail img{width:48px;height:48px;border-radius:16px;object-fit:cover}
 #mem{background:var(--side);padding:12px 8px;overflow:auto}
@@ -403,92 +493,156 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 
 <div id="cfg" hidden>
   <nav id="cfgtabs">
-    <button data-t="perfil">Meu perfil</button><button data-t="voz">Voz</button><button data-t="ativ">Atividade</button><button data-t="atalho">Atalhos</button><button data-t="visual">Aparência</button><button data-t="sobre">Atualizações</button>
-    <button id="cfgx">Fechar ✕</button>
+    <h4>Minha conta</h4>
+    <button data-t="perfil"><span>👤</span>Meu perfil</button>
+    <button data-t="ativ"><span>🎮</span>Atividade</button>
+    <h4>App</h4>
+    <button data-t="voz"><span>🎙️</span>Voz e áudio</button>
+    <button data-t="atalho"><span>⌨️</span>Atalhos</button>
+    <button data-t="visual"><span>🎨</span>Aparência</button>
+    <h4>Sistema</h4>
+    <button data-t="sobre"><span>🔄</span>Atualizações</button>
   </nav>
+  <button id="cfgx" type="button" title="Fechar (Esc)"><b>✕</b><small>ESC</small></button>
   <div id="cfgbody">
+
     <section data-p="perfil"><h2>Meu perfil</h2>
-      <label>Nome<input id="pNome" maxlength="24"></label>
-      <label>Sobre mim<input id="pSobre" maxlength="120"></label>
-      <label>Foto<input type="file" id="pFoto" accept="image/*"></label>
-      <label>Fundo do perfil<input type="file" id="pBanner" accept="image/*"></label>
-      <label>Cor do perfil<input type="color" id="pCor"></label>
-      <div class="row">
-        <button type="button" class="sec" id="pRmFoto">Remover foto</button>
-        <button type="button" class="sec" id="pRmBanner">Remover fundo</button>
-        <button type="button" class="sec" id="pRmCor">Cor padrão</button>
-        <button type="button" class="sec" id="pRmSobre">Limpar "sobre mim"</button>
+      <p class="sub">Como a turma te vê. Mexeu em alguma coisa? Confira a pré-visualização do cartão e clique em <b>Salvar perfil</b>.</p>
+      <div class="pgrid">
+        <div class="cc pad">
+          <label class="fld"><span>Nome</span><input id="pNome" maxlength="24"></label>
+          <label class="fld"><span>Sobre mim</span><input id="pSobre" maxlength="120" placeholder="Uma frase sobre você"></label>
+          <div class="fld" style="margin-top:-10px"><div class="rc"><button type="button" class="sec mini" id="pRmSobre">Limpar “sobre mim”</button></div></div>
+          <div class="fld"><span>Foto</span>
+            <div class="rc"><label class="sec up">📷 Escolher foto<input type="file" id="pFoto" accept="image/*" hidden></label><button type="button" class="sec" id="pRmFoto">Remover</button></div>
+            <small>JPG, PNG ou GIF animado (GIF até 4 MB).</small></div>
+          <div class="fld"><span>Fundo do perfil</span>
+            <div class="rc"><label class="sec up">🖼️ Escolher fundo<input type="file" id="pBanner" accept="image/*" hidden></label><button type="button" class="sec" id="pRmBanner">Remover</button></div>
+            <small>A faixa que aparece no topo do seu cartão.</small></div>
+          <div class="fld" style="margin-bottom:0"><span>Cor do perfil</span>
+            <div class="rc"><input type="color" id="pCor" class="cpick"><button type="button" class="sec" id="pRmCor">Cor padrão</button></div>
+            <small>Pinta o topo do cartão (se você não tem fundo) e o círculo com a sua letra (se você não tem foto).</small></div>
+        </div>
+        <div class="pside">
+          <div class="fld" style="margin:0"><span>Pré-visualização</span></div>
+          <div id="pPrev"></div>
+          <button class="go" id="pSalvar">Salvar perfil</button>
+        </div>
       </div>
-      <div id="pPrev"></div><button class="go" id="pSalvar">Salvar perfil</button>
     </section>
+
     <section data-p="ativ" hidden><h2>Atividade</h2>
-      <small>Mostra para a turma, ao lado do seu nome, o jogo que você está jogando e a música que está tocando.</small>
-      <label class="ck"><input type="checkbox" id="actGame"> Mostrar o jogo que estou jogando</label>
-      <label class="ck"><input type="checkbox" id="actMusic"> Mostrar a música que estou ouvindo (YouTube Music, Spotify...)</label>
-      <small id="actSt"></small>
-      <label>Status manual (vale no lugar do jogo detectado)<input id="actManual" maxlength="40" placeholder="Ex.: Jogando CS2 · deixe vazio para automático"></label>
+      <p class="sub">O que a turma vê ao lado do seu nome.</p>
+      <div class="cc">
+        <div class="rw"><div class="rt"><b>Mostrar o jogo que estou jogando</b><small>A detecção automática funciona no app do Windows.</small></div><label class="sw"><input type="checkbox" id="actGame"><i></i></label></div>
+        <div class="rw"><div class="rt"><b>Mostrar a música que estou ouvindo</b><small>YouTube Music, Spotify...</small></div><label class="sw"><input type="checkbox" id="actMusic"><i></i></label></div>
+      </div>
+      <div class="cc"><h3>Agora</h3><div class="rw"><div class="rt"><small id="actSt"></small></div></div></div>
+      <div class="cc"><div class="rw col"><div class="rt"><b>Status manual</b><small>Vale no lugar do jogo detectado. Deixe vazio para ficar automático.</small></div>
+        <input id="actManual" maxlength="40" placeholder="Ex.: Jogando CS2"></div></div>
     </section>
+
     <section data-p="voz" hidden><h2>Voz e áudio</h2>
-      <label>Volume do aplicativo <small id="appVolT"></small><input type="range" id="appVol" min="0" max="100" step="1"></label>
-      <label>Volume do soundboard <small id="sbVolT"></small><input type="range" id="sbVol" min="0" max="100" step="1"></label>
-      <label>Sons de entrar e sair da chamada
-        <select id="packSel">
-          <option value="padrao">Padrão (sininhos)</option>
-          <option value="1">Meme 1 · risada ao entrar, "nese auuu" ao sair</option>
-          <option value="2">Meme 2 · "de novo" ao entrar, "aaaaaaa" ao sair</option>
-          <option value="3">Meme 3 · "tão me empurrando" ao entrar, "que nojo" ao sair</option>
-        </select></label>
-      <div class="row"><button type="button" class="sec" id="packIn">▶ Ouvir o de entrar</button><button type="button" class="sec" id="packOut">▶ Ouvir o de sair</button></div>
-      <small>Vale só para você: cada pessoa escolhe o que quer ouvir quando alguém entra ou sai.</small>
-      <label>Saída de áudio (alto-falantes ou fone)<select id="outSel"></select></label>
-      <label>Microfone<select id="micSel"></select></label>
-      <label>Volume do microfone <small id="micVolT"></small><input type="range" id="micVol" min="0" max="200" step="5"></label>
-      <h3>Qualidade do microfone</h3>
-      <label class="ck"><input type="checkbox" id="ns"> Supressão de ruído</label>
-      <label class="ck"><input type="checkbox" id="ai"> Supressão de ruído por IA (RNNoise) — experimental, precisa de internet</label>
-      <label class="ck"><input type="checkbox" id="ec"> Cancelamento de eco</label>
-      <label class="ck"><input type="checkbox" id="agc"> Ajuste automático de volume</label>
-      <label class="ck"><input type="checkbox" id="gate"> Porta de ruído: corta o que não for voz (teclado, ventilador, respiração)</label>
-      <label class="ck" id="gAutoW"><input type="checkbox" id="gAuto"> Sensibilidade automática</label>
-      <div id="gThrW"><label>Sensibilidade manual <small id="gThrT"></small><input type="range" id="gThr" min="-70" max="-20" step="1"></label></div>
-      <div id="meter"><div id="meterBar"></div><div id="meterThr"></div></div>
-      <small>A barra mostra o seu microfone: quando passa do traço vermelho a porta abre e sua voz sai. Ela só mexe dentro de um canal de voz.</small>
-      <h3>Transmissão de tela</h3>
-      <label>Qualidade da transmissão
-        <select id="sq">
-          <option value="720p30">720p · 30 fps (leve)</option>
-          <option value="720p60">720p · 60 fps</option>
-          <option value="1080p30">1080p · 30 fps</option>
-          <option value="1080p60">1080p · 60 fps (pesada)</option>
-        </select></label>
-      <small>Vale na hora, mesmo durante a transmissão. 1080p e 60 fps pedem uma internet de envio boa, principalmente com mais gente assistindo.</small>
-      <label class="ck"><input type="checkbox" id="aec"> Anti-eco: tirar a voz da chamada do som do PC que você transmite</label>
-      <small>O som do PC leva junto a voz de quem está na chamada, e ela voltava para a pessoa. Com isso ligado, quem assiste ouve o som do seu PC normal, mas não a própria voz de volta.</small>
-      <small id="aecSt"></small>
-      <label class="ck"><input type="checkbox" id="duck"> Reserva: abafar o som da transmissão para quem está falando</label>
-      <small>Só funciona com o anti-eco desligado. Enquanto a pessoa fala, o som da transmissão que vai para ELA diminui (os outros continuam ouvindo normal).</small>
-      <small>As mudanças valem na hora, mesmo durante a chamada.</small>
+      <p class="sub">As mudanças valem na hora, mesmo durante a chamada.</p>
+
+      <div class="cc"><h3>Volumes</h3>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Volume do aplicativo</b></div><span class="pill" id="appVolT"></span></div><input type="range" id="appVol" min="0" max="100" step="1"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Volume do soundboard</b></div><span class="pill" id="sbVolT"></span></div><input type="range" id="sbVol" min="0" max="100" step="1"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Volume do microfone</b></div><span class="pill" id="micVolT"></span></div><input type="range" id="micVol" min="0" max="200" step="5"></div>
+      </div>
+
+      <div class="cc"><h3>Dispositivos</h3>
+        <div class="rw col"><div class="rt"><b>Saída de áudio</b><small>Alto-falantes ou fone.</small></div><select id="outSel"></select></div>
+        <div class="rw col"><div class="rt"><b>Microfone</b></div><select id="micSel"></select></div>
+      </div>
+
+      <div class="cc"><h3>Sons de entrar e sair</h3>
+        <div class="rw col"><div class="rt"><b>Pacote de sons</b><small>Vale só para você: cada pessoa escolhe o que quer ouvir quando alguém entra ou sai.</small></div>
+          <select id="packSel">
+            <option value="padrao">Padrão (sininhos)</option>
+            <option value="1">Meme 1 · risada ao entrar, "nese auuu" ao sair</option>
+            <option value="2">Meme 2 · "de novo" ao entrar, "aaaaaaa" ao sair</option>
+            <option value="3">Meme 3 · "tão me empurrando" ao entrar, "que nojo" ao sair</option>
+          </select></div>
+        <div class="rw"><div class="rc"><button type="button" class="sec" id="packIn">▶ Ouvir o de entrar</button><button type="button" class="sec" id="packOut">▶ Ouvir o de sair</button></div></div>
+      </div>
+
+      <div class="cc"><h3>Qualidade do microfone</h3>
+        <div class="rw"><div class="rt"><b>Supressão de ruído</b><small>Reduz barulho constante de fundo, como ventilador e chiado.</small></div><label class="sw"><input type="checkbox" id="ns"><i></i></label></div>
+        <div class="rw"><div class="rt"><b>Supressão de ruído por IA (RNNoise)</b><small>Mais forte, mas experimental e precisa de internet para carregar.</small></div><label class="sw"><input type="checkbox" id="ai"><i></i></label></div>
+        <div class="rw"><div class="rt"><b>Cancelamento de eco</b><small>Evita que sua voz volte pelo alto-falante.</small></div><label class="sw"><input type="checkbox" id="ec"><i></i></label></div>
+        <div class="rw"><div class="rt"><b>Ajuste automático de volume</b><small>Mantém a sua voz sempre num volume parecido.</small></div><label class="sw"><input type="checkbox" id="agc"><i></i></label></div>
+        <div class="rw"><div class="rt"><b>Porta de ruído</b><small>Corta o que não for voz: teclado, ventilador, respiração.</small></div><label class="sw"><input type="checkbox" id="gate"><i></i></label></div>
+        <div class="rw" id="gAutoW"><div class="rt"><b>Sensibilidade automática</b><small>O app acha sozinho o ponto certo da porta de ruído.</small></div><label class="sw"><input type="checkbox" id="gAuto"><i></i></label></div>
+        <div class="rw col" id="gThrW"><div class="rh"><div class="rt"><b>Sensibilidade manual</b></div><span class="pill" id="gThrT"></span></div><input type="range" id="gThr" min="-70" max="-20" step="1"></div>
+        <div class="rw col"><div class="rt"><b>Medidor do microfone</b><small>Quando a barra passa do traço vermelho, a porta abre e a sua voz sai. Só mexe dentro de um canal de voz.</small></div>
+          <div id="meter"><div id="meterBar"></div><div id="meterThr"></div></div></div>
+      </div>
+
+      <div class="cc"><h3>Transmissão de tela</h3>
+        <div class="rw col"><div class="rt"><b>Qualidade da transmissão</b><small>1080p e 60 fps pedem uma internet de envio boa, principalmente com mais gente assistindo.</small></div>
+          <select id="sq">
+            <option value="720p30">720p · 30 fps (leve)</option>
+            <option value="720p60">720p · 60 fps</option>
+            <option value="1080p30">1080p · 30 fps</option>
+            <option value="1080p60">1080p · 60 fps (pesada)</option>
+          </select></div>
+        <div class="rw"><div class="rt"><b>Anti-eco da transmissão</b><small>O som do PC leva junto a voz de quem está na chamada, e ela voltava para a pessoa. Ligado, quem assiste ouve o som do seu PC, mas não a própria voz de volta.</small><small id="aecSt"></small></div><label class="sw"><input type="checkbox" id="aec"><i></i></label></div>
+        <div class="rw"><div class="rt"><b>Reserva: abafar o som da transmissão para quem está falando</b><small>Só funciona com o anti-eco desligado. Enquanto a pessoa fala, o som da transmissão que vai para ELA diminui (os outros continuam ouvindo normal).</small></div><label class="sw"><input type="checkbox" id="duck"><i></i></label></div>
+      </div>
     </section>
+
     <section data-p="atalho" hidden><h2>Atalhos</h2>
-      <p>Mutar / desmutar o microfone</p><button id="kMute"></button>
-      <small>No app de computador o atalho funciona em qualquer lugar, até com o jogo aberto. No navegador só funciona com a janela em foco. Você precisa já estar em um canal de voz.</small>
+      <p class="sub">Clique no botão e aperte as teclas que você quer usar.</p>
+      <div class="cc">
+        <div class="rw"><div class="rt"><b>Mutar / desmutar o microfone</b></div><button type="button" id="kMute"></button></div>
+      </div>
+      <p class="nt">No app de computador o atalho funciona em qualquer lugar, até com o jogo aberto. No navegador só funciona com a janela em foco. Você precisa já estar em um canal de voz.</p>
     </section>
+
     <section data-p="sobre" hidden><h2>Atualizações</h2>
-      <p id="verTxt"></p>
-      <div class="row"><button type="button" class="sec" id="updBtn">Verificar atualizações</button><button type="button" class="sec" id="updGo" hidden>Reiniciar e atualizar</button></div>
-      <small id="updTxt"></small>
-      <h3>Memória do servidor</h3>
-      <progress id="memBar" max="100" value="0" style="width:100%;height:12px"></progress>
-      <p id="memTxt">Medindo…</p>
-      <small>É a memória que o servidor do Render está usando, de um limite de 512 MB no plano grátis. Se encher, o servidor reinicia sozinho. Mensagens com imagens grandes pesam bastante.</small>
+      <p class="sub">Versão do app e uso de memória do servidor.</p>
+      <div class="cc">
+        <div class="rw col"><div class="rt"><b id="verTxt"></b><small id="updTxt"></small></div>
+          <div class="rc"><button type="button" class="sec" id="updBtn">Verificar atualizações</button><button type="button" class="sec" id="updGo" hidden>Reiniciar e atualizar</button></div></div>
+      </div>
+      <div class="cc"><h3>Memória do servidor</h3>
+        <div class="rw col"><progress id="memBar" max="100" value="0" style="width:100%;height:12px"></progress>
+          <div class="rt" style="margin:8px 0 0"><b id="memTxt">Medindo…</b><small>É a memória que o servidor do Render está usando, de um limite de 512 MB no plano grátis. Se encher, o servidor reinicia sozinho. Mensagens com imagens grandes pesam bastante.</small></div></div>
+      </div>
     </section>
+
     <section data-p="visual" hidden><h2>Aparência</h2>
-      <div id="presets"></div>
-      <label>Cor de destaque<input type="color" id="cAc"></label>
-      <small>É também a cor da borda que pisca em quem está falando.</small>
-      <label>Cor de fundo<input type="color" id="cBg"></label>
-      <label>Tamanho dos ícones<input type="range" id="icSz" min="16" max="36" step="2"></label>
+      <p class="sub">Deixe o app com a sua cara. Vale só para você, neste aparelho. O que aparece aqui embaixo muda na hora.</p>
+
+      <div class="cc pad">
+        <div class="tp" id="tprev" aria-hidden="true">
+          <div class="tp-rail"><i></i><i></i><i></i></div>
+          <div class="tp-side"><b>Discord dos Pampas</b><span class="on"># geral</span><span># jogos</span><span>🔊 Sala 1</span><span>🔊 Sala 2</span></div>
+          <div class="tp-main">
+            <div class="tp-msg"><span class="av s" style="background:#eb459e">A</span><div><b>Alencar</b><br><small>bora jogar? 🎮</small></div></div>
+            <div class="tp-tile"><span class="av s speaking" style="background:#23a559">F</span><span>Fulano falando</span></div>
+            <div class="tp-row"><span class="tp-btn">Botão</span><span class="tp-bar"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cc"><h3>Temas prontos</h3><div id="presets" style="padding:12px 0 16px"></div></div>
+
+      <div class="cc"><h3>Cores</h3>
+        <div class="cfld"><div class="rt"><b>Cor principal</b><small>É a antiga “cor de destaque”: pinta botões, barras de volume, itens selecionados e reações.</small></div><div class="swr" id="swAc"></div></div>
+        <div class="cfld"><div class="rt"><b>Cor de quem está falando</b><small>A borda que pisca em volta de quem fala na chamada. Se você não escolher, usa a cor principal.</small></div><div class="swr" id="swFa"></div><div><button type="button" class="sec mini" id="faReset" hidden>Usar a cor principal</button></div></div>
+        <div class="cfld"><div class="rt"><b>Cor de fundo</b><small>O tom base do app. As barras laterais ficam automaticamente mais escuras.</small></div><div class="swr" id="swBg"></div></div>
+      </div>
+
+      <div class="cc"><h3>Texto e ícones</h3>
+        <div class="rw"><div class="rt"><b>Fonte</b></div><select id="fontSel"></select></div>
+        <div class="rw"><div class="rt"><b>Tamanho do texto</b></div><div class="seg" id="fsSeg"></div></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Tamanho dos ícones</b></div><span class="pill" id="icSzT"></span></div><input type="range" id="icSz" min="16" max="36" step="2"></div>
+      </div>
+      <button type="button" class="sec" id="thReset">Restaurar visual padrão</button>
     </section>
+
   </div>
 </div>
 
@@ -1577,7 +1731,7 @@ $('#bSom').onclick = e => {
 };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
@@ -1603,12 +1757,29 @@ idb.get('prof-img').then(img => {
 const prof = {};
 const audioC = () => ({ echoCancellation: cfg.ec, noiseSuppression: cfg.ns, autoGainControl: cfg.agc, ...(cfg.mic ? { deviceId: { exact: cfg.mic } } : {}) });
 
-const PRE = { 'Discord': ['#5865f2', '#313338'], 'Pampa': ['#c8372d', '#243326'], 'Chimarrão': ['#7da340', '#2b3328'], 'Azul': ['#4f7bd9', '#1d2740'], 'Noite': ['#a970ff', '#1e1b2e'] };
+const PRE = {
+  'Discord': ['#5865f2', '#313338'], 'Pampa': ['#c8372d', '#243326'], 'Chimarrão': ['#7da340', '#2b3328'], 'Azul': ['#4f7bd9', '#1d2740'],
+  'Noite': ['#a970ff', '#1e1b2e'], 'Meia-noite': ['#3ba55d', '#0b0b0f'], 'Pôr do sol': ['#ff7a45', '#2b1f2e'], 'Oceano': ['#22b8cf', '#12262e'],
+  'Sakura': ['#f472b6', '#2a1d28'], 'Grafite': ['#9aa4b2', '#202327'], 'Ouro': ['#f5b700', '#2a2618'], 'Rubi': ['#ef4444', '#2a1416']
+};
+const ACCENTS = ['#5865f2', '#4f7bd9', '#22b8cf', '#23a559', '#7da340', '#f5b700', '#ff7a45', '#ef4444', '#c8372d', '#f472b6', '#c026d3', '#a970ff'];
+const BGS = ['#313338', '#202327', '#0b0b0f', '#1e1b2e', '#1d2740', '#12262e', '#243326', '#2b3328', '#2a2618', '#2a1416', '#2a1d28', '#2b1f2e'];
+const FONTS = {
+  padrao: ['Padrão', '"gg sans","Segoe UI",system-ui,-apple-system,sans-serif'],
+  arred: ['Arredondada', '"Trebuchet MS","Segoe UI",Verdana,sans-serif'],
+  classica: ['Clássica', 'Georgia,"Times New Roman",serif'],
+  mono: ['Código', '"Cascadia Code",Consolas,ui-monospace,monospace']
+};
+const lum = h => { const n = parseInt(String(h).slice(1), 16) || 0; return [n >> 16 & 255, n >> 8 & 255, n & 255].map((v, i) => { v /= 255; v = v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; return v * [.2126, .7152, .0722][i]; }).reduce((a, b) => a + b, 0); };
 function applyTheme() {
   const r = document.documentElement.style, { accent, bg } = cfg.theme;
   const mx = (p, c) => `color-mix(in srgb, ${bg} ${100 - p}%, ${c} ${p}%)`;
   r.setProperty('--ic', (cfg.ic || 20) + 'px'); r.setProperty('--blur', accent); r.setProperty('--main', bg); r.setProperty('--side', mx(12, '#000')); r.setProperty('--rail', mx(28, '#000'));
   r.setProperty('--input', mx(8, '#fff')); r.setProperty('--hover', mx(5, '#fff')); $('meta[name=theme-color]').content = bg;
+  r.setProperty('--fala', cfg.theme.fala || accent);
+  r.setProperty('--onac', lum(accent) > .42 ? '#111' : '#fff');   // texto escuro em cima de cores claras (ex.: dourado)
+  r.setProperty('--ff', (FONTS[cfg.theme.font] || FONTS.padrao)[1]);
+  r.setProperty('--fsc', (+cfg.theme.fs || 100) / 100);
 }
 applyTheme();
 
@@ -2067,7 +2238,7 @@ document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => ta
 $('#bCfg').onclick = () => {
   ed = { ...cfg.prof }; $('#pNome').value = myName; $('#pSobre').value = ed.about; $('#pCor').value = ed.color || colorOf(myName).slice(0, 7);
   fillVoz(); $('#kMute').textContent = cfg.mute;
-  $('#icSz').value = cfg.ic || 20; $('#cAc').value = cfg.theme.accent; $('#cBg').value = cfg.theme.bg; renderPrev(); tab('perfil'); $('#cfg').hidden = false;
+  $('#icSz').value = cfg.ic || 20; fillTheme(); renderPrev(); tab('perfil'); $('#cfg').hidden = false;
 };
 $('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; };
 $('#pNome').oninput = renderPrev;
@@ -2077,7 +2248,7 @@ $('#pRmFoto').onclick = () => { ed.avatar = ''; $('#pFoto').value = ''; renderPr
 $('#pRmBanner').onclick = () => { ed.banner = ''; $('#pBanner').value = ''; renderPrev(); };
 $('#pRmCor').onclick = () => { ed.color = ''; $('#pCor').value = colorOf($('#pNome').value || myName).slice(0, 7); renderPrev(); };
 $('#pRmSobre').onclick = () => { ed.about = ''; $('#pSobre').value = ''; renderPrev(); };
-$('#icSz').oninput = e => { cfg.ic = +e.target.value; applyTheme(); saveCfg(); };
+$('#icSz').oninput = e => { cfg.ic = +e.target.value; $('#icSzT').textContent = cfg.ic + ' px'; applyTheme(); saveCfg(); };
 // GIF fica animado (sem redimensionar). Outras imagens continuam sendo reduzidas.
 function pickImg(e, key, w, h, maxGif) {
   const f = e.target.files[0]; if (!f) return;
@@ -2096,12 +2267,47 @@ $('#pSalvar').onclick = () => {
 };
 ['ns', 'ec', 'agc'].forEach(k => $('#' + k).onchange = e => { cfg[k] = e.target.checked; saveCfg(); applyMic(); });
 $('#micSel').onchange = e => { cfg.mic = e.target.value; saveCfg(); applyMic(); };
+// ---------- aparência: temas, cores, fonte e tamanho ----------
+const setTheme = patch => { cfg.theme = { ...cfg.theme, ...patch }; applyTheme(); saveCfg(); fillTheme(); };
+function swatches(box, list, key, inputId) {
+  const cur = String(cfg.theme[key] || (key === 'fala' ? cfg.theme.accent : '')).toLowerCase();
+  box.replaceChildren();
+  list.forEach(c => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'dot' + (c === cur ? ' on' : ''); b.style.background = c; b.title = c;
+    b.onclick = () => setTheme({ [key]: c }); box.append(b);
+  });
+  const l = document.createElement('label'); l.className = 'dot rb'; l.title = 'Escolher outra cor'; l.style.setProperty('--cur', cur || '#ffffff');
+  const i = document.createElement('input'); i.type = 'color'; i.id = inputId; i.value = /^#[0-9a-f]{6}$/.test(cur) ? cur : '#ffffff';
+  i.oninput = e => { cfg.theme[key] = e.target.value; l.style.setProperty('--cur', e.target.value); applyTheme(); saveCfg(); markPresets(); };   // sem refazer a lista: o seletor de cor do sistema não pode fechar
+  l.append(i); box.append(l);
+}
+function markPresets() {
+  const a = String(cfg.theme.accent).toLowerCase(), b = String(cfg.theme.bg).toLowerCase();
+  document.querySelectorAll('#presets .pt').forEach(x => x.classList.toggle('on', x.dataset.a === a && x.dataset.b === b));
+  const fa = $('#faReset'); if (fa) fa.hidden = !cfg.theme.fala;
+}
+function fillTheme() {
+  swatches($('#swAc'), ACCENTS, 'accent', 'cAc'); swatches($('#swFa'), ACCENTS, 'fala', 'cFa'); swatches($('#swBg'), BGS, 'bg', 'cBg');
+  $('#fontSel').value = FONTS[cfg.theme.font] ? cfg.theme.font : 'padrao';
+  document.querySelectorAll('#fsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.v === (+cfg.theme.fs || 100)));
+  $('#icSz').value = cfg.ic || 20; $('#icSzT').textContent = (cfg.ic || 20) + ' px';
+  markPresets();
+}
 Object.entries(PRE).forEach(([n, [a, b]]) => {
-  const x = document.createElement('button'); x.textContent = n; x.style.borderLeft = '8px solid ' + a;
-  x.onclick = () => { cfg.theme = { accent: a, bg: b }; $('#cAc').value = a; $('#cBg').value = b; applyTheme(); saveCfg(); }; $('#presets').append(x);
+  const x = document.createElement('button'); x.type = 'button'; x.className = 'pt'; x.dataset.a = a; x.dataset.b = b;
+  x.style.setProperty('--pbg', b); x.style.setProperty('--pac', a);
+  const t = document.createElement('b'); t.textContent = n; x.append(document.createElement('i'), document.createElement('i'), t);
+  x.onclick = () => setTheme({ accent: a, bg: b, fala: '' }); $('#presets').append(x);
 });
-$('#cAc').oninput = e => { cfg.theme.accent = e.target.value; applyTheme(); saveCfg(); };
-$('#cBg').oninput = e => { cfg.theme.bg = e.target.value; applyTheme(); saveCfg(); };
+Object.entries(FONTS).forEach(([k, [n]]) => $('#fontSel').append(new Option(n, k)));
+$('#fontSel').onchange = e => setTheme({ font: e.target.value });
+[['Pequeno', 90], ['Normal', 100], ['Grande', 115], ['Enorme', 130]].forEach(([n, v]) => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = n; b.dataset.v = v; b.onclick = () => setTheme({ fs: v }); $('#fsSeg').append(b);
+});
+$('#faReset').onclick = () => setTheme({ fala: '' });
+$('#thReset').onclick = () => { cfg.theme = { ...DEF.theme }; cfg.ic = DEF.ic; applyTheme(); saveCfg(); fillTheme(); toast('Visual padrão restaurado.'); };
+// Esc fecha as configurações (menos quando está gravando um atalho)
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cfg').hidden && !capt) { $('#cfg').hidden = true; } }, true);
 
 // ---------- configurações novas: áudio, seletor de tela, atualização ----------
 function fillDevs() {
