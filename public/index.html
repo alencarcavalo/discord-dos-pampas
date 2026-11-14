@@ -227,6 +227,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .vb{gap:8px;margin-bottom:6px}
 .vb button{height:38px;padding:0;border-radius:8px;background:#383a40}
 .vb button:hover{background:#4a4d55}
+.vb button[hidden]{display:none}
 #meav{width:34px;height:34px;flex:none;margin-right:6px}
 #me>div:nth-child(2){flex:1;min-width:0;line-height:1.25;margin-right:4px}
 #meN{font-weight:600;font-size:.95rem}
@@ -290,6 +291,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       <div class="vb">
         <button id="bCam" title="Câmera">📷</button>
         <button id="bTela" title="Compartilhar tela">🖥️</button>
+        <button id="bTrocar" title="Trocar a tela / janela que você está transmitindo" hidden>🔄</button>
       </div>
     </div>
     <div id="me"><div class="av" id="meav"></div><div><b id="meN"></b><small>Online</small></div><div class="sp"><button id="bMic" title="Mutar / desmutar microfone">🎤</button><button class="ar" id="aMic" type="button" title="Opções do microfone"></button></div><div class="sp"><button id="bDeaf" title="Ficar sem áudio (fone mudo)">🎧</button><button class="ar" id="aDeaf" type="button" title="Opções de áudio"></button></div><button id="bCfg" title="Configurações">⚙️</button></div>
@@ -448,11 +450,12 @@ const P = {
   head: '<path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>',
   headoff: '<path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/><path d="M2.4 3.8 3.8 2.4 21.6 20.2 20.2 21.6z" stroke="var(--rail)" stroke-width="1.5"/>',
   expand: '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>',
+  swap: '<path d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>',
   pin: '<path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/>'
 };
 const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[n] + '</svg>';
 function ico(n) { const s = document.createElement('span'); s.className = 'ico'; s.innerHTML = svg(n); return s; }
-[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bDeaf', 'head'], ['#bCfg', 'gear'], ['#aMic', 'down'], ['#aDeaf', 'down'], ['#sig', 'sig'], ['#bAnexo', 'plus'], ['#bFig', 'smile']]
+[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bTrocar', 'swap'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bDeaf', 'head'], ['#bCfg', 'gear'], ['#aMic', 'down'], ['#aDeaf', 'down'], ['#sig', 'sig'], ['#bAnexo', 'plus'], ['#bFig', 'smile']]
   .forEach(([s, n]) => { const b = $(s); b.classList.add('ico'); b.innerHTML = svg(n); });
 
 // ---------- áudio: saída, volume do app e sons ----------
@@ -1033,8 +1036,46 @@ async function startShare() {
     Object.keys(peers).forEach(addShareAudio);
   }
   v.onended = stopShare;
-  addScreen(me, S.screen, true); syncStage(); press($('#bTela'), true); sendVs();
+  addScreen(me, S.screen, true); syncStage(); press($('#bTela'), true); $('#bTrocar').hidden = false; sendVs();
   applyShareQ(); clearInterval(sqTimer); sqTimer = setInterval(applyShareQ, 4000);   // pega também quem entra depois
+}
+// trocar a tela/janela sem parar a transmissão (quem assiste continua assistindo)
+let swapping = false;
+async function swapShare() {
+  if (swapping || !S.screen.getTracks().length) return;
+  swapping = true;
+  try {
+    const [qw, qh, qf] = sqNow();
+    let m;
+    try { m = await navigator.mediaDevices.getDisplayMedia({ video: { width: { ideal: qw }, height: { ideal: qh }, frameRate: { ideal: qf } }, audio: { restrictOwnAudio: true } }); }
+    catch { return; }   // cancelou: continua transmitindo a tela de antes
+    const nv = m.getVideoTracks()[0]; nv.contentHint = 'motion';
+    const old = S.screen.getVideoTracks()[0];
+    // troca o vídeo direto nos envios: ninguém precisa reconectar
+    for (const p of Object.values(peers)) for (const sn of (p.snd.screen || [])) {
+      if (sn && sn.track && sn.track.kind === 'video') { try { await sn.replaceTrack(nv); } catch (e) { console.warn('troca', e); } }
+    }
+    if (old) { old.onended = null; S.screen.removeTrack(old); old.stop(); }
+    S.screen.addTrack(nv);
+    nv.onended = stopShare;
+    const t = TL['s:' + me + ':' + S.screen.id]; if (t) t.v.play().catch(() => {});
+    // áudio do PC: recomeça com o som da nova tela (ou sem som, se ela não tiver)
+    Object.keys(peers).forEach(dropShareAudio);
+    if (shareAud) {
+      try { shareAud.src.disconnect(); } catch {}
+      if (shareAud.out !== shareAud.src) { try { refTap.disconnect(shareAud.out); shareAud.out.disconnect(); shareAud.out.port.onmessage = null; } catch {} }
+      shareAud.track.stop(); shareAud = null; aecOn = false; aecInfo = null;
+    }
+    const a = m.getAudioTracks()[0];
+    if (a) {
+      const src = getAC().createMediaStreamSource(new MediaStream([a]));
+      shareAud = { track: a, src, out: src };
+      shareAud.out = await buildAec(src);
+      Object.keys(peers).forEach(addShareAudio);
+    }
+    paintAec(); applyShareQ();
+  } catch (e) { console.error(e); note('Não consegui trocar a tela.'); }
+  finally { swapping = false; }
 }
 function stopShare() {
   clearInterval(sqTimer);
@@ -1045,7 +1086,7 @@ function stopShare() {
     shareAud.track.stop(); shareAud = null;
   }
   aecOn = false; aecInfo = null; paintAec();
-  dropLocal('screen'); press($('#bTela'), false); sendVs();
+  dropLocal('screen'); press($('#bTela'), false); $('#bTrocar').hidden = true; sendVs();
 }
 
 $('#bCam').onclick = async e => {
@@ -1064,6 +1105,7 @@ $('#bTela').onclick = async () => {
   cfg.sq = q; saveCfg(); if (!$('#cfg').hidden) fillVoz();
   try { await startShare(); } catch (e) { console.error(e); note('Compartilhamento de tela cancelado.'); }
 };
+$('#bTrocar').onclick = swapShare;
 $('#bSair').onclick = () => { dropAll(); send({ type: 'leave' }); sfx('eu_sai'); sendVs(); if (view?.k === 'v') firstText(); else { renderChans(); renderTop(); } };
 
 $('#chat').onsubmit = e => {
