@@ -784,7 +784,7 @@ function musicCard(music) {   // capa + nome + artista (cartão de perfil)
   const b = document.createElement('b'); b.textContent = ti; mt.append(b);
   if (rest.length) { const a = document.createElement('span'); a.textContent = rest.join(' — '); mt.append(a); }
   d.append(cv, mt);
-  coverFor(music, url => { const im = document.createElement('img'); im.className = 'cv'; im.alt = ''; im.src = url; if (cv.isConnected) cv.replaceWith(im); });
+  coverFor(music, url => { const im = document.createElement('img'); im.className = 'cv'; im.alt = ''; im.src = url; if (cv.parentNode) cv.replaceWith(im); });
   return d;
 }
 function actLines(u, rich) {
@@ -793,7 +793,7 @@ function actLines(u, rich) {
   if (a.music && rich) out.push(musicCard(a.music));
   else if (a.music) {
     const e = document.createElement('small'); e.className = 'act'; e.textContent = '🎵 ' + a.music; e.title = a.music; out.push(e);
-    coverFor(a.music, url => { if (!e.isConnected) return; const im = document.createElement('img'); im.className = 'cv'; im.alt = ''; im.src = url; e.replaceChildren(im, document.createTextNode(a.music)); });
+    coverFor(a.music, url => { const im = document.createElement('img'); im.className = 'cv'; im.alt = ''; im.src = url; e.replaceChildren(im, document.createTextNode(a.music)); });
   }
   return out;
 }
