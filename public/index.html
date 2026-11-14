@@ -193,6 +193,25 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .file{display:inline-block;margin-top:4px;padding:8px 12px;background:var(--side);border-radius:6px;color:#00a8fc;text-decoration:none}
 .stk{display:inline-grid;justify-items:center;margin-top:4px;padding:8px 14px;font-size:3.6rem;line-height:1.1;background:var(--side);border-radius:12px}
 .stk small{font-size:.9rem;color:var(--txt);font-weight:700}
+.msg{position:relative}
+.msg>div:last-child{min-width:0}
+.mact{position:absolute;top:-12px;right:4px;display:flex;gap:2px;background:var(--side);border:1px solid var(--input);border-radius:6px;padding:2px;opacity:0;pointer-events:none}
+.msg:hover .mact,.msg:focus-within .mact{opacity:1;pointer-events:auto}
+@media(hover:none){.mact{opacity:1;pointer-events:auto;top:-8px}}
+.mact button{padding:2px 7px;font-size:1rem;border-radius:4px;color:var(--mut)}
+.mact button:hover{background:var(--hover);color:var(--txt)}
+.rq{display:flex;gap:6px;align-items:baseline;margin-bottom:2px;padding-left:8px;border-left:3px solid var(--mut);font-size:.82rem;color:var(--mut);cursor:pointer;overflow:hidden;white-space:nowrap}
+.rq b{color:var(--txt);margin:0}
+.rq span{overflow:hidden;text-overflow:ellipsis}
+.ed{margin-top:2px}
+.edh{display:block;color:var(--mut);font-size:.75rem;margin-top:2px}
+.msg .eds{color:var(--mut);font-size:.72rem;margin-left:.3rem}
+.msg.hl{animation:hl 1.6s}
+@keyframes hl{from{background:#5865f255}to{background:transparent}}
+#rbar{display:flex;align-items:center;gap:8px;margin:0 16px;padding:6px 12px;background:var(--side);border-radius:8px 8px 0 0;font-size:.85rem;color:var(--mut)}
+#rbar span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rbar b{color:var(--txt)}
+#rbar button{padding:2px 8px}
 #chat{display:flex;gap:4px;align-items:center;background:var(--input);margin:0 16px 16px;border-radius:8px;padding:0 6px}
 #chat input{background:transparent}
 #chat button{font-size:1.3rem;padding:6px 8px}
@@ -312,6 +331,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       <div id="msgs" aria-live="polite"></div>
       <div id="pend"></div>
       <div id="figs" hidden></div>
+      <div id="rbar" hidden></div>
       <form id="chat">
         <button type="button" id="bAnexo" title="Enviar imagem ou arquivo">➕</button>
         <input id="txt" maxlength="2000" autocomplete="off">
@@ -821,28 +841,90 @@ function firstText() { const c = st.channels.find(c => c.kind === 'text'); if (c
 function openText(id) {
   view = { k: 't', id }; unread[id] = 0;
   if (!(id in hist)) { hist[id] = null; send({ type: 'history', channel: id }); }
-  renderMsgs(); renderChans(); renderTop();
+  if (replyTo && replyTo.ch !== id) replyTo = null;
+  renderMsgs(); renderChans(); renderTop(); paintReply();
 }
-let lastDay = '';
-function renderMsgs() { $('#msgs').replaceChildren(); lastDay = ''; (hist[view?.id] || []).forEach(addMsg); $('#msgs').scrollTop = 1e9; }
-function addMsg(m) {
-  const d = document.createElement('div'), c = document.createElement('div'), p = document.createElement('div'); d.className = 'msg';
+let lastDay = '', replyTo = null;
+// identidade fixa deste aparelho: prova ao servidor que a mensagem é sua (para editar). Fica só aqui e no servidor, nunca vai para os outros.
+let CID = ''; try { CID = localStorage.getItem('pampas-cid') || ''; if (!CID) { CID = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)); localStorage.setItem('pampas-cid', CID); } } catch {}
+function renderMsgs() { $('#msgs').replaceChildren(); lastDay = ''; const id = view?.id; (hist[id] || []).forEach(m => addMsg(m, id)); $('#msgs').scrollTop = 1e9; }
+const snipOf = x => (x.text || '').replace(/\s+/g, ' ').slice(0, 100) || (x.att && x.att[0] ? '📎 ' + x.att[0].name : x.st != null ? 'Figurinha' : '');
+const msgEl = mid => $('#msgs').querySelector('.msg[data-mid="' + CSS.escape(mid) + '"]');
+function mkMsg(m, ch) {
+  const d = document.createElement('div'), c = document.createElement('div'), p = document.createElement('div'); d.className = 'msg'; c.className = 'cb'; p.className = 'hd';
+  if (m.mid) d.dataset.mid = m.mid;
   const b = document.createElement('b'); b.textContent = m.from;
   const tm = document.createElement('time'); tm.textContent = new Date(m.t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  p.append(b, tm); c.append(p);
-  if (m.text) { const t = document.createElement('p'); t.textContent = m.text; c.append(t); }
+  p.append(b, tm);
+  if (m.edited) { const e = document.createElement('small'); e.className = 'eds'; e.textContent = '(editada)'; e.title = 'Editada em ' + new Date(m.edited).toLocaleString('pt-BR'); p.append(e); }
+  if (m.re) {   // resposta: mostra quem e o quê (com o texto atual da original, se ela ainda estiver no histórico)
+    const o = (hist[ch] || []).find(x => x.mid === m.re.mid);
+    const q = document.createElement('div'); q.className = 'rq'; q.title = 'Ir para a mensagem';
+    const qb = document.createElement('b'); qb.textContent = '↪ ' + (o ? o.from : m.re.from);
+    const qs = document.createElement('span'); qs.textContent = o ? snipOf(o) : m.re.text;
+    q.append(qb, qs); q.onclick = () => jumpTo(m.re.mid); c.append(q);
+  }
+  c.append(p);
+  if (m.text) { const t = document.createElement('p'); t.className = 'tx'; t.textContent = m.text; c.append(t); }
   if (m.st != null && STK[m.st]) { const s = document.createElement('div'); s.className = 'stk'; s.textContent = STK[m.st][0]; const l = document.createElement('small'); l.textContent = STK[m.st][1]; s.append(l); c.append(s); }
   (m.att || []).forEach(a => {
     if (a.type.startsWith('image/')) { const i = document.createElement('img'); i.className = 'a'; i.src = a.data; c.append(i); }
     else { const l = document.createElement('a'); l.className = 'file'; l.href = a.data; l.download = a.name; l.textContent = '📎 ' + a.name + ' (' + Math.ceil(a.size / 1024) + ' KB)'; c.append(l); }
   });
+  d.append(avatar(m.from, 0, m.uid), c);
+  if (m.mid && ch) {
+    const t = document.createElement('div'); t.className = 'mact';
+    const r = document.createElement('button'); r.type = 'button'; r.textContent = '↩️'; r.title = 'Responder'; r.onclick = () => startReply(m, ch); t.append(r);
+    if (m.own && (m.text || (m.att || []).length)) { const e = document.createElement('button'); e.type = 'button'; e.textContent = '✏️'; e.title = 'Editar'; e.onclick = () => startEdit(m, ch); t.append(e); }
+    d.append(t);
+  }
+  return d;
+}
+function addMsg(m, ch) {
+  const d = mkMsg(m, ch);
   const dt = new Date(m.t), day = dt.toDateString();   // linha com a data quando muda o dia (igual ao Discord)
   if (day !== lastDay) {
     lastDay = day;
     const dv = document.createElement('div'); dv.className = 'dv'; const sp = document.createElement('span');
     sp.textContent = dt.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }); dv.append(sp); $('#msgs').append(dv);
   }
-  d.append(avatar(m.from, 0, m.uid), c); $('#msgs').append(d); $('#msgs').scrollTop = 1e9;
+  $('#msgs').append(d); $('#msgs').scrollTop = 1e9;
+}
+// troca só aquela mensagem na tela (sem rolar o chat); não mexe se a pessoa está editando outra coisa nela
+function patchMsg(m, ch, force) { const el = msgEl(m.mid); if (el && (force || !el.querySelector('input.ed'))) el.replaceWith(mkMsg(m, ch)); }
+function jumpTo(mid) {
+  const el = msgEl(mid); if (!el) return toast('Essa mensagem já não está mais no histórico.');
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('hl'); void el.offsetWidth; el.classList.add('hl');
+}
+function startReply(m, ch) { replyTo = { ch, mid: m.mid, from: m.from, text: snipOf(m) }; paintReply(); $('#txt').focus(); }
+function paintReply() {
+  const b = $('#rbar'); if (!replyTo || view?.k !== 't') { b.hidden = true; b.replaceChildren(); return; }
+  const s = document.createElement('span'), n = document.createElement('b'); n.textContent = replyTo.from;
+  s.append('Respondendo a ', n, replyTo.text ? ': ' + replyTo.text : '');
+  const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.title = 'Cancelar resposta'; x.onclick = () => { replyTo = null; paintReply(); };
+  b.replaceChildren(s, x); b.hidden = false;
+}
+const takeReply = ch => { const r = replyTo && replyTo.ch === ch ? replyTo.mid : undefined; replyTo = null; paintReply(); return r; };
+function startEdit(m, ch) {
+  const d = msgEl(m.mid); if (!d || d.querySelector('input.ed')) return;
+  const c = d.querySelector('.cb'), tp = c.querySelector('p.tx');
+  const i = document.createElement('input'); i.className = 'ed'; i.maxLength = 2000; i.value = m.text || '';
+  const h = document.createElement('small'); h.className = 'edh'; h.textContent = 'Enter salva · Esc cancela';
+  if (tp) tp.replaceWith(i); else c.querySelector('.hd').after(i);
+  i.after(h);
+  const done = () => { patchMsg(m, ch, true); $('#txt').focus(); };
+  i.onkeydown = e => {
+    if (e.key === 'Escape') { e.preventDefault(); done(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault(); const t = i.value.trim();
+      if (t !== (m.text || '').trim()) {
+        if (!t && !(m.att || []).length && m.st == null) return toast('A mensagem não pode ficar vazia.');
+        m.text = t; m.edited = Date.now(); send({ type: 'msg-edit', channel: ch, mid: m.mid, text: t });
+      }
+      done();
+    }
+  };
+  i.focus(); i.setSelectionRange(i.value.length, i.value.length);
 }
 
 $('#login').onsubmit = e => {
@@ -851,7 +933,7 @@ $('#login').onsubmit = e => {
   try { localStorage.setItem('pampas-nome', myName); } catch {}
   fetch('/ice').then(r => r.json()).then(j => ICE = j).catch(() => {});
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-  ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof });
+  ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof, cid: CID });
   ws.onmessage = ev => handle(JSON.parse(ev.data));
   ws.onclose = () => showReload(kickedBy ? 'Você foi removido por ' + kickedBy + '.' : 'Conexão perdida ou o app foi atualizado.');
 };
@@ -906,7 +988,10 @@ function handle(m) {
   } else if (m.type === 'history') { hist[m.channel] = m.msgs; if (view?.k === 't' && view.id === m.channel) renderMsgs(); }
   else if (m.type === 'msg') {
     (hist[m.channel] ||= []).push(m.msg);
-    if (view?.k === 't' && view.id === m.channel) addMsg(m.msg); else { unread[m.channel] = 1; renderChans(); }
+    if (view?.k === 't' && view.id === m.channel) addMsg(m.msg, m.channel); else { unread[m.channel] = 1; renderChans(); }
+  } else if (m.type === 'msg-edit') {
+    const x = (hist[m.channel] || []).find(y => y.mid === m.mid);
+    if (x) { x.text = m.text; x.edited = m.edited; if (view?.k === 't' && view.id === m.channel) patchMsg(x, m.channel); }
   } else if (m.type === 'kicked') { kickedBy = m.by || 'alguém'; dropAll(); }
   else if (m.type === 'full') { toast('Esse canal está cheio (máximo de 8 pessoas).'); firstText(); }
   else if (m.type === 'joined') {
@@ -1180,8 +1265,15 @@ $('#bSair').onclick = () => { dropAll(); send({ type: 'leave' }); sfx('eu_sai');
 $('#chat').onsubmit = e => {
   e.preventDefault(); const t = $('#txt').value.trim();
   if (!view || view.k !== 't' || (!t && !pend.length)) return;
-  send({ type: 'msg', channel: view.id, text: t, att: pend }); pend = []; $('#txt').value = ''; renderPend();
+  send({ type: 'msg', channel: view.id, text: t, att: pend, re: takeReply(view.id) }); pend = []; $('#txt').value = ''; renderPend();
 };
+$('#txt').addEventListener('keydown', e => {
+  if (e.key === 'Escape' && replyTo) { replyTo = null; paintReply(); }
+  else if (e.key === 'ArrowUp' && !$('#txt').value && !pend.length && view?.k === 't') {   // seta para cima: edita sua última mensagem (igual ao Discord)
+    const l = [...(hist[view.id] || [])].reverse().find(x => x.own && (x.text || (x.att || []).length));
+    if (l) { e.preventDefault(); startEdit(l, view.id); }
+  }
+});
 async function addFiles(fs) {
   for (const f of fs) {
     if (f.size > 3e6) { toast(f.name + ' passa de 3 MB.'); continue; }
@@ -1202,7 +1294,7 @@ $('#chatw').addEventListener('dragover', e => e.preventDefault());
 $('#chatw').addEventListener('drop', e => { e.preventDefault(); addFiles([...e.dataTransfer.files]); });
 STK.forEach((s, i) => {
   const b = document.createElement('button'); b.textContent = s[0]; const l = document.createElement('small'); l.textContent = s[1]; b.append(l);
-  b.onclick = () => { if (view?.k === 't') send({ type: 'msg', channel: view.id, st: i }); $('#figs').hidden = true; }; $('#figs').append(b);
+  b.onclick = () => { if (view?.k === 't') send({ type: 'msg', channel: view.id, st: i, re: takeReply(view.id) }); $('#figs').hidden = true; }; $('#figs').append(b);
 });
 $('#bFig').onclick = () => { $('#figs').hidden = !$('#figs').hidden; };
 
