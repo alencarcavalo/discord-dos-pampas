@@ -662,9 +662,13 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       </div>
 
       <div class="cc"><h3>Desfoque de fundo</h3>
-        <div class="rw col"><div class="rh"><div class="rt"><b>Força do desfoque</b><small>Deixa o centro (onde fica o seu rosto) nítido e desfoca em volta. É um foco oval, não segue o contorno do corpo. 0 desliga.</small></div><span class="pill" id="csT_bgb"></span></div><input type="range" id="cs_bgb" min="0" max="20" step="1"></div>
-        <div class="rw col"><div class="rh"><div class="rt"><b>Tamanho da área nítida</b><small>Aumente se o seu rosto estiver sendo desfocado.</small></div><span class="pill" id="csT_bgs"></span></div><input type="range" id="cs_bgs" min="30" max="120" step="1"></div>
-        <div class="rw col"><div class="rh"><div class="rt"><b>Posição da área nítida</b><small>Negativo sobe, positivo desce.</small></div><span class="pill" id="csT_bgy"></span></div><input type="range" id="cs_bgy" min="-30" max="30" step="1"></div>
+        <div class="rw col"><div class="rt"><b>Modo</b><small><span style="font-weight:700;color:var(--txt)">Só o fundo (IA)</span> reconhece você e desfoca tudo que não é você. Baixa um modelo na primeira vez (precisa de internet) e usa mais processador. <span style="font-weight:700;color:var(--txt)">Foco oval</span> é leve: deixa o centro nítido e desfoca as bordas.</small></div>
+          <div class="seg" id="camBgm"><button type="button" data-v="ia">Só o fundo (IA)</button><button type="button" data-v="oval">Foco oval</button></div>
+          <small id="camSegSt" style="display:block;margin-top:8px;color:var(--mut)"></small></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Força do desfoque</b><small>0 desliga.</small></div><span class="pill" id="csT_bgb"></span></div><input type="range" id="cs_bgb" min="0" max="20" step="1"></div>
+        <div class="rw col" data-oval><div class="rh"><div class="rt"><b>Tamanho da área nítida</b><small>Aumente se o seu rosto estiver sendo desfocado.</small></div><span class="pill" id="csT_bgs"></span></div><input type="range" id="cs_bgs" min="30" max="120" step="1"></div>
+        <div class="rw col" data-oval><div class="rh"><div class="rt"><b>Posição da área nítida</b><small>Negativo sobe, positivo desce.</small></div><span class="pill" id="csT_bgy"></span></div><input type="range" id="cs_bgy" min="-30" max="30" step="1"></div>
+        <div class="rw" id="camBgiW"><div class="rt"><b>Inverter a máscara</b><small>Só ligue se você ficou desfocado e o fundo nítido.</small></div><label class="sw"><input type="checkbox" id="camBgi"><i></i></label></div>
       </div>
 
       <div class="cc"><h3>Filtros</h3>
@@ -1839,7 +1843,7 @@ $('#bSom').onclick = e => {
 };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, blur: 0, bgb: 0, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, blur: 0, bgb: 0, bgm: 'ia', bgi: false, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof }; cfg.cam = { ...DEF.cam, ...cfg.cam };
@@ -2573,6 +2577,7 @@ async function camSwapLive(track) {   // troca a imagem que já está sendo envi
 }
 async function camChanged() {
   if (!CAM) return;
+  if (cfg.cam.bgb > 0 && cfg.cam.bgm === 'ia' && camSeg.st === 'off') segLoad();
   camSetMode();
   if (CAM.live) await camSwapLive(camTrack());
   camPrevUI();
@@ -2605,6 +2610,46 @@ function camBR() {   // teto de bitrate/fps do envio (também pega quem entra de
       sn.setParameters(pr).catch(() => {});
     } catch (er) { console.warn('cam bitrate', er); }
   }
+}
+
+
+// ---- desfoque só do fundo: IA de segmentação (MediaPipe) carregada na hora que precisa ----
+const SEG_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/';
+const camSeg = { st: 'off', sg: null, mc: document.createElement('canvas'), g: null, has: false, busy: false };
+function camBgUI() {
+  const o = cfg.cam, ia = o.bgm === 'ia', fail = camSeg.st === 'fail';
+  document.querySelectorAll('[data-oval]').forEach(e => e.hidden = ia && !fail);
+  const w = $('#camBgiW'); if (w) w.hidden = !ia || fail;
+  document.querySelectorAll('#camBgm button').forEach(b => b.classList.toggle('on', b.dataset.v === o.bgm));
+  const e = $('#camSegSt'); if (e) e.textContent = !ia ? '' : camSeg.st === 'loading' ? 'Carregando a IA do desfoque (só na primeira vez)…' : camSeg.st === 'ready' ? 'IA pronta.' : fail ? 'Não consegui carregar a IA (ela precisa de internet). Usando o foco oval. Clique em “Só o fundo (IA)” para tentar de novo.' : '';
+}
+async function segLoad() {
+  if (camSeg.st === 'loading' || camSeg.st === 'ready') return;
+  camSeg.st = 'loading'; camBgUI();
+  try {
+    if (!window.SelfieSegmentation) await new Promise((ok, no) => {
+      const sc = document.createElement('script'); sc.src = SEG_URL + 'selfie_segmentation.js'; sc.crossOrigin = 'anonymous';
+      sc.onload = ok; sc.onerror = () => no(new Error('não baixou o script')); document.head.append(sc);
+    });
+    const sg = new window.SelfieSegmentation({ locateFile: f => SEG_URL + f });
+    sg.setOptions({ modelSelection: 1 });
+    sg.onResults(segResult);
+    await Promise.race([sg.initialize(), new Promise((_, no) => setTimeout(() => no(new Error('demorou demais')), 30000))]);
+    camSeg.sg = sg; camSeg.st = 'ready';
+  } catch (e) { console.warn('IA do desfoque:', e); camSeg.st = 'fail'; toast('Não consegui carregar a IA do desfoque. Usando o foco oval.'); }
+  camBgUI();
+}
+function segResult(r) {   // transforma a resposta da IA numa máscara só de transparência (opaco = você)
+  const m = r && r.segmentationMask; if (!m) return;
+  const w = m.width || 256, h = m.height || 256, mc = camSeg.mc;
+  if (mc.width !== w || mc.height !== h) { mc.width = w; mc.height = h; camSeg.g = null; }
+  const g = camSeg.g || (camSeg.g = mc.getContext('2d', { willReadFrequently: true }));
+  g.globalCompositeOperation = 'copy'; g.drawImage(m, 0, 0, w, h);
+  const im = g.getImageData(0, 0, w, h), d = im.data;
+  let lo = 255, hi = 0; for (let i = 3; i < d.length; i += 64) { if (d[i] < lo) lo = d[i]; if (d[i] > hi) hi = d[i]; }
+  const ch = hi - lo > 40 ? 3 : 0, inv = !!cfg.cam.bgi;   // a máscara vem no alfa ou no canal vermelho
+  for (let i = 0; i < d.length; i += 4) { const v = d[i + ch]; d[i + 3] = inv ? 255 - v : v; d[i] = d[i + 1] = d[i + 2] = 0; }
+  g.putImageData(im, 0, 0); camSeg.has = true;
 }
 
 // ---- desenho de cada quadro ----
@@ -2645,6 +2690,13 @@ function camDraw() {
     g.restore();
   };
   if (o.bgb > 0) {
+    const ia = o.bgm === 'ia';
+    if (ia && camSeg.st === 'off') segLoad();
+    const seg = ia && camSeg.st === 'ready' && camSeg.has;
+    if (ia && camSeg.st === 'ready' && !camSeg.busy) {   // pede uma máscara nova (sem acumular pedidos)
+      camSeg.busy = true;
+      try { Promise.resolve(camSeg.sg.send({ image: v })).catch(() => {}).finally(() => { camSeg.busy = false; }); } catch { camSeg.busy = false; }
+    }
     const r = o.bgb * H / 720;
     if (CAMF_OK) paint(x, (f + ' blur(' + r.toFixed(1) + 'px)').trim(), 1 + Math.min(.25, 3 * r / W));
     else {   // sem ctx.filter (Safari antigo): encolhe e estica a imagem, que também borra
@@ -2653,15 +2705,23 @@ function camDraw() {
       sc.getContext('2d').drawImage(v, 0, 0, sc.width, sc.height);
       x.save(); if (o.mirror) { x.translate(W, 0); x.scale(-1, 1); } x.drawImage(sc, 0, 0, W, H); x.restore();
     }
-    // camada nítida só no meio, com a borda suave (oval)
+    // camada nítida recortada: pela silhueta (IA) ou por um oval com a borda suave
     const fc = c.fc || (c.fc = document.createElement('canvas')); if (fc.width !== W || fc.height !== H) { fc.width = W; fc.height = H; }
     const fx = fc.getContext('2d'); fx.globalCompositeOperation = 'source-over'; fx.clearRect(0, 0, W, H);
     paint(fx, f, 1);
-    const rx = W * o.bgs / 200, ry = H * o.bgs / 200;
     fx.save(); fx.globalCompositeOperation = 'destination-in';
-    fx.translate(W / 2, H / 2 + o.bgy / 100 * H); fx.scale(1, ry / rx);
-    const g = fx.createRadialGradient(0, 0, rx * .5, 0, 0, rx); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    fx.fillStyle = g; fx.fillRect(-1e4, -1e4, 2e4, 2e4); fx.restore();
+    if (seg) {
+      if (o.mirror) { fx.translate(W, 0); fx.scale(-1, 1); }
+      if (CAMF_OK) fx.filter = 'blur(' + Math.max(1, H / 300).toFixed(1) + 'px)';   // borda do recorte mais suave
+      const mw = camSeg.mc.width, mh = camSeg.mc.height;
+      fx.drawImage(camSeg.mc, mw * (1 - 1 / z) / 2, mh * (1 - 1 / z) / 2, mw / z, mh / z, 0, 0, W, H);
+    } else {
+      const rx = W * o.bgs / 200, ry = H * o.bgs / 200;
+      fx.translate(W / 2, H / 2 + o.bgy / 100 * H); fx.scale(1, ry / rx);
+      const g = fx.createRadialGradient(0, 0, rx * .5, 0, 0, rx); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      fx.fillStyle = g; fx.fillRect(-1e4, -1e4, 2e4, 2e4);
+    }
+    fx.restore();
     x.drawImage(fc, 0, 0);
   } else paint(x, f, 1);
   // 2) cor por cima (frio, quente, cyberpunk...)
@@ -2754,7 +2814,7 @@ function fillCam() {
   $('#camBw').value = o.bw; $('#camBwT').textContent = o.bw + '%'; $('#camBc').value = o.bc; $('#camBc2').value = o.bc2;
   document.querySelectorAll('#camFilters .cfb').forEach(b => b.classList.toggle('on', b.dataset.k === o.f));
   document.querySelectorAll('#camBords .cfb').forEach(b => b.classList.toggle('on', b.dataset.k === o.bd));
-  $('#camFNote').hidden = CAMF_OK; camDevs(); camPrevUI();
+  $('#camFNote').hidden = CAMF_OK; $('#camBgi').checked = !!o.bgi; camBgUI(); camDevs(); camPrevUI();
 }
 let camSaveT = 0; const camSave = () => { clearTimeout(camSaveT); camSaveT = setTimeout(saveCfg, 300); };
 const camSet = (k, v) => { cfg.cam[k] = v; camSave(); camChanged(); };
@@ -2765,6 +2825,8 @@ $('#camBw').addEventListener('input', e => { const v = +e.target.value; $('#camB
 $('#camBc').addEventListener('input', e => camSet('bc', e.target.value));
 $('#camBc2').addEventListener('input', e => camSet('bc2', e.target.value));
 [['camMir', 'mirror'], ['camVig', 'vig'], ['camScan', 'scan'], ['camTag', 'tag']].forEach(([id, k]) => $('#' + id).onchange = e => camSet(k, e.target.checked));
+document.querySelectorAll('#camBgm button').forEach(b => b.onclick = () => { cfg.cam.bgm = b.dataset.v; saveCfg(); if (b.dataset.v === 'ia' && camSeg.st === 'fail') camSeg.st = 'off'; camBgUI(); camChanged(); });
+$('#camBgi').onchange = e => { cfg.cam.bgi = e.target.checked; saveCfg(); };
 $('#camSel').onchange = e => { cfg.cam.dev = e.target.value; saveCfg(); camHW(true); };
 $('#camRes').onchange = e => { cfg.cam.res = e.target.value; saveCfg(); camHW(false); };
 $('#camBr').onchange = e => { cfg.cam.br = e.target.value; saveCfg(); camBR(); };
