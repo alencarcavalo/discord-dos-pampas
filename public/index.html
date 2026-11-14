@@ -450,6 +450,20 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .cfb.on{border-color:var(--blur);background:color-mix(in srgb,var(--blur) 22%,transparent)}
 .ccol{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
 .ccol label{display:flex;align-items:center;gap:8px;color:var(--mut);font-weight:600;font-size:.86rem}
+
+#cfgbody>section[data-p=cam]{max-width:1240px}
+.camwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);gap:24px;align-items:start}
+.camctl{grid-column:1;grid-row:1;min-width:0}
+.campv{grid-column:2;grid-row:1;position:sticky;top:0;align-self:start;z-index:3}
+.campv .cc{margin:0}
+@media(max-width:1180px){
+  .camwrap{display:block}
+  .campv{top:-20px;padding:8px 0 6px;background:var(--main)}
+  .campv .cc{padding:10px 12px;margin-bottom:6px}
+  #camStage{max-height:30vh}
+  #camInfo{display:none}
+  .campv .rc{margin-top:8px!important}
+}
 </style>
 </head>
 <body>
@@ -619,12 +633,13 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 
     <section data-p="cam" hidden><h2>Câmera</h2>
       <p class="sub">As mudanças valem na hora, mesmo com a câmera ligada na chamada. Os efeitos são aplicados no seu aparelho antes de enviar, então todo mundo vê igual.</p>
-
+      <div class="camwrap"><div class="campv">
       <div class="cc pad">
         <div id="camStage"><video id="camPrev" muted playsinline autoplay></video><div id="camPrevMsg">Câmera desligada</div></div>
         <div class="rc" style="margin-top:12px"><button type="button" class="go" id="camPrevBtn">Ligar pré-visualização</button><button type="button" class="sec" id="camReset">Restaurar efeitos</button></div>
         <small id="camInfo"></small>
       </div>
+      </div><div class="camctl">
 
       <div class="cc"><h3>Dispositivo e qualidade</h3>
         <div class="rw col"><div class="rt"><b>Câmera</b><small>Os nomes aparecem completos depois que você liga a pré-visualização uma vez.</small></div><select id="camSel"></select></div>
@@ -646,6 +661,12 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
         <div class="rw"><div class="rt"><b>Espelhar imagem</b><small>Vira a imagem como num espelho (todo mundo vê assim).</small></div><label class="sw"><input type="checkbox" id="camMir"><i></i></label></div>
       </div>
 
+      <div class="cc"><h3>Desfoque de fundo</h3>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Força do desfoque</b><small>Deixa o centro (onde fica o seu rosto) nítido e desfoca em volta. É um foco oval, não segue o contorno do corpo. 0 desliga.</small></div><span class="pill" id="csT_bgb"></span></div><input type="range" id="cs_bgb" min="0" max="20" step="1"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Tamanho da área nítida</b><small>Aumente se o seu rosto estiver sendo desfocado.</small></div><span class="pill" id="csT_bgs"></span></div><input type="range" id="cs_bgs" min="30" max="120" step="1"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Posição da área nítida</b><small>Negativo sobe, positivo desce.</small></div><span class="pill" id="csT_bgy"></span></div><input type="range" id="cs_bgy" min="-30" max="30" step="1"></div>
+      </div>
+
       <div class="cc"><h3>Filtros</h3>
         <small id="camFNote" hidden style="color:var(--mut)">Este navegador não aplica filtros de cor. Bordas, espelho e zoom funcionam normalmente.</small>
         <div class="cgrid" id="camFilters"></div>
@@ -653,7 +674,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
         <div class="rw col"><div class="rh"><div class="rt"><b>Contraste</b></div><span class="pill" id="csT_con"></span></div><input type="range" id="cs_con" min="50" max="150" step="1"></div>
         <div class="rw col"><div class="rh"><div class="rt"><b>Saturação</b></div><span class="pill" id="csT_sat"></span></div><input type="range" id="cs_sat" min="0" max="200" step="1"></div>
         <div class="rw col"><div class="rh"><div class="rt"><b>Matiz</b><small>Gira as cores.</small></div><span class="pill" id="csT_hue"></span></div><input type="range" id="cs_hue" min="-180" max="180" step="1"></div>
-        <div class="rw col"><div class="rh"><div class="rt"><b>Desfoque</b></div><span class="pill" id="csT_blur"></span></div><input type="range" id="cs_blur" min="0" max="10" step="0.5"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Desfoque geral</b><small>Desfoca a imagem inteira, rosto junto.</small></div><span class="pill" id="csT_blur"></span></div><input type="range" id="cs_blur" min="0" max="10" step="0.5"></div>
         <div class="rw col"><div class="rh"><div class="rt"><b>Zoom</b><small>Aproxima o centro da imagem.</small></div><span class="pill" id="csT_zoom"></span></div><input type="range" id="cs_zoom" min="100" max="200" step="1"></div>
       </div>
 
@@ -669,6 +690,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
         <div class="rw"><div class="rt"><b>Linhas de TV</b><small>Visual de televisão antiga.</small></div><label class="sw"><input type="checkbox" id="camScan"><i></i></label></div>
         <div class="rw"><div class="rt"><b>Mostrar meu nome na imagem</b><small>Uma etiqueta no canto de baixo.</small></div><label class="sw"><input type="checkbox" id="camTag"><i></i></label></div>
       </div>
+    </div></div>
     </section>
 
     <section data-p="atalho" hidden><h2>Atalhos</h2>
@@ -1817,7 +1839,7 @@ $('#bSom').onclick = e => {
 };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, blur: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, blur: 0, bgb: 0, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof }; cfg.cam = { ...DEF.cam, ...cfg.cam };
@@ -2467,7 +2489,7 @@ const CAMF = {
   pixel: { n: '🟦 Pixelado', px: 1 },
 };
 const CAMB = { none: '🚫 Nenhuma', solid: '🟦 Sólida', double: '🔲 Dupla', neon: '💡 Neon', rainbow: '🌈 Arco-íris', grad: '🎨 Degradê girando', dash: '➖ Pontilhada', pulse: '💓 Pulsando', voice: '🎙️ Acende quando falo', round: '⬜ Cantos redondos', polaroid: '📷 Polaroid', film: '🎞️ Filme' };
-const CAM_SL = [['bri', '%'], ['con', '%'], ['sat', '%'], ['hue', '°'], ['blur', ' px'], ['zoom', '%']];
+const CAM_SL = [['bri', '%'], ['con', '%'], ['sat', '%'], ['hue', '°'], ['blur', ' px'], ['zoom', '%'], ['bgb', ' px'], ['bgs', '%'], ['bgy', '%']];
 
 // relógio que não congela com a janela minimizada (setInterval/rAF são freados em segundo plano, um Worker não)
 function mkTicker(cb, ms) {
@@ -2528,7 +2550,7 @@ function camLost() {   // a câmera foi desconectada
 }
 function camNeedFx() {
   const o = cfg.cam;
-  return !!(o.mirror || o.f !== 'none' || o.bri !== 100 || o.con !== 100 || o.sat !== 100 || o.hue || o.blur || o.zoom > 100 || o.bd !== 'none' || o.vig || o.scan || o.tag);
+  return !!(o.mirror || o.f !== 'none' || o.bri !== 100 || o.con !== 100 || o.sat !== 100 || o.hue || o.blur || o.bgb || o.zoom > 100 || o.bd !== 'none' || o.vig || o.scan || o.tag);
 }
 function camSetMode() {   // câmera pura ou canvas com efeitos?
   const c = CAM; if (!c) return;
@@ -2596,26 +2618,52 @@ function camDraw() {
   const W = v.videoWidth, H = v.videoHeight, cv = c.cv, x = c.ctx, o = cfg.cam, P = CAMF[o.f] || CAMF.none;
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   const t = (performance.now() - c.t0) / 1000;
-  // 1) imagem: zoom, espelho, filtro e ajustes
-  const z = Math.max(1, o.zoom / 100), sw = W / z, sh = H / z, sx = (W - sw) / 2, sy = (H - sh) / 2;
-  x.save();
-  if (o.mirror) { x.translate(W, 0); x.scale(-1, 1); }
+  // 1) imagem: zoom, espelho, filtro e ajustes (+ foco com fundo desfocado)
+  const z = Math.max(1, o.zoom / 100);
+  let f = '';
   if (CAMF_OK) {
-    let f = P.f || '';
+    f = P.f || '';
     if (o.bri !== 100) f += ' brightness(' + o.bri + '%)';
     if (o.con !== 100) f += ' contrast(' + o.con + '%)';
     if (o.sat !== 100) f += ' saturate(' + o.sat + '%)';
     if (o.hue) f += ' hue-rotate(' + o.hue + 'deg)';
     if (o.blur) f += ' blur(' + (o.blur * H / 720).toFixed(1) + 'px)';
-    x.filter = f.trim() || 'none';
+    f = f.trim();
   }
-  if (P.px) {
-    const bs = Math.max(4, Math.round(H / 72)), pw = Math.ceil(W / bs), ph = Math.ceil(H / bs);
-    const pc = c.px || (c.px = document.createElement('canvas')); pc.width = pw; pc.height = ph;
-    pc.getContext('2d').drawImage(v, sx, sy, sw, sh, 0, 0, pw, ph);
-    x.imageSmoothingEnabled = false; x.drawImage(pc, 0, 0, pw, ph, 0, 0, W, H); x.imageSmoothingEnabled = true;
-  } else x.drawImage(v, sx, sy, sw, sh, 0, 0, W, H);
-  x.restore();
+  // g = contexto onde desenhar, k = quanto aproximar a mais (esconde a borda esmaecida do desfoque)
+  const paint = (g, filt, k) => {
+    const zz = z * k, sw = W / zz, sh = H / zz, sx = (W - sw) / 2, sy = (H - sh) / 2;
+    g.save();
+    if (o.mirror) { g.translate(W, 0); g.scale(-1, 1); }
+    if (CAMF_OK) g.filter = filt || 'none';
+    if (P.px) {
+      const bs = Math.max(4, Math.round(H / 72)), pw = Math.ceil(W / bs), ph = Math.ceil(H / bs);
+      const pc = c.px || (c.px = document.createElement('canvas')); pc.width = pw; pc.height = ph;
+      pc.getContext('2d').drawImage(v, sx, sy, sw, sh, 0, 0, pw, ph);
+      g.imageSmoothingEnabled = false; g.drawImage(pc, 0, 0, pw, ph, 0, 0, W, H); g.imageSmoothingEnabled = true;
+    } else g.drawImage(v, sx, sy, sw, sh, 0, 0, W, H);
+    g.restore();
+  };
+  if (o.bgb > 0) {
+    const r = o.bgb * H / 720;
+    if (CAMF_OK) paint(x, (f + ' blur(' + r.toFixed(1) + 'px)').trim(), 1 + Math.min(.25, 3 * r / W));
+    else {   // sem ctx.filter (Safari antigo): encolhe e estica a imagem, que também borra
+      const sc = c.bl || (c.bl = document.createElement('canvas')), d = 1 + o.bgb;
+      sc.width = Math.max(2, Math.round(W / d)); sc.height = Math.max(2, Math.round(H / d));
+      sc.getContext('2d').drawImage(v, 0, 0, sc.width, sc.height);
+      x.save(); if (o.mirror) { x.translate(W, 0); x.scale(-1, 1); } x.drawImage(sc, 0, 0, W, H); x.restore();
+    }
+    // camada nítida só no meio, com a borda suave (oval)
+    const fc = c.fc || (c.fc = document.createElement('canvas')); if (fc.width !== W || fc.height !== H) { fc.width = W; fc.height = H; }
+    const fx = fc.getContext('2d'); fx.globalCompositeOperation = 'source-over'; fx.clearRect(0, 0, W, H);
+    paint(fx, f, 1);
+    const rx = W * o.bgs / 200, ry = H * o.bgs / 200;
+    fx.save(); fx.globalCompositeOperation = 'destination-in';
+    fx.translate(W / 2, H / 2 + o.bgy / 100 * H); fx.scale(1, ry / rx);
+    const g = fx.createRadialGradient(0, 0, rx * .5, 0, 0, rx); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    fx.fillStyle = g; fx.fillRect(-1e4, -1e4, 2e4, 2e4); fx.restore();
+    x.drawImage(fc, 0, 0);
+  } else paint(x, f, 1);
   // 2) cor por cima (frio, quente, cyberpunk...)
   if (P.tint) { x.save(); x.globalCompositeOperation = P.tint[2]; x.globalAlpha = P.tint[1]; x.fillStyle = P.tint[0]; x.fillRect(0, 0, W, H); x.restore(); }
   // 3) vinheta
@@ -2702,7 +2750,7 @@ function fillCam() {
   $('#camRes').value = CAMQ[o.res] ? o.res : '720p'; $('#camBr').value = o.br;
   document.querySelectorAll('#camFps button').forEach(b => b.classList.toggle('on', +b.dataset.v === o.fps));
   $('#camMir').checked = !!o.mirror; $('#camVig').checked = !!o.vig; $('#camScan').checked = !!o.scan; $('#camTag').checked = !!o.tag;
-  CAM_SL.forEach(([k]) => { const r = $('#cs_' + k); r.value = o[k]; $('#csT_' + k).textContent = fmtSl(k, o[k]); if (k !== 'zoom') r.disabled = !CAMF_OK; });
+  CAM_SL.forEach(([k]) => { const r = $('#cs_' + k); r.value = o[k]; $('#csT_' + k).textContent = fmtSl(k, o[k]); if (!['zoom', 'bgb', 'bgs', 'bgy'].includes(k)) r.disabled = !CAMF_OK; });
   $('#camBw').value = o.bw; $('#camBwT').textContent = o.bw + '%'; $('#camBc').value = o.bc; $('#camBc2').value = o.bc2;
   document.querySelectorAll('#camFilters .cfb').forEach(b => b.classList.toggle('on', b.dataset.k === o.f));
   document.querySelectorAll('#camBords .cfb').forEach(b => b.classList.toggle('on', b.dataset.k === o.bd));
