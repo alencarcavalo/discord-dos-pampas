@@ -1,10 +1,10 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, session, desktopCapturer, shell } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, session, desktopCapturer, shell, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 let autoUpdater = null;
 try { ({ autoUpdater } = require('electron-updater')); } catch { /* sem atualizador (ex.: rodando em modo dev sem npm install) */ }
 
 const URL_SITE = process.env.PAMPAS_URL || 'https://discord-dos-pampas.onrender.com/';
-let win;
+let win, tray = null, quitting = false;   // quitting = true só quando a pessoa escolhe Sair de verdade
 
 // Com o jogo em tela cheia por cima, o Chromium acha que a janela está "escondida" e
 // congela timers (indicador de quem está falando, redução de eco...). Desligamos isso.
@@ -13,7 +13,8 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.setAppUserModelId('br.pampas.discord');
 
 if (!app.requestSingleInstanceLock()) app.quit();
-app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
+function showWin() { if (!win || win.isDestroyed()) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
+app.on('second-instance', showWin);
 
 function load() {
   win.loadURL(URL_SITE).catch(() => {});
@@ -52,7 +53,7 @@ function setupUpdater() {
 }
 if (!canUpdate) ipcMain.handle('upd-check', () => upd({ s: 'dev' }));
 ipcMain.handle('upd-state', () => lastUpd);
-ipcMain.handle('upd-install', () => { if (canUpdate && lastUpd.s === 'ready') autoUpdater.quitAndInstall(false, true); });
+ipcMain.handle('upd-install', () => { if (canUpdate && lastUpd.s === 'ready') { quitting = true; autoUpdater.quitAndInstall(false, true); } });
 ipcMain.handle('app-version', () => app.getVersion());
 
 
@@ -101,6 +102,27 @@ app.whenReady().then(() => {
   });
   win.removeMenu();
 
+  // ícone perto do relógio: fechar no X só esconde a janela, o app (voz, atalho do microfone) continua rodando
+  try {
+    const img = nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png'));
+    if (!img.isEmpty()) {
+      tray = new Tray(img.resize({ width: 32, height: 32 }));
+      tray.setToolTip('Discord dos Guri');
+      tray.setContextMenu(Menu.buildFromTemplate([
+        { label: 'Abrir o Discord dos Guri', click: showWin },
+        { type: 'separator' },
+        { label: 'Sair', click: () => { quitting = true; app.quit(); } },
+      ]));
+      tray.on('click', showWin);
+      let avisou = false;
+      win.on('close', e => {
+        if (quitting) return;
+        e.preventDefault(); win.hide();
+        if (!avisou) { avisou = true; try { tray.displayBalloon({ title: 'Discord dos Guri', content: 'Continua rodando aqui. Clique no ícone para abrir, ou botão direito > Sair.' }); } catch {} }
+      });
+    }
+  } catch {}
+
   // microfone, câmera e tela liberados só para o site da turma
   session.defaultSession.setPermissionRequestHandler((wc, perm, cb) => cb(['media', 'display-capture', 'fullscreen'].includes(perm)));
 
@@ -143,5 +165,6 @@ ipcMain.handle('mute-key', (e, acc) => {
   try { return globalShortcut.register(acc, () => win && win.webContents.send('mute')); } catch { return false; }
 });
 
+app.on('before-quit', () => { quitting = true; });
 app.on('will-quit', () => globalShortcut.unregisterAll());
-app.on('window-all-closed', () => app.quit());
+app.on('window-all-closed', () => { if (quitting) app.quit(); });
