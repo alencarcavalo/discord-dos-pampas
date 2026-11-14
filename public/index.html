@@ -1759,6 +1759,9 @@ if (window.pampas && pampas.onUpdate) {
   $('#updGo').onclick = $('#updbarGo').onclick = () => pampas.installUpdate();
   $('#updbarX').onclick = () => { $('#updbar').hidden = true; };
 }
+
+// quem já tem nome salvo entra direto, sem clicar em "Entrar"
+try { if (($('#nome').value || '').trim()) $('#login').requestSubmit(); } catch {}
 </script>
 </body>
 </html>
