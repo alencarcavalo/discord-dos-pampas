@@ -438,6 +438,18 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 @keyframes aniFone{0%,100%{transform:none}15%{transform:rotate(-20deg)}35%{transform:rotate(17deg)}55%{transform:rotate(-12deg)}75%{transform:rotate(7deg)}}
 @keyframes aniSom{0%,100%{transform:none}30%{transform:translateY(-3px) scale(1.1)}60%{transform:translateY(1px)}}
 @media(prefers-reduced-motion:reduce){#me button svg,#vc button svg{transition:none}#me .sp:hover>#bMic svg,#bSair:hover svg,#vc #bSom:hover svg{animation:none}}
+
+/* ---- aba Câmera ---- */
+#camStage{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;display:grid;place-items:center}
+#camStage video{width:100%;height:100%;object-fit:contain;display:block}
+#camPrevMsg{position:absolute;color:#fffa;font-weight:600;text-align:center;padding:0 16px}
+#camInfo{display:block;margin-top:10px;color:var(--mut)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:8px;padding:12px 0 14px}
+.cfb{padding:11px 8px;border-radius:10px;background:var(--input);border:2px solid transparent;font-weight:600;font-size:.86rem;text-align:center;color:var(--txt)}
+.cfb:hover{background:var(--hover)}
+.cfb.on{border-color:var(--blur);background:color-mix(in srgb,var(--blur) 22%,transparent)}
+.ccol{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.ccol label{display:flex;align-items:center;gap:8px;color:var(--mut);font-weight:600;font-size:.86rem}
 </style>
 </head>
 <body>
@@ -510,6 +522,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     <button data-t="ativ"><span>🎮</span>Atividade</button>
     <h4>App</h4>
     <button data-t="voz"><span>🎙️</span>Voz e áudio</button>
+    <button data-t="cam"><span>📷</span>Câmera</button>
     <button data-t="atalho"><span>⌨️</span>Atalhos</button>
     <button data-t="visual"><span>🎨</span>Aparência</button>
     <h4>Sistema</h4>
@@ -604,6 +617,60 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       </div>
     </section>
 
+    <section data-p="cam" hidden><h2>Câmera</h2>
+      <p class="sub">As mudanças valem na hora, mesmo com a câmera ligada na chamada. Os efeitos são aplicados no seu aparelho antes de enviar, então todo mundo vê igual.</p>
+
+      <div class="cc pad">
+        <div id="camStage"><video id="camPrev" muted playsinline autoplay></video><div id="camPrevMsg">Câmera desligada</div></div>
+        <div class="rc" style="margin-top:12px"><button type="button" class="go" id="camPrevBtn">Ligar pré-visualização</button><button type="button" class="sec" id="camReset">Restaurar efeitos</button></div>
+        <small id="camInfo"></small>
+      </div>
+
+      <div class="cc"><h3>Dispositivo e qualidade</h3>
+        <div class="rw col"><div class="rt"><b>Câmera</b><small>Os nomes aparecem completos depois que você liga a pré-visualização uma vez.</small></div><select id="camSel"></select></div>
+        <div class="rw col"><div class="rt"><b>Resolução</b><small>Se a câmera não tiver essa resolução, ela usa a mais próxima.</small></div>
+          <select id="camRes">
+            <option value="360p">360p (bem leve)</option>
+            <option value="480p">480p</option>
+            <option value="720p">720p (recomendado)</option>
+            <option value="1080p">1080p (pesada)</option>
+          </select></div>
+        <div class="rw col"><div class="rt"><b>Quadros por segundo (FPS)</b><small>30 é o normal. 60 deixa o movimento mais suave, mas usa mais internet e processador.</small></div>
+          <div class="seg" id="camFps"><button type="button" data-v="15">15</button><button type="button" data-v="24">24</button><button type="button" data-v="30">30</button><button type="button" data-v="60">60</button></div></div>
+        <div class="rw col"><div class="rt"><b>Qualidade do envio</b><small>Quanto mais alta, mais nítida a imagem, mas cada pessoa na chamada recebe um vídeo seu. Se travar, escolha Econômica.</small></div>
+          <select id="camBr">
+            <option value="low">Econômica</option>
+            <option value="auto">Automática</option>
+            <option value="high">Alta</option>
+          </select></div>
+        <div class="rw"><div class="rt"><b>Espelhar imagem</b><small>Vira a imagem como num espelho (todo mundo vê assim).</small></div><label class="sw"><input type="checkbox" id="camMir"><i></i></label></div>
+      </div>
+
+      <div class="cc"><h3>Filtros</h3>
+        <small id="camFNote" hidden style="color:var(--mut)">Este navegador não aplica filtros de cor. Bordas, espelho e zoom funcionam normalmente.</small>
+        <div class="cgrid" id="camFilters"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Brilho</b></div><span class="pill" id="csT_bri"></span></div><input type="range" id="cs_bri" min="50" max="150" step="1"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Contraste</b></div><span class="pill" id="csT_con"></span></div><input type="range" id="cs_con" min="50" max="150" step="1"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Saturação</b></div><span class="pill" id="csT_sat"></span></div><input type="range" id="cs_sat" min="0" max="200" step="1"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Matiz</b><small>Gira as cores.</small></div><span class="pill" id="csT_hue"></span></div><input type="range" id="cs_hue" min="-180" max="180" step="1"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Desfoque</b></div><span class="pill" id="csT_blur"></span></div><input type="range" id="cs_blur" min="0" max="10" step="0.5"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Zoom</b><small>Aproxima o centro da imagem.</small></div><span class="pill" id="csT_zoom"></span></div><input type="range" id="cs_zoom" min="100" max="200" step="1"></div>
+      </div>
+
+      <div class="cc"><h3>Bordas</h3>
+        <div class="cgrid" id="camBords"></div>
+        <div class="rw col"><div class="rh"><div class="rt"><b>Espessura</b></div><span class="pill" id="camBwT"></span></div><input type="range" id="camBw" min="0.5" max="6" step="0.5"></div>
+        <div class="rw"><div class="rt"><b>Cores da borda</b><small>A segunda cor aparece nas bordas dupla, degradê e pontilhada.</small></div>
+          <div class="ccol"><label><input type="color" id="camBc" class="cpick"> Cor 1</label><label><input type="color" id="camBc2" class="cpick"> Cor 2</label></div></div>
+      </div>
+
+      <div class="cc"><h3>Extras</h3>
+        <div class="rw"><div class="rt"><b>Vinheta</b><small>Escurece os cantos e dá foco no rosto.</small></div><label class="sw"><input type="checkbox" id="camVig"><i></i></label></div>
+        <div class="rw"><div class="rt"><b>Linhas de TV</b><small>Visual de televisão antiga.</small></div><label class="sw"><input type="checkbox" id="camScan"><i></i></label></div>
+        <div class="rw"><div class="rt"><b>Mostrar meu nome na imagem</b><small>Uma etiqueta no canto de baixo.</small></div><label class="sw"><input type="checkbox" id="camTag"><i></i></label></div>
+      </div>
+    </section>
+
     <section data-p="atalho" hidden><h2>Atalhos</h2>
       <p class="sub">Clique no botão e aperte as teclas que você quer usar.</p>
       <div class="cc">
@@ -679,6 +746,7 @@ if (matchMedia('(display-mode: standalone)').matches || window.pampas) $('#insta
 const STK = [['🧉', 'Bah!'], ['🤠', 'Tchê!'], ['🔥', 'Tri legal'], ['😂', 'Kkkk'], ['👍', 'Beleza'], ['❤️', 'Gosto'], ['🥩', 'Churras'], ['😴', 'Sono']];
 const S = { mic: new MediaStream(), cam: new MediaStream(), screen: new MediaStream() };
 let kickedBy = '', ws, me, ICE = [], peers = {}, names = {}, myName = '', cur = null, view = null, st = { channels: [], users: [] }, micTried = false, hist = {}, unread = {}, pend = [], muted = false, wasMuted = false, deaf = false, pinKey = null, shareAud = null, mic = null, micLvl = {};
+let CAM = null, camP = null, camBusy = false;   // câmera aberta (pipeline com efeitos): ver bloco "Câmera" mais abaixo
 const send = m => ws.readyState === 1 && ws.send(JSON.stringify(m));
 const COLORS = ['#5865f2', '#23a559', '#c27c0e', '#eb459e', '#f23f43', '#0b8fd6'];
 const colorOf = n => COLORS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
@@ -1428,9 +1496,9 @@ function addLocal(kind, track) {
   for (const p of Object.values(peers)) (p.snd[kind] ||= []).push(p.pc.addTrack(track, S[kind]));
 }
 function dropLocal(kind) {
-  S[kind].getTracks().forEach(t => { t.stop(); S[kind].removeTrack(t); });
+  S[kind].getTracks().forEach(t => { if (kind !== 'cam') t.stop(); S[kind].removeTrack(t); });   // faixas da câmera quem fecha é o camRelease
   for (const p of Object.values(peers)) { (p.snd[kind] || []).forEach(s => { try { p.pc.removeTrack(s); } catch {} }); p.snd[kind] = []; }
-  if (kind === 'cam') { if (TL['p:' + me]) setCam(me, null); }
+  if (kind === 'cam') { if (TL['p:' + me]) setCam(me, null); camRelease('live'); }
   else Object.keys(TL).filter(k => k.startsWith('s:' + me + ':')).forEach(rmTile);
 }
 const press = (b, on) => b.classList.toggle('on', on);
@@ -1555,13 +1623,19 @@ function stopShare() {
 
 $('#bCam').onclick = async e => {
   const b = e.currentTarget;
+  if (camBusy) return;
   if (S.cam.getTracks().length) { dropLocal('cam'); press(b, false); return sendVs(); }
+  camBusy = true;
   try {
-    const m = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
-    const t = m.getVideoTracks()[0];
-    t.onended = () => { dropLocal('cam'); press(b, false); sendVs(); };
-    addLocal('cam', t); setCam(me, S.cam); press(b, true); sendVs();
-  } catch { note('Não consegui abrir a câmera. Confira a permissão do navegador.'); }
+    const c = await camOpen(); camSetMode();
+    addLocal('cam', camTrack()); c.live = true;
+    setCam(me, S.cam); press(b, true); sendVs();
+    clearInterval(c.brT); c.brT = setInterval(camBR, 4000); camBR(); camPrevUI();
+  } catch (err) {
+    console.error(err);
+    if (CAM && !CAM.live && !CAM.prev) camClose();
+    note('Não consegui abrir a câmera. Confira a permissão do navegador.');
+  } finally { camBusy = false; }
 };
 $('#bTela').onclick = async () => {
   if (S.screen.getTracks().length) return stopShare();
@@ -1743,10 +1817,10 @@ $('#bSom').onclick = e => {
 };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, blur: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
-cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
+cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof }; cfg.cam = { ...DEF.cam, ...cfg.cam };
 // foto/fundo do perfil (GIFs grandes) ficam no IndexedDB; o localStorage é pequeno demais para isso
 const idb = {
   open: () => new Promise((res, rej) => { const r = indexedDB.open('pampas', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }),
@@ -2242,7 +2316,9 @@ const renderPrev = () => $('#pPrev').replaceChildren(cardEl($('#pNome').value ||
 function tab(t) {
   document.querySelectorAll('#cfgbody section').forEach(s => s.hidden = s.dataset.p !== t);
   document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  if (t !== 'cam') camPrevOff();
   if (t === 'voz') { fillVoz(); fillDevs(); }
+  if (t === 'cam') fillCam();
   if (t === 'sobre') showAbout();
   if (t === 'ativ') { $('#actGame').checked = !!cfg.actGame; $('#actMusic').checked = !!cfg.actMusic; $('#actManual').value = cfg.actManual || ''; actStatus(); }
 }
@@ -2252,7 +2328,7 @@ $('#bCfg').onclick = () => {
   fillVoz(); $('#kMute').textContent = cfg.mute;
   $('#icSz').value = cfg.ic || 20; fillTheme(); renderPrev(); tab('perfil'); $('#cfg').hidden = false;
 };
-$('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; };
+$('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; camPrevOff(); };
 $('#pNome').oninput = renderPrev;
 $('#pSobre').oninput = () => { ed.about = $('#pSobre').value; renderPrev(); };
 $('#pCor').oninput = () => { ed.color = $('#pCor').value; renderPrev(); };
@@ -2319,7 +2395,7 @@ $('#fontSel').onchange = e => setTheme({ font: e.target.value });
 $('#faReset').onclick = () => setTheme({ fala: '' });
 $('#thReset').onclick = () => { cfg.theme = { ...DEF.theme }; cfg.ic = DEF.ic; applyTheme(); saveCfg(); fillTheme(); toast('Visual padrão restaurado.'); };
 // Esc fecha as configurações (menos quando está gravando um atalho)
-addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cfg').hidden && !capt) { $('#cfg').hidden = true; } }, true);
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cfg').hidden && !capt) { $('#cfg').hidden = true; camPrevOff(); } }, true);
 
 // ---------- configurações novas: áudio, seletor de tela, atualização ----------
 function fillDevs() {
@@ -2367,6 +2443,295 @@ $('#aec').onchange = e => {
 ['gate', 'gAuto', 'duck'].forEach(k => $('#' + k).onchange = e => { cfg[k] = e.target.checked; saveCfg(); pushGate(); fillVoz(); });
 $('#ai').onchange = e => setAI(e.target.checked);
 $('#sq').onchange = e => { cfg.sq = e.target.value; saveCfg(); applyShareQ(); };
+
+// ---------- Câmera: dispositivo, qualidade, filtros e bordas ----------
+// Sem efeitos a câmera vai direto (leve). Com efeitos, cada quadro passa por um canvas e o que sai dele é o que a turma vê.
+const CAMQ = { '360p': [640, 360, 0.8e6], '480p': [854, 480, 1.2e6], '720p': [1280, 720, 2.5e6], '1080p': [1920, 1080, 4.5e6] };
+const CAMF_OK = typeof CanvasRenderingContext2D !== 'undefined' && 'filter' in CanvasRenderingContext2D.prototype;
+const CAMF = {
+  none: { n: '✨ Normal', f: '' },
+  pb: { n: '⚫ Preto e branco', f: 'grayscale(1) contrast(1.1)' },
+  noir: { n: '🎞️ Noir', f: 'grayscale(1) contrast(1.6) brightness(.9)', vig: 1 },
+  sepia: { n: '🟤 Sépia', f: 'sepia(.9) contrast(1.05)' },
+  vint: { n: '📻 Vintage', f: 'sepia(.45) contrast(1.1) saturate(1.3) brightness(1.05)', vig: 1 },
+  frio: { n: '🧊 Frio', f: 'saturate(1.05) contrast(1.05)', tint: ['#3b82f6', .22, 'soft-light'] },
+  quente: { n: '🔥 Quente', f: 'saturate(1.1)', tint: ['#ff8a3d', .25, 'soft-light'] },
+  vivo: { n: '🌈 Vibrante', f: 'contrast(1.2) saturate(1.9) brightness(1.04)' },
+  pastel: { n: '🌸 Pastel', f: 'brightness(1.1) contrast(.9) saturate(.85)', tint: ['#ffc8e6', .18, 'soft-light'] },
+  drama: { n: '🎬 Drama', f: 'contrast(1.35) saturate(.75) brightness(.95)', vig: 1 },
+  suave: { n: '🪞 Pele suave', f: 'blur(1.1px) brightness(1.06) contrast(.97) saturate(1.1)' },
+  cyber: { n: '🌆 Cyberpunk', f: 'contrast(1.25) saturate(1.7)', tint: ['#ff00c8', .28, 'overlay'] },
+  matrix: { n: '🟢 Matrix', f: 'grayscale(1) contrast(1.3)', tint: ['#00ff55', .45, 'multiply'], scan: 1 },
+  vhs: { n: '📼 VHS', f: 'saturate(1.5) contrast(1.1) blur(.5px)', tint: ['#ff4d6d', .08, 'screen'], scan: 1 },
+  neg: { n: '🔄 Negativo', f: 'invert(1)' },
+  pixel: { n: '🟦 Pixelado', px: 1 },
+};
+const CAMB = { none: '🚫 Nenhuma', solid: '🟦 Sólida', double: '🔲 Dupla', neon: '💡 Neon', rainbow: '🌈 Arco-íris', grad: '🎨 Degradê girando', dash: '➖ Pontilhada', pulse: '💓 Pulsando', voice: '🎙️ Acende quando falo', round: '⬜ Cantos redondos', polaroid: '📷 Polaroid', film: '🎞️ Filme' };
+const CAM_SL = [['bri', '%'], ['con', '%'], ['sat', '%'], ['hue', '°'], ['blur', ' px'], ['zoom', '%']];
+
+// relógio que não congela com a janela minimizada (setInterval/rAF são freados em segundo plano, um Worker não)
+function mkTicker(cb, ms) {
+  try {
+    const url = URL.createObjectURL(new Blob(['let t;onmessage=e=>{clearInterval(t);if(e.data)t=setInterval(()=>postMessage(0),e.data)}'], { type: 'text/javascript' }));
+    const w = new Worker(url); URL.revokeObjectURL(url); w.onmessage = cb; w.postMessage(ms);
+    return { set: v => w.postMessage(v), stop: () => { w.postMessage(0); w.terminate(); } };
+  } catch {
+    let t = setInterval(cb, ms);
+    return { set: v => { clearInterval(t); t = setInterval(cb, v); }, stop: () => clearInterval(t) };
+  }
+}
+async function camGum() {
+  const c = cfg.cam, [w, h] = CAMQ[c.res] || CAMQ['720p'];
+  const v = { width: { ideal: w }, height: { ideal: h }, frameRate: { ideal: c.fps } };
+  if (c.dev) v.deviceId = { exact: c.dev };
+  try { return await navigator.mediaDevices.getUserMedia({ video: v }); }
+  catch (e) {
+    if (!c.dev) throw e;
+    c.dev = ''; saveCfg(); delete v.deviceId; toast('Essa câmera não está disponível. Voltei para a padrão.');
+    return navigator.mediaDevices.getUserMedia({ video: v });
+  }
+}
+function camOpen() {
+  if (CAM) return Promise.resolve(CAM);
+  return camP ||= (async () => {
+    try {
+      const raw = await camGum();
+      const vid = document.createElement('video'); vid.muted = true; vid.playsInline = true; vid.srcObject = raw;
+      vid.style.cssText = 'position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+      document.body.append(vid); await vid.play().catch(() => {});
+      await new Promise(r => { if (vid.videoWidth) r(); else { vid.onloadedmetadata = () => r(); setTimeout(r, 3000); } });
+      raw.getVideoTracks()[0].onended = camLost;
+      const cv = document.createElement('canvas');
+      CAM = { raw, vid, cv, ctx: cv.getContext('2d', { alpha: false }), cs: null, tick: null, uses: false, live: false, prev: false, t0: performance.now(), lv: 0, brT: 0 };
+      camDevs(); return CAM;
+    } finally { camP = null; }
+  })();
+}
+function camClose() {
+  const c = CAM; if (!c) return; CAM = null;
+  clearInterval(c.brT); if (c.tick) c.tick.stop();
+  c.raw.getTracks().forEach(t => { t.onended = null; t.stop(); });
+  if (c.cs) c.cs.getTracks().forEach(t => t.stop());
+  c.vid.srcObject = null; c.vid.remove();
+  camPrevUI();
+}
+function camRelease(who) {
+  if (!CAM) return;
+  CAM[who] = false;
+  if (who === 'live') clearInterval(CAM.brT);
+  if (!CAM.live && !CAM.prev) camClose(); else { camSetMode(); camPrevUI(); }
+}
+function camLost() {   // a câmera foi desconectada
+  const live = CAM && CAM.live;
+  if (live) { dropLocal('cam'); press($('#bCam'), false); sendVs(); toast('A câmera foi desconectada.'); }
+  camClose();
+}
+function camNeedFx() {
+  const o = cfg.cam;
+  return !!(o.mirror || o.f !== 'none' || o.bri !== 100 || o.con !== 100 || o.sat !== 100 || o.hue || o.blur || o.zoom > 100 || o.bd !== 'none' || o.vig || o.scan || o.tag);
+}
+function camSetMode() {   // câmera pura ou canvas com efeitos?
+  const c = CAM; if (!c) return;
+  const want = camNeedFx();
+  if (want && !c.cs) {
+    c.cv.width = c.vid.videoWidth || 1280; c.cv.height = c.vid.videoHeight || 720;
+    c.cs = c.cv.captureStream(60);
+  }
+  c.uses = want;
+  if (want) { if (!c.tick) c.tick = mkTicker(camDraw, 1000 / cfg.cam.fps); camDraw(); }
+  else if (c.tick) { c.tick.stop(); c.tick = null; }
+}
+const camTrack = () => CAM.uses ? CAM.cs.getVideoTracks()[0] : CAM.raw.getVideoTracks()[0];
+async function camSwapLive(track) {   // troca a imagem que já está sendo enviada, sem renegociar a chamada
+  const old = S.cam.getVideoTracks()[0];
+  if (!track || old === track) return;
+  S.cam.addTrack(track); if (old) S.cam.removeTrack(old);
+  for (const p of Object.values(peers)) for (const sn of (p.snd.cam || [])) { try { await sn.replaceTrack(track); } catch (e) { console.warn('cam', e); } }
+  const t = TL['p:' + me]; if (t) t.v.play().catch(() => {});
+}
+async function camChanged() {
+  if (!CAM) return;
+  camSetMode();
+  if (CAM.live) await camSwapLive(camTrack());
+  camPrevUI();
+}
+async function camHW(devChanged) {   // trocou câmera, resolução ou fps
+  const c = CAM; if (!c) return;
+  if (!devChanged) {
+    const [w, h] = CAMQ[cfg.cam.res] || CAMQ['720p'];
+    try { await c.raw.getVideoTracks()[0].applyConstraints({ width: { ideal: w }, height: { ideal: h }, frameRate: { ideal: cfg.cam.fps } }); if (c.tick) c.tick.set(1000 / cfg.cam.fps); camBR(); camPrevUI(); return; } catch {}
+  }
+  c.raw.getTracks().forEach(t => { t.onended = null; t.stop(); });
+  try { c.raw = await camGum(); }
+  catch { toast('Não consegui abrir essa câmera.'); camLost(); return; }
+  c.vid.srcObject = c.raw; await c.vid.play().catch(() => {});
+  c.raw.getVideoTracks()[0].onended = camLost;
+  if (c.tick) c.tick.set(1000 / cfg.cam.fps);
+  camSetMode();
+  if (c.live) await camSwapLive(camTrack());
+  camBR(); camPrevUI(); camDevs();
+}
+function camBR() {   // teto de bitrate/fps do envio (também pega quem entra depois)
+  const c = CAM; if (!c || !c.live) return;
+  const o = cfg.cam, br = Math.round((CAMQ[o.res] || CAMQ['720p'])[2] * (o.br === 'low' ? .5 : o.br === 'high' ? 1.6 : 1) * (o.fps > 30 ? 1.4 : 1));
+  for (const p of Object.values(peers)) for (const sn of (p.snd.cam || [])) {
+    if (!sn || !sn.track || sn.track.kind !== 'video') continue;
+    try {
+      const pr = sn.getParameters(); if (!pr.encodings || !pr.encodings.length) pr.encodings = [{}];
+      const e = pr.encodings[0]; if (e.maxBitrate === br && e.maxFramerate === o.fps) continue;
+      e.maxBitrate = br; e.maxFramerate = o.fps; e.scaleResolutionDownBy = 1;
+      sn.setParameters(pr).catch(() => {});
+    } catch (er) { console.warn('cam bitrate', er); }
+  }
+}
+
+// ---- desenho de cada quadro ----
+function camRR(x, a, b, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath();
+}
+function camDraw() {
+  const c = CAM; if (!c || !c.uses) return;
+  const v = c.vid; if (v.readyState < 2 || !v.videoWidth) return;
+  const W = v.videoWidth, H = v.videoHeight, cv = c.cv, x = c.ctx, o = cfg.cam, P = CAMF[o.f] || CAMF.none;
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const t = (performance.now() - c.t0) / 1000;
+  // 1) imagem: zoom, espelho, filtro e ajustes
+  const z = Math.max(1, o.zoom / 100), sw = W / z, sh = H / z, sx = (W - sw) / 2, sy = (H - sh) / 2;
+  x.save();
+  if (o.mirror) { x.translate(W, 0); x.scale(-1, 1); }
+  if (CAMF_OK) {
+    let f = P.f || '';
+    if (o.bri !== 100) f += ' brightness(' + o.bri + '%)';
+    if (o.con !== 100) f += ' contrast(' + o.con + '%)';
+    if (o.sat !== 100) f += ' saturate(' + o.sat + '%)';
+    if (o.hue) f += ' hue-rotate(' + o.hue + 'deg)';
+    if (o.blur) f += ' blur(' + (o.blur * H / 720).toFixed(1) + 'px)';
+    x.filter = f.trim() || 'none';
+  }
+  if (P.px) {
+    const bs = Math.max(4, Math.round(H / 72)), pw = Math.ceil(W / bs), ph = Math.ceil(H / bs);
+    const pc = c.px || (c.px = document.createElement('canvas')); pc.width = pw; pc.height = ph;
+    pc.getContext('2d').drawImage(v, sx, sy, sw, sh, 0, 0, pw, ph);
+    x.imageSmoothingEnabled = false; x.drawImage(pc, 0, 0, pw, ph, 0, 0, W, H); x.imageSmoothingEnabled = true;
+  } else x.drawImage(v, sx, sy, sw, sh, 0, 0, W, H);
+  x.restore();
+  // 2) cor por cima (frio, quente, cyberpunk...)
+  if (P.tint) { x.save(); x.globalCompositeOperation = P.tint[2]; x.globalAlpha = P.tint[1]; x.fillStyle = P.tint[0]; x.fillRect(0, 0, W, H); x.restore(); }
+  // 3) vinheta
+  if (o.vig || P.vig) {
+    const g = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .32, W / 2, H / 2, Math.hypot(W, H) / 2);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.65)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  }
+  // 4) linhas de TV
+  if (o.scan || P.scan) {
+    const l = Math.max(1, Math.round(H / 240)); x.fillStyle = 'rgba(0,0,0,.2)';
+    for (let y = 0; y < H; y += l * 2) x.fillRect(0, y, W, l);
+    const by = ((t * .18) % 1.3 - .15) * H, g = x.createLinearGradient(0, by, 0, by + H * .12);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.06)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, by, W, H * .12);
+  }
+  // 5) borda e etiqueta
+  if (o.bd !== 'none') camBorder(c, x, W, H, t, o);
+  if (o.tag && myName) camTag(x, W, H, o);
+}
+function camTag(x, W, H, o) {
+  const m = Math.min(W, H), fs = Math.round(H * .045), edge = o.bd === 'none' ? 0 : m * o.bw / 100 * (o.bd === 'polaroid' ? 5 : o.bd === 'film' ? 1 : 2.4);
+  x.save(); x.font = '600 ' + fs + 'px system-ui,Segoe UI,sans-serif'; x.textBaseline = 'middle';
+  const w = x.measureText(myName).width + fs * 1.2, h = fs * 1.7, a = fs * .6 + (o.bd === 'film' ? m * o.bw / 100 * 3 : edge), b = H - h - fs * .6 - (o.bd === 'film' ? 0 : edge);
+  x.fillStyle = 'rgba(0,0,0,.55)'; x.beginPath(); camRR(x, a, b, w, h, h / 2); x.fill();
+  x.fillStyle = '#fff'; x.fillText(myName, a + fs * .6, b + h / 2 + 1); x.restore();
+}
+function camBorder(c, x, W, H, t, o) {
+  const m = Math.min(W, H), bw = Math.max(2, m * o.bw / 100), c1 = o.bc, c2 = o.bc2;
+  const ring = (inset, lw, style) => { x.lineWidth = lw; x.strokeStyle = style; x.strokeRect(inset + lw / 2, inset + lw / 2, W - 2 * inset - lw, H - 2 * inset - lw); };
+  x.save();
+  switch (o.bd) {
+    case 'solid': ring(0, bw, c1); break;
+    case 'double': ring(0, bw, c1); ring(bw * 1.6, bw * .4, c2); break;
+    case 'neon': { const i = bw * 1.6; x.shadowColor = c1; x.shadowBlur = bw * 4; ring(i, bw * .7, c1); ring(i, bw * .7, c1); x.shadowBlur = 0; ring(i + bw * .2, bw * .25, '#fff'); break; }
+    case 'rainbow': { const g = x.createLinearGradient(0, 0, W, H); for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, 'hsl(' + ((t * 90 + i * 60) % 360).toFixed(0) + ',100%,60%)'); ring(0, bw, g); break; }
+    case 'grad': { const a = t * .9, r = Math.hypot(W, H) / 2, g = x.createLinearGradient(W / 2 - Math.cos(a) * r, H / 2 - Math.sin(a) * r, W / 2 + Math.cos(a) * r, H / 2 + Math.sin(a) * r); g.addColorStop(0, c1); g.addColorStop(.5, c2); g.addColorStop(1, c1); ring(0, bw, g); break; }
+    case 'dash': { const d = bw * 2.2; x.setLineDash([d, d]); x.lineDashOffset = -t * bw * 5; ring(0, bw, c1); x.lineDashOffset = -t * bw * 5 - d; ring(0, bw, c2); break; }
+    case 'pulse': { const k = .5 + .5 * Math.sin(t * 4); x.globalAlpha = .55 + .45 * k; ring(0, bw * (.4 + 1.6 * k), c1); break; }
+    case 'voice': {   // acende com o volume da sua voz
+      const l = (micLvl && micLvl.l) || 0, tg = muted || deaf ? 0 : Math.max(0, Math.min(1, (20 * Math.log10(l + 1e-6) + 55) / 40));
+      c.lv = c.lv * .75 + tg * .25; x.shadowColor = c1; x.shadowBlur = bw * (1 + c.lv * 6); ring(bw * .8, bw * (.35 + c.lv * 1.8), c1); break;
+    }
+    case 'round': x.fillStyle = c1; x.beginPath(); x.rect(0, 0, W, H); camRR(x, bw * .5, bw * .5, W - bw, H - bw, m * .1); x.fill('evenodd'); break;
+    case 'polaroid': { const s = bw * 1.2, bt = bw * 4.5; x.fillStyle = '#f6f3ea'; x.fillRect(0, 0, W, s); x.fillRect(0, 0, s, H); x.fillRect(W - s, 0, s, H); x.fillRect(0, H - bt, W, bt); break; }
+    case 'film': {
+      const sw = bw * 3, hw = sw * .45, hh = sw * .6, step = sw * 1.5, off = (t * sw * 2) % step;
+      x.fillStyle = '#111'; x.fillRect(0, 0, sw, H); x.fillRect(W - sw, 0, sw, H); x.fillStyle = '#e8e8e8';
+      for (let y = -step + off; y < H; y += step) { x.beginPath(); camRR(x, (sw - hw) / 2, y, hw, hh, hw * .25); x.fill(); x.beginPath(); camRR(x, W - sw + (sw - hw) / 2, y, hw, hh, hw * .25); x.fill(); }
+      break;
+    }
+  }
+  x.restore();
+}
+
+// ---- tela de configuração ----
+function camPrevUI() {
+  const v = $('#camPrev'); if (!v) return;
+  const on = !!CAM, st = on ? (CAM.uses ? CAM.cs : CAM.raw) : null;
+  if (v.srcObject !== st) { v.srcObject = st; if (st) v.play().catch(() => {}); }
+  $('#camPrevMsg').hidden = on;
+  const b = $('#camPrevBtn'); b.disabled = !!(CAM && CAM.live && !CAM.prev);
+  b.textContent = CAM && CAM.prev ? 'Desligar pré-visualização' : CAM && CAM.live ? 'Sua câmera está ligada na chamada' : 'Ligar pré-visualização';
+  camInfo();
+}
+function camInfo() {
+  const el = $('#camInfo'); if (!el) return;
+  const t = CAM && CAM.raw.getVideoTracks()[0];
+  if (!t) { el.textContent = ''; return; }
+  const s = t.getSettings();
+  el.textContent = 'A câmera está entregando ' + (s.width || '?') + '×' + (s.height || '?') + (s.frameRate ? ' a ' + Math.round(s.frameRate) + ' fps' : '') + ' · ' + (CAM.uses ? 'efeitos ligados' : 'imagem direta, sem efeitos');
+}
+function camPrevOff() { if (CAM && CAM.prev) camRelease('prev'); camPrevUI(); }
+function camDevs() {
+  const sel = $('#camSel'); if (!sel || !navigator.mediaDevices) return;
+  navigator.mediaDevices.enumerateDevices().then(ds => {
+    sel.replaceChildren(new Option('Padrão do sistema', ''));
+    ds.filter(d => d.kind === 'videoinput' && d.deviceId).forEach((d, i) => sel.append(new Option(d.label || 'Câmera ' + (i + 1), d.deviceId)));
+    sel.value = cfg.cam.dev;
+  }).catch(() => {});
+}
+navigator.mediaDevices && navigator.mediaDevices.addEventListener('devicechange', () => { if (!$('#cfg').hidden) camDevs(); });
+const fmtSl = (k, v) => v + (CAM_SL.find(a => a[0] === k) || ['', ''])[1];
+function fillCam() {
+  const o = cfg.cam;
+  $('#camRes').value = CAMQ[o.res] ? o.res : '720p'; $('#camBr').value = o.br;
+  document.querySelectorAll('#camFps button').forEach(b => b.classList.toggle('on', +b.dataset.v === o.fps));
+  $('#camMir').checked = !!o.mirror; $('#camVig').checked = !!o.vig; $('#camScan').checked = !!o.scan; $('#camTag').checked = !!o.tag;
+  CAM_SL.forEach(([k]) => { const r = $('#cs_' + k); r.value = o[k]; $('#csT_' + k).textContent = fmtSl(k, o[k]); if (k !== 'zoom') r.disabled = !CAMF_OK; });
+  $('#camBw').value = o.bw; $('#camBwT').textContent = o.bw + '%'; $('#camBc').value = o.bc; $('#camBc2').value = o.bc2;
+  document.querySelectorAll('#camFilters .cfb').forEach(b => b.classList.toggle('on', b.dataset.k === o.f));
+  document.querySelectorAll('#camBords .cfb').forEach(b => b.classList.toggle('on', b.dataset.k === o.bd));
+  $('#camFNote').hidden = CAMF_OK; camDevs(); camPrevUI();
+}
+let camSaveT = 0; const camSave = () => { clearTimeout(camSaveT); camSaveT = setTimeout(saveCfg, 300); };
+const camSet = (k, v) => { cfg.cam[k] = v; camSave(); camChanged(); };
+Object.entries(CAMF).forEach(([k, f]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'cfb'; b.dataset.k = k; b.textContent = f.n; b.onclick = () => { camSet('f', k); fillCam(); }; $('#camFilters').append(b); });
+Object.entries(CAMB).forEach(([k, n]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'cfb'; b.dataset.k = k; b.textContent = n; b.onclick = () => { camSet('bd', k); fillCam(); }; $('#camBords').append(b); });
+CAM_SL.forEach(([k]) => $('#cs_' + k).addEventListener('input', e => { const v = +e.target.value; $('#csT_' + k).textContent = fmtSl(k, v); camSet(k, v); }));
+$('#camBw').addEventListener('input', e => { const v = +e.target.value; $('#camBwT').textContent = v + '%'; camSet('bw', v); });
+$('#camBc').addEventListener('input', e => camSet('bc', e.target.value));
+$('#camBc2').addEventListener('input', e => camSet('bc2', e.target.value));
+[['camMir', 'mirror'], ['camVig', 'vig'], ['camScan', 'scan'], ['camTag', 'tag']].forEach(([id, k]) => $('#' + id).onchange = e => camSet(k, e.target.checked));
+$('#camSel').onchange = e => { cfg.cam.dev = e.target.value; saveCfg(); camHW(true); };
+$('#camRes').onchange = e => { cfg.cam.res = e.target.value; saveCfg(); camHW(false); };
+$('#camBr').onchange = e => { cfg.cam.br = e.target.value; saveCfg(); camBR(); };
+document.querySelectorAll('#camFps button').forEach(b => b.onclick = () => { cfg.cam.fps = +b.dataset.v; saveCfg(); fillCam(); camHW(false); });
+$('#camReset').onclick = () => {
+  const k = { dev: cfg.cam.dev, res: cfg.cam.res, fps: cfg.cam.fps, br: cfg.cam.br };
+  cfg.cam = { ...DEF.cam, ...k }; saveCfg(); fillCam(); camChanged(); toast('Efeitos da câmera restaurados.');
+};
+$('#camPrevBtn').onclick = async () => {
+  if (CAM && CAM.prev) return camPrevOff();
+  try { const c = await camOpen(); c.prev = true; camSetMode(); }
+  catch { toast('Não consegui abrir a câmera. Confira a permissão do navegador.'); }
+  camPrevUI(); camDevs();
+};
+
 
 // seletor de tela / janela (app de computador)
 let pkList = [], pkSel = null, pkKind = 'screen';
