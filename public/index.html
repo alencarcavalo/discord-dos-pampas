@@ -429,21 +429,15 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 /* animações simples nos ícones da barra de baixo e da chamada (ao passar o mouse) */
 #me button svg,#vc button svg{transition:transform .35s cubic-bezier(.34,1.56,.64,1);transform-origin:center;transform-box:fill-box}
 #bCfg:hover svg{transform:rotate(90deg)}
-#me #bDeaf{position:relative}
-#me #bDeaf svg{transition:transform .22s ease-out}
 #me .sp:hover>#bDeaf svg{transform:scale(1.14)}
-#me #bDeaf::after{content:"";position:absolute;inset:0;border-radius:6px;pointer-events:none;opacity:0;--ring:color-mix(in srgb,var(--txt) 55%,transparent)}
-#me #bDeaf.off::after{--ring:#f23f43aa}
-#me .sp:hover>#bDeaf::after{animation:deafRing .65s ease-out}
 #me .sp:hover>#bMic svg{animation:aniMic .55s ease}
 #bSair:hover svg{animation:aniFone .6s ease}
 #vc .vb button:hover svg{transform:scale(1.16) rotate(-4deg)}
 #vc #bSom:hover svg{animation:aniSom .5s ease}
 @keyframes aniMic{0%,100%{transform:none}25%{transform:rotate(-14deg) translateY(-1px)}55%{transform:rotate(10deg)}80%{transform:rotate(-4deg)}}
-@keyframes deafRing{0%{opacity:1;box-shadow:0 0 0 0 var(--ring)}100%{opacity:0;box-shadow:0 0 0 9px transparent}}
 @keyframes aniFone{0%,100%{transform:none}15%{transform:rotate(-20deg)}35%{transform:rotate(17deg)}55%{transform:rotate(-12deg)}75%{transform:rotate(7deg)}}
 @keyframes aniSom{0%,100%{transform:none}30%{transform:translateY(-3px) scale(1.1)}60%{transform:translateY(1px)}}
-@media(prefers-reduced-motion:reduce){#me button svg,#vc button svg{transition:none}#me .sp:hover>#bMic svg,#me .sp:hover>#bDeaf::after,#bSair:hover svg,#vc #bSom:hover svg{animation:none}}
+@media(prefers-reduced-motion:reduce){#me button svg,#vc button svg{transition:none}#me .sp:hover>#bMic svg,#bSair:hover svg,#vc #bSom:hover svg{animation:none}}
 
 /* ---- aba Câmera ---- */
 #camStage{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;display:grid;place-items:center}
