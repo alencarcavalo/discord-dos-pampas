@@ -116,15 +116,62 @@ async function loadSaved() {
   try {
     const raw = await up(['GET', 'guri:canais']);
     const ch = raw ? JSON.parse(raw) : null;
-    if (Array.isArray(ch) && ch.some(c => c.kind === 'text') && ch.some(c => c.kind === 'voice')) { CH.length = 0; ch.forEach(c => CH.push(c)); }
+    let listOk = false;
+    if (Array.isArray(ch) && ch.some(c => c.kind === 'text') && ch.some(c => c.kind === 'voice')) { CH.length = 0; ch.forEach(c => CH.push(c)); listOk = true; }
     for (const c of CH.filter(c => c.kind === 'text')) {
       const h = await up(['GET', 'guri:h:' + c.id]);
       if (h && !hist.has(c.id)) hist.set(c.id, JSON.parse(h).slice(-40));
     }
+    hist.forEach(fixMids);
+    prune();
     console.log('Mensagens e canais carregados do Upstash.');
+    if (listOk) cleanOrphans().catch(e => console.error('limpeza do Upstash falhou:', e.message));   // só roda se a lista de canais foi lida com sucesso
   } catch (e) { console.error('não consegui carregar o que estava salvo:', e.message); }
 }
 const send = (ws, m) => ws.readyState === 1 && ws.send(JSON.stringify(m));
+
+// ---------- mensagens: id, resposta, edição e limpeza das antigas ----------
+const mkMid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const snip = x => (x.text || '').replace(/\s+/g, ' ').slice(0, 100) || (x.att && x.att[0] ? '📎 ' + x.att[0].name : x.st != null ? 'Figurinha' : '');
+// o que cada pessoa recebe: sem o "cid" de ninguém, só com own = true nas mensagens dela
+const pub = (m, viewer) => { const { cid, ...rest } = m; return { ...rest, own: !!cid && cid === viewer.cid }; };
+// mensagens antigas (de antes desta versão) ganham um id estável para poderem ser respondidas
+const fixMids = arr => arr.forEach((m, i) => { if (!m.mid) m.mid = 'l' + (+m.t || 0).toString(36) + i; });
+// limpeza automática (pode ajustar no Render > Environment; 0 desliga):
+//   MSG_TTL_DAYS  = apaga mensagens com mais de N dias   (padrão 30)
+//   ATT_TTL_DAYS  = tira imagens/arquivos com mais de N dias e deixa só o texto (padrão 7)
+const envDays = (k, def) => (process.env[k] === undefined || process.env[k] === '' ? def : +process.env[k]);
+const TTL_DAYS = envDays('MSG_TTL_DAYS', 30), ATT_DAYS = envDays('ATT_TTL_DAYS', 7);
+function prune() {
+  const now = Date.now();
+  hist.forEach((h, id) => {
+    let changed = false;
+    if (TTL_DAYS > 0) {
+      const keep = h.filter(m => m.t >= now - TTL_DAYS * 864e5);
+      if (keep.length !== h.length) { h.splice(0, h.length, ...keep); changed = true; }
+    }
+    if (ATT_DAYS > 0) h.forEach(m => {
+      if (m.att && m.att.length && m.t < now - ATT_DAYS * 864e5) {
+        m.text = (m.text ? m.text + '\n' : '') + m.att.map(a => '📎 ' + a.name + ' (anexo antigo, removido)').join('\n');
+        m.att = []; changed = true;
+      }
+    });
+    if (changed) markDirty(id);
+  });
+}
+// históricos guardados no Upstash de canais que não existem mais
+async function cleanOrphans() {
+  let cur = '0', n = 0;
+  do {
+    const [nx, keys] = await up(['SCAN', cur, 'MATCH', 'guri:h:*', 'COUNT', 100]);
+    cur = String(nx);
+    for (const k of keys) {
+      const id = k.slice('guri:h:'.length);
+      if (!CH.some(c => c.id === id && c.kind === 'text')) { await up(['DEL', k]); n++; }
+    }
+  } while (cur !== '0');
+  if (n) console.log('Limpeza: ' + n + ' histórico(s) de canal apagado removido(s) do Upstash.');
+}
 const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'canal';
 
 // aceita JPEG (imagem reduzida) ou GIF animado (limite maior)
@@ -158,6 +205,7 @@ wss.on('connection', ws => {
     let m; try { m = JSON.parse(raw); } catch { return; }
     if (m.type === 'hello') {
       ws.nick = String(m.name || 'Guri').slice(0, 24);
+      ws.cid = String(m.cid || '').slice(0, 64);   // identidade fixa deste aparelho (nunca é enviada aos outros): é ela que prova que a mensagem é sua para editar
       setProf(ws, m.prof);
       send(ws, { type: 'hello-ok', id: ws.id });
       [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
@@ -204,7 +252,8 @@ wss.on('connection', ws => {
       send(t, { type: 'kicked', by: ws.nick });
       setTimeout(() => t.close(), 200);
     } else if (m.type === 'history') {
-      send(ws, { type: 'history', channel: m.channel, msgs: hist.get(m.channel) || [] });
+      const hh = hist.get(m.channel) || []; fixMids(hh);
+      send(ws, { type: 'history', channel: m.channel, msgs: hh.map(x => pub(x, ws)) });
     } else if (m.type === 'msg') {
       if (!CH.some(c => c.id === m.channel && c.kind === 'text')) return;
       const att = (Array.isArray(m.att) ? m.att : []).slice(0, 4)
@@ -213,12 +262,23 @@ wss.on('connection', ws => {
       const st = Number.isInteger(m.st) ? m.st : null;
       const text = String(m.text || '').slice(0, 2000);
       if (!text && !att.length && st === null) return;
-      const msg = { uid: ws.id, from: ws.nick, text, att, st, t: Date.now() };
       const h = hist.get(m.channel) || [];
+      fixMids(h);
+      const msg = { mid: mkMid(), cid: ws.cid || '', uid: ws.id, from: ws.nick, text, att, st, t: Date.now() };
+      const rep = typeof m.re === 'string' ? h.find(x => x.mid === m.re) : null;   // resposta: o servidor confere a mensagem original
+      if (rep) msg.re = { mid: rep.mid, from: rep.from, text: snip(rep) };
       h.push(msg); if (h.length > 40) h.shift();
       hist.set(m.channel, h);
       markDirty(m.channel);
-      clients.forEach(c => c.nick && send(c, { type: 'msg', channel: m.channel, msg }));
+      clients.forEach(c => c.nick && send(c, { type: 'msg', channel: m.channel, msg: pub(msg, c) }));
+    } else if (m.type === 'msg-edit') {
+      const x = (hist.get(m.channel) || []).find(y => y.mid === m.mid);
+      if (!x || !ws.cid || x.cid !== ws.cid) return;   // só o dono edita
+      const text = String(m.text || '').slice(0, 2000);
+      if (text === x.text || (!text && !(x.att && x.att.length) && x.st == null)) return;
+      x.text = text; x.edited = Date.now();
+      markDirty(m.channel);
+      clients.forEach(c => c.nick && send(c, { type: 'msg-edit', channel: m.channel, mid: x.mid, text, edited: x.edited }));
     } else if (m.type === 'join') {
       const c = CH.find(c => c.id === m.room && c.kind === 'voice');
       if (!c || ws.room === c.id) return;
@@ -247,6 +307,8 @@ setInterval(() => {
   const mem = { used: Math.round(process.memoryUsage().rss / 1048576), limit: +process.env.MEM_LIMIT_MB || 512 };   // plano grátis do Render = 512 MB
   clients.forEach(c => c.nick && send(c, { type: 'pings', p, mem }));
 }, 4000);
+
+setInterval(prune, 3600e3);   // limpeza das mensagens/anexos antigos, de hora em hora
 
 // o Render avisa (SIGTERM) antes de desligar: grava o que faltar
 process.on('SIGTERM', async () => { clearTimeout(flushTimer); await flush().catch(() => {}); process.exit(0); });
