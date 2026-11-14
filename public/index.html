@@ -170,6 +170,12 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .u.hasb{color:#fff;text-shadow:0 1px 3px #000d}
 .u.hasb small{color:#e8e8ee}
 .u.hasb .av{box-shadow:0 0 0 2px #0008}
+.act img.cv{width:16px;height:16px;border-radius:3px;vertical-align:-3px;margin-right:4px;object-fit:cover}
+.mus{display:flex;gap:12px;align-items:center;margin-top:4px}
+.mus .cv{width:56px;height:56px;border-radius:8px;flex:none;object-fit:cover;background:#4b3a7a;display:grid;place-items:center;font-size:1.5rem}
+.mus .mt{min-width:0;display:grid;gap:2px}
+.mus .mt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.95rem}
+.mus .mt span{color:var(--mut);font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .u small{display:block;line-height:1.1}
 .cat{display:flex;align-items:center;justify-content:space-between;margin:14px 8px 4px;font-size:.75rem;color:var(--mut);text-transform:uppercase;font-weight:700}
 .cat button{color:var(--mut);font-size:1.2rem;line-height:1}
@@ -757,10 +763,38 @@ function renderChans() {
     });
   });
 }
-function actLines(u) {
+const covers = new Map();   // "título — artista" -> endereço da capa ('' se não achou)
+function coverFor(music, cb) {
+  const v = covers.get(music);
+  if (typeof v === 'string') { if (v) cb(v); return; }
+  if (v) { v.then(u => u && cb(u)); return; }
+  const [ti] = music.split(' — ');
+  const norm = x => (x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const p = fetch('https://itunes.apple.com/search?media=music&entity=song&limit=5&country=BR&term=' + encodeURIComponent(music.replace(' — ', ' ')))
+    .then(r => r.json())
+    .then(j => { const nt = norm(ti); const hit = (j.results || []).find(x => { const n = norm(x.trackName); return n && nt && (n.includes(nt) || nt.includes(n)); }); return hit && hit.artworkUrl100 ? hit.artworkUrl100.replace('100x100bb', '200x200bb') : ''; })
+    .catch(() => '').then(u => { covers.set(music, u); return u; });
+  covers.set(music, p); p.then(u => u && cb(u));
+}
+function musicCard(music) {   // capa + nome + artista (cartão de perfil)
+  const [ti, ...rest] = music.split(' — ');
+  const d = document.createElement('div'); d.className = 'mus'; d.title = music;
+  const cv = document.createElement('div'); cv.className = 'cv'; cv.textContent = '🎵';
+  const mt = document.createElement('div'); mt.className = 'mt';
+  const b = document.createElement('b'); b.textContent = ti; mt.append(b);
+  if (rest.length) { const a = document.createElement('span'); a.textContent = rest.join(' — '); mt.append(a); }
+  d.append(cv, mt);
+  coverFor(music, url => { const im = document.createElement('img'); im.className = 'cv'; im.alt = ''; im.src = url; if (cv.isConnected) cv.replaceWith(im); });
+  return d;
+}
+function actLines(u, rich) {
   const a = u.act, out = []; if (!a) return out;
   if (a.game) { const e = document.createElement('small'); e.className = 'act g'; e.textContent = '🎮 ' + a.game; e.title = a.game; out.push(e); }
-  if (a.music) { const e = document.createElement('small'); e.className = 'act'; e.textContent = '🎵 ' + a.music; e.title = a.music; out.push(e); }
+  if (a.music && rich) out.push(musicCard(a.music));
+  else if (a.music) {
+    const e = document.createElement('small'); e.className = 'act'; e.textContent = '🎵 ' + a.music; e.title = a.music; out.push(e);
+    coverFor(a.music, url => { if (!e.isConnected) return; const im = document.createElement('img'); im.className = 'cv'; im.alt = ''; im.src = url; e.replaceChildren(im, document.createTextNode(a.music)); });
+  }
   return out;
 }
 function renderMem() {
@@ -1623,7 +1657,7 @@ function card(id, anchor) {
   const nm = document.createElement('b'); nm.className = 'nm'; nm.textContent = u.name + (id === me ? ' (você)' : ''); bx.append(nm);
   const sec = (title, ...els) => { const d = document.createElement('div'); const h = document.createElement('h4'); h.textContent = title; d.append(h, ...els); bx.append(document.createElement('hr'), d); };
   if (pr.about) { const t = document.createElement('p'); t.textContent = pr.about; sec('Sobre mim', t); }
-  const al = actLines(u); if (al.length) sec('Atividade', ...al);
+  const al = actLines(u, true); if (al.length) sec('Atividade', ...al);
   if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
   const pv = id === me ? callPing() : pings[id];
   if (pv !== undefined && pv >= 0) { const t = document.createElement('p'); t.textContent = pv + ' ms'; sec('Ping', t); }
