@@ -1,7 +1,32 @@
-const http = require('http'), fs = require('fs'), path = require('path');
+const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 
 const PORT = process.env.PORT || 3000;
+
+// ---------- senha da turma ----------
+// No Render > Environment crie a variável SENHA_TURMA com a senha. Sem ela, o site continua aberto para todo mundo.
+const SENHA = String(process.env.SENHA_TURMA || process.env.SENHA || '');
+const sha = s => crypto.createHash('sha256').update(String(s)).digest();
+const passOk = p => !SENHA || crypto.timingSafeEqual(sha(p), sha(SENHA));
+// quem erra a senha 6 vezes seguidas fica 10 minutos bloqueado (evita tentar todas as senhas)
+const fails = new Map();
+const blocked = ip => { const f = fails.get(ip); return !!f && f.until > Date.now(); };
+function failed(ip) {
+  const now = Date.now(), f = fails.get(ip) || { n: 0, first: now, until: 0 };
+  if (now - f.first > 600e3) { f.n = 0; f.first = now; }
+  if (++f.n >= 6) { f.until = now + 600e3; f.n = 0; }
+  fails.set(ip, f);
+}
+setInterval(() => { const now = Date.now(); fails.forEach((f, ip) => { if (f.until < now && now - f.first > 600e3) fails.delete(ip); }); }, 3600e3);
+const ipOf = req => String(String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '');
+// páginas que só entram com a senha certa (cabeçalho x-senha)
+function httpAuth(req, res) {
+  if (!SENHA) return true;
+  const ip = ipOf(req);
+  if (!blocked(ip) && passOk(String(req.headers['x-senha'] || ''))) return true;
+  if (!blocked(ip)) failed(ip);
+  res.writeHead(401); res.end(); return false;
+}
 const MAX = 8; // malha P2P: 8 pessoas por sala é um bom teto
 // ICE = como os aparelhos acham um caminho entre si. Só com STUN, quem está atrás de
 // CGNAT / NAT simétrico (muito comum em internet de operadora) NÃO consegue conectar:
@@ -43,7 +68,19 @@ const PUB = path.join(__dirname, 'public');
 
 const srv = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
+  if (url === '/ok') { res.setHeader('cache-control', 'no-store'); return res.end('ok'); }   // só para saber se o servidor já acordou
+  if (url === '/need-pass') { res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); return res.end(JSON.stringify({ pass: !!SENHA })); }
+  const sbm = url.match(/^\/sb\/([a-z0-9]+)$/);   // arquivo de um som do soundboard
+  if (sbm) {
+    if (!httpAuth(req, res)) return;
+    const s = SB.find(x => x.id === sbm[1]);
+    if (!s) { res.writeHead(404); return res.end(); }
+    const mime = (s.data.match(/^data:([^;,]+)/) || [])[1] || 'audio/mpeg';
+    res.writeHead(200, { 'content-type': mime, 'cache-control': 'private, max-age=31536000, immutable' });
+    return res.end(Buffer.from(s.data.slice(s.data.indexOf(',') + 1), 'base64'));
+  }
   if (url === '/ice') {
+    if (!httpAuth(req, res)) return;
     return iceList().then(l => {
       res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store');
       res.end(JSON.stringify(l));
@@ -63,6 +100,7 @@ const wss = new WebSocketServer({ server: srv, maxPayload: 18 * 1024 * 1024 });
 const rooms = new Map();
 const clients = new Set();
 const hist = new Map();
+const SB = [];   // sons do soundboard: { id, name, emoji, by, cid, data (data:audio/...;base64) }
 const CH = [
   { id: 'geral', name: 'geral', kind: 'text', def: 1 },
   { id: 'voz-geral', name: 'Geral', kind: 'voice', def: 1 },
@@ -102,6 +140,8 @@ async function flush() {
   for (const id of ids) {
     try {
       if (id === '\0ch') { await up(['SET', 'guri:canais', JSON.stringify(CH)]); continue; }
+      if (id === '\0sbl') { await up(['SET', 'guri:sbl', JSON.stringify(SB.map(s => s.id))]); continue; }
+      if (id.startsWith('\0sb:')) { const sid = id.slice(4), s = SB.find(x => x.id === sid); await up(s ? ['SET', 'guri:sb:' + sid, JSON.stringify(s)] : ['DEL', 'guri:sb:' + sid]); continue; }
       const h = hist.get(id);
       if (!h) { await up(['DEL', 'guri:h:' + id]); continue; }
       let arr = h.map(slim), js = JSON.stringify(arr);
@@ -122,6 +162,10 @@ async function loadSaved() {
       const h = await up(['GET', 'guri:h:' + c.id]);
       if (h && !hist.has(c.id)) hist.set(c.id, JSON.parse(h).slice(-40));
     }
+    try {   // sons do soundboard
+      const ids = JSON.parse((await up(['GET', 'guri:sbl'])) || '[]');
+      for (const id of ids) { const raw = await up(['GET', 'guri:sb:' + id]); if (raw && !SB.some(s => s.id === id)) SB.push(JSON.parse(raw)); }
+    } catch (e) { console.error('não consegui carregar os sons do soundboard:', e.message); }
     hist.forEach(fixMids);
     prune();
     console.log('Mensagens e canais carregados do Upstash.');
@@ -134,7 +178,17 @@ const send = (ws, m) => ws.readyState === 1 && ws.send(JSON.stringify(m));
 const mkMid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const snip = x => (x.text || '').replace(/\s+/g, ' ').slice(0, 100) || (x.att && x.att[0] ? '📎 ' + x.att[0].name : x.st != null ? 'Figurinha' : '');
 // o que cada pessoa recebe: sem o "cid" de ninguém, só com own = true nas mensagens dela
-const pub = (m, viewer) => { const { cid, ...rest } = m; return { ...rest, own: !!cid && cid === viewer.cid }; };
+// reações ficam guardadas como { emoji: [{ c: cid, n: nome }] }; cada pessoa recebe só { n: quantas, me: se foi ela, who: nomes }
+const rxPub = (rx, viewer) => {
+  const o = {};
+  for (const e in rx || {}) { const a = rx[e]; if (a && a.length) o[e] = { n: a.length, me: !!viewer.cid && a.some(x => x.c === viewer.cid), who: a.map(x => x.n).slice(0, 12) }; }
+  return o;
+};
+const okEmoji = e => typeof e === 'string' && e.length > 0 && [...e].length <= 10 && /^[\p{Extended_Pictographic}\p{Emoji_Modifier}‍️]+$/u.test(e) && /\p{Extended_Pictographic}/u.test(e);
+const pub = (m, viewer) => { const { cid, rx, ...rest } = m; return { ...rest, rx: rxPub(rx, viewer), own: !!cid && cid === viewer.cid }; };
+const sbPub = viewer => SB.map(s => ({ id: s.id, name: s.name, emoji: s.emoji, by: s.by, own: !!viewer.cid && s.cid === viewer.cid }));
+const sendSb = ws => send(ws, { type: 'sb', list: sbPub(ws) });
+const sbAll = () => clients.forEach(c => c.nick && sendSb(c));
 // mensagens antigas (de antes desta versão) ganham um id estável para poderem ser respondidas
 const fixMids = arr => arr.forEach((m, i) => { if (!m.mid) m.mid = 'l' + (+m.t || 0).toString(36) + i; });
 // limpeza automática (pode ajustar no Render > Environment; 0 desliga):
@@ -198,16 +252,22 @@ function leave(ws) {
   state();
 }
 
-wss.on('connection', ws => {
+wss.on('connection', (ws, req) => {
   ws.id = String(next++);
+  ws.ip = ipOf(req);
   clients.add(ws);
   ws.on('message', raw => {
     let m; try { m = JSON.parse(raw); } catch { return; }
     if (m.type === 'hello') {
+      if (SENHA && !ws.nick) {   // senha da turma: sem ela certa, a pessoa nem aparece na lista
+        if (blocked(ws.ip)) { send(ws, { type: 'bad-pass', wait: true }); return ws.close(); }
+        if (!passOk(String(m.pass || ''))) { failed(ws.ip); send(ws, { type: 'bad-pass' }); return ws.close(); }
+      }
       ws.nick = String(m.name || 'Guri').slice(0, 24);
       ws.cid = String(m.cid || '').slice(0, 64);   // identidade fixa deste aparelho (nunca é enviada aos outros): é ela que prova que a mensagem é sua para editar
       setProf(ws, m.prof);
       send(ws, { type: 'hello-ok', id: ws.id });
+      sendSb(ws);
       [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
       state();
@@ -279,6 +339,44 @@ wss.on('connection', ws => {
       x.text = text; x.edited = Date.now();
       markDirty(m.channel);
       clients.forEach(c => c.nick && send(c, { type: 'msg-edit', channel: m.channel, mid: x.mid, text, edited: x.edited }));
+    } else if (m.type === 'msg-del') {
+      const h = hist.get(m.channel) || [], i = h.findIndex(y => y.mid === m.mid);
+      if (i < 0 || !ws.cid || h[i].cid !== ws.cid) return;   // só o dono apaga
+      h.splice(i, 1);
+      markDirty(m.channel);
+      clients.forEach(c => c.nick && send(c, { type: 'msg-del', channel: m.channel, mid: m.mid }));
+    } else if (m.type === 'react') {
+      const x = (hist.get(m.channel) || []).find(y => y.mid === m.mid), e = m.emoji;
+      if (!x || !ws.cid || !okEmoji(e)) return;
+      const rx = x.rx || (x.rx = {});
+      let a = rx[e];
+      if (!a) { if (Object.keys(rx).length >= 20) return; a = rx[e] = []; }
+      const i = a.findIndex(y => y.c === ws.cid);   // clicou de novo na mesma reação: tira a sua
+      if (i >= 0) a.splice(i, 1); else a.push({ c: ws.cid, n: ws.nick });
+      if (!a.length) delete rx[e];
+      if (!Object.keys(rx).length) delete x.rx;
+      markDirty(m.channel);
+      clients.forEach(c => c.nick && send(c, { type: 'react', channel: m.channel, mid: x.mid, rx: rxPub(x.rx, c) }));
+    } else if (m.type === 'sb-add') {
+      const name = String(m.name || '').trim().slice(0, 24), data = String(m.data || '');
+      const emoji = okEmoji(String(m.emoji || '')) ? String(m.emoji) : '🔊';
+      if (!ws.cid || !name || SB.length >= 30) return send(ws, { type: 'sb-err', msg: SB.length >= 30 ? 'O soundboard já tem 30 sons (o máximo). Apague algum.' : 'Faltou o nome do som.' });
+      if (data.length > 700000 || !/^data:audio\/[a-z0-9.+-]+(;[a-z0-9=.+-]+)*;base64,/i.test(data)) return send(ws, { type: 'sb-err', msg: 'Esse arquivo de áudio não serve (grande demais ou formato estranho).' });
+      const id = mkMid();
+      SB.push({ id, name, emoji, by: ws.nick, cid: ws.cid, data });
+      markDirty('\0sb:' + id); markDirty('\0sbl');
+      sbAll();
+    } else if (m.type === 'sb-del') {
+      const i = SB.findIndex(s => s.id === m.id);
+      if (i < 0 || !ws.cid || SB[i].cid !== ws.cid) return;   // só quem adicionou o som apaga
+      SB.splice(i, 1);
+      markDirty('\0sb:' + m.id); markDirty('\0sbl');
+      sbAll();
+    } else if (m.type === 'sb-play') {
+      const id = String(m.id || '');
+      if (!ws.room || !(/^b:[a-z]{1,16}$/.test(id) || SB.some(s => s.id === id))) return;   // só toca quem está numa chamada
+      const now = Date.now(); if (now - (ws.sbAt || 0) < 1000) return; ws.sbAt = now;        // 1 som por segundo, por pessoa
+      (rooms.get(ws.room) || new Map()).forEach(p => send(p, { type: 'sb-play', id, from: ws.id, name: ws.nick }));
     } else if (m.type === 'join') {
       const c = CH.find(c => c.id === m.room && c.kind === 'voice');
       if (!c || ws.room === c.id) return;
