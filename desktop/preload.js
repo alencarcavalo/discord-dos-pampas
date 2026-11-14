@@ -1,5 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('pampas', {
+  setKeys: map => ipcRenderer.invoke('set-keys', map),
+  onKey: cb => ipcRenderer.on('key', (e, n) => cb(n)),
   setMute: acc => ipcRenderer.invoke('mute-key', acc),
   onMute: cb => ipcRenderer.on('mute', () => cb()),
   // seletor de tela/janela

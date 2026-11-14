@@ -165,6 +165,19 @@ ipcMain.handle('mute-key', (e, acc) => {
   try { return globalShortcut.register(acc, () => win && win.webContents.send('mute')); } catch { return false; }
 });
 
+// vários atalhos globais: { mute, deaf, leave } -> devolve a lista dos que não foram registrados
+ipcMain.handle('set-keys', (e, map) => {
+  globalShortcut.unregisterAll();
+  const bad = [];
+  for (const [name, acc] of Object.entries(map || {})) {
+    if (!acc || !['mute', 'deaf', 'leave'].includes(name)) continue;
+    let ok = false;
+    try { ok = globalShortcut.register(acc, () => win && win.webContents.send('key', name)); } catch {}
+    if (!ok) bad.push(name);
+  }
+  return bad;
+});
+
 app.on('before-quit', () => { quitting = true; });
 app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => { if (quitting) app.quit(); });
