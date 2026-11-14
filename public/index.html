@@ -18,6 +18,22 @@ button,input{font:inherit;color:inherit}
 button{cursor:pointer;border:0;border-radius:4px;background:transparent}
 input{background:var(--input);border:0;border-radius:6px;padding:.7rem .8rem;width:100%}
 input:focus-visible,button:focus-visible{outline:2px solid var(--blur);outline-offset:1px}
+/* barra de rolagem fininha e discreta (igual à do Discord) */
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--txt) 20%,transparent);background-clip:padding-box;border:3px solid transparent;border-radius:8px;min-height:40px;min-width:40px}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--txt) 38%,transparent);background-clip:padding-box}
+@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--txt) 22%,transparent) transparent}}
+/* barras de volume: trilho fino, parte preenchida na cor de destaque e botão que vai de ponta a ponta */
+input[type=range]{--tw:10px;--f:0;-webkit-appearance:none;appearance:none;padding:0;height:24px;background:transparent;border-radius:0;cursor:pointer}
+input[type=range]:focus-visible{outline:none}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(var(--blur),var(--blur)) 0 0/calc(var(--tw)/2 + (100% - var(--tw))*var(--f)) 100% no-repeat,color-mix(in srgb,var(--txt) 22%,transparent)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:var(--tw);height:22px;margin-top:-7px;border:0;border-radius:3px;background:#fff;box-shadow:0 1px 3px #0008}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px color-mix(in srgb,var(--blur) 60%,transparent),0 1px 3px #0008}
+input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:color-mix(in srgb,var(--txt) 22%,transparent)}
+input[type=range]::-moz-range-progress{height:8px;border-radius:4px;background:var(--blur)}
+input[type=range]::-moz-range-thumb{width:var(--tw);height:22px;border:0;border-radius:3px;background:#fff;box-shadow:0 1px 3px #0008}
 small{color:var(--mut)}
 .av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:600;color:#fff;flex:none}
 .av.s{width:24px;height:24px;font-size:.75rem}
@@ -436,6 +452,12 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 
 <script>
 const $ = s => document.querySelector(s);
+// barras de volume: o preenchimento acompanha o valor, mesmo quando o valor é trocado pelo código
+const paintRange = r => { const mn = +r.min || 0, mx = r.max === '' ? 100 : +r.max; r.style.setProperty('--f', mx > mn ? Math.min(1, Math.max(0, (r.value - mn) / (mx - mn))) : 0); };
+{ const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  Object.defineProperty(HTMLInputElement.prototype, 'value', { configurable: true, enumerable: d.enumerable, get: d.get, set(v) { d.set.call(this, v); if (this.type === 'range') paintRange(this); } }); }
+document.addEventListener('input', e => { if (e.target.type === 'range') paintRange(e.target); }, true);
+document.querySelectorAll('input[type=range]').forEach(paintRange);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 let instPrompt;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); instPrompt = e; if (!window.pampas) $('#instalar').hidden = false; });
