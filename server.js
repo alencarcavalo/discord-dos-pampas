@@ -244,7 +244,8 @@ wss.on('connection', ws => {
 // a cada 4 s manda para todo mundo o ping de cada pessoa (medido por ela mesma até o servidor)
 setInterval(() => {
   const p = {}; clients.forEach(c => { if (c.nick && c.ping !== undefined) p[c.id] = c.ping; });
-  clients.forEach(c => c.nick && send(c, { type: 'pings', p }));
+  const mem = { used: Math.round(process.memoryUsage().rss / 1048576), limit: +process.env.MEM_LIMIT_MB || 512 };   // plano grátis do Render = 512 MB
+  clients.forEach(c => c.nick && send(c, { type: 'pings', p, mem }));
 }, 4000);
 
 // o Render avisa (SIGTERM) antes de desligar: grava o que faltar
