@@ -811,8 +811,26 @@ $('#login').onsubmit = e => {
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
   ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof });
   ws.onmessage = ev => handle(JSON.parse(ev.data));
-  ws.onclose = () => toast(kickedBy ? 'Você foi removido por ' + kickedBy + '. Recarregue para entrar de novo.' : 'Conexão perdida. Recarregue o app.');
+  ws.onclose = () => showReload(kickedBy ? 'Você foi removido por ' + kickedBy + '.' : 'Conexão perdida ou o app foi atualizado.');
 };
+// aviso com botão: quando o servidor reinicia (ex.: depois de subir uma atualização) ou a conexão cai
+function showReload(msg) {
+  let b = $('#rlbar');
+  if (!b) {
+    b = document.createElement('div'); b.id = 'rlbar';
+    b.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:12px;background:#1e1f22;color:#fff;border:1px solid var(--blur,#5865f2);padding:10px 14px;border-radius:10px;box-shadow:0 6px 24px #000a;font-size:.9rem';
+    const t = document.createElement('span'); t.id = 'rlt';
+    const g = document.createElement('button'); g.type = 'button'; g.textContent = 'Recarregar';
+    g.style.cssText = 'background:var(--blur,#5865f2);color:#fff;padding:6px 14px;border-radius:6px;font-weight:700';
+    g.onclick = () => {   // só recarrega quando o servidor já voltou; se ainda estiver subindo, avisa
+      g.disabled = true; g.textContent = 'Verificando…';
+      fetch('/ice', { cache: 'no-store' }).then(r => { if (!r.ok) throw 0; location.reload(); })
+        .catch(() => { g.disabled = false; g.textContent = 'Recarregar'; toast('O servidor ainda está reiniciando. Tenta de novo em alguns segundos.'); });
+    };
+    b.append(t, g); document.body.append(b);
+  }
+  $('#rlt').textContent = msg;
+}
 try { $('#nome').value = localStorage.getItem('pampas-nome') || ''; } catch {}
 
 async function joinCh(id) {
