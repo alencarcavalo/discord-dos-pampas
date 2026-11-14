@@ -431,6 +431,15 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     <section data-p="voz" hidden><h2>Voz e áudio</h2>
       <label>Volume do aplicativo <small id="appVolT"></small><input type="range" id="appVol" min="0" max="100" step="1"></label>
       <label>Volume do soundboard <small id="sbVolT"></small><input type="range" id="sbVol" min="0" max="100" step="1"></label>
+      <label>Sons de entrar e sair da chamada
+        <select id="packSel">
+          <option value="padrao">Padrão (sininhos)</option>
+          <option value="1">Meme 1 · risada ao entrar, "nese auuu" ao sair</option>
+          <option value="2">Meme 2 · "de novo" ao entrar, "aaaaaaa" ao sair</option>
+          <option value="3">Meme 3 · "tão me empurrando" ao entrar, "que nojo" ao sair</option>
+        </select></label>
+      <div class="row"><button type="button" class="sec" id="packIn">▶ Ouvir o de entrar</button><button type="button" class="sec" id="packOut">▶ Ouvir o de sair</button></div>
+      <small>Vale só para você: cada pessoa escolhe o que quer ouvir quando alguém entra ou sai.</small>
       <label>Saída de áudio (alto-falantes ou fone)<select id="outSel"></select></label>
       <label>Microfone<select id="micSel"></select></label>
       <label>Volume do microfone <small id="micVolT"></small><input type="range" id="micVol" min="0" max="200" step="5"></label>
@@ -594,17 +603,31 @@ const SND = {
   undeaf:   [[330, 0, .1], [440, .07, .1], [587, .14, .22]],
 };
 const custom = {};
-async function loadCustom() {   // opcional: public/sons/entrar.mp3 e sair.mp3 substituem os sons de entrar/sair
-  for (const [f, ks] of [['entrar', ['entra', 'eu_entra']], ['sair', ['sai', 'eu_sai']]]) {
-    for (const ext of ['mp3', 'ogg', 'wav']) {
-      try {
-        const r = await fetch('/sons/' + f + '.' + ext);
-        if (!r.ok || !/audio/.test(r.headers.get('content-type') || '')) continue;
-        const buf = await getAC().decodeAudioData(await r.arrayBuffer());
-        ks.forEach(k => custom[k] = buf); break;
-      } catch {}
-    }
+// Pacotes de sons de entrar/sair: cada pessoa escolhe nas Configurações > Voz o que quer ouvir (só no próprio aparelho).
+// "padrao" = sininhos (ou public/sons/entrar.mp3 e sair.mp3, se existirem). Os memes ficam em public/sons/memeN-entra.mp3 e memeN-sai.mp3.
+const PACKS = { '1': 'meme1', '2': 'meme2', '3': 'meme3' };
+let loadTok = 0;
+async function loadSnd(file, ks, exts, out) {
+  for (const ext of exts) {
+    try {
+      const r = await fetch('/sons/' + file + '.' + ext);
+      if (!r.ok || !/audio/.test(r.headers.get('content-type') || '')) continue;
+      const buf = await getAC().decodeAudioData(await r.arrayBuffer());
+      ks.forEach(k => out[k] = buf); return;
+    } catch {}
   }
+}
+async function loadCustom() {
+  const tok = ++loadTok, out = {}, pk = PACKS[cfg.pack];
+  if (pk) {
+    await loadSnd(pk + '-entra', ['entra', 'eu_entra'], ['mp3'], out);
+    await loadSnd(pk + '-sai', ['sai', 'eu_sai'], ['mp3'], out);
+  } else {
+    await loadSnd('entrar', ['entra', 'eu_entra'], ['mp3', 'ogg', 'wav'], out);
+    await loadSnd('sair', ['sai', 'eu_sai'], ['mp3', 'ogg', 'wav'], out);
+  }
+  if (tok !== loadTok) return;   // a pessoa trocou de pacote enquanto carregava
+  Object.keys(custom).forEach(k => delete custom[k]); Object.assign(custom, out);
 }
 function sfx(n) {
   try {
@@ -1554,7 +1577,7 @@ $('#bSom').onclick = e => {
 };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
@@ -2098,6 +2121,7 @@ function fillVoz() {
   ['ns', 'ec', 'agc', 'ai', 'gate', 'gAuto', 'duck', 'aec'].forEach(k => $('#' + k).checked = !!cfg[k]); paintAec(); $('#sq').value = cfg.sq || '720p30';
   $('#appVol').value = Math.round(cfg.app * 100); $('#appVolT').textContent = Math.round(cfg.app * 100) + '%';
   $('#sbVol').value = Math.round(cfg.sbv * 100); $('#sbVolT').textContent = Math.round(cfg.sbv * 100) + '%';
+  $('#packSel').value = PACKS[cfg.pack] ? cfg.pack : 'padrao';
   $('#micVol').value = Math.round(cfg.micv * 100); $('#micVolT').textContent = Math.round(cfg.micv * 100) + '%';
   $('#gThr').value = cfg.gThr; $('#gThrT').textContent = cfg.gThr + ' dB';
   $('#gAutoW').hidden = !cfg.gate; $('#gThrW').hidden = !cfg.gate || cfg.gAuto;
@@ -2110,6 +2134,9 @@ function drawMeter() {
 }
 $('#outSel').onchange = e => { cfg.out = e.target.value; saveCfg(); applyOut(); };
 $('#appVol').oninput = e => { cfg.app = e.target.value / 100; saveCfg(); applyVol(); $('#appVolT').textContent = e.target.value + '%'; };
+$('#packSel').onchange = async e => { cfg.pack = e.target.value; saveCfg(); await loadCustom(); sfx('entra'); };
+$('#packIn').onclick = () => sfx('entra');
+$('#packOut').onclick = () => sfx('sai');
 $('#sbVol').oninput = e => { cfg.sbv = e.target.value / 100; saveCfg(); $('#sbVolT').textContent = e.target.value + '%'; };
 $('#micVol').oninput = e => { cfg.micv = e.target.value / 100; saveCfg(); if (mic) mic.gain.gain.value = cfg.micv; $('#micVolT').textContent = e.target.value + '%'; };
 $('#gThr').oninput = e => { cfg.gThr = +e.target.value; saveCfg(); pushGate(); $('#gThrT').textContent = cfg.gThr + ' dB'; };
