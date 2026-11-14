@@ -1476,9 +1476,9 @@ const tip = document.createElement('div'); tip.id = 'ptip'; tip.hidden = true; d
 function tipFill(id) {
   const self = id === 'me' || id === me, v = self ? myPing : pings[id];
   tip.replaceChildren();
-  if (self) { const cp = callPing(); if (cp >= 0) { const d = document.createElement('div'); d.append('Atraso na chamada: '); const k = document.createElement('i'); k.textContent = cp + ' ms'; d.append(k); tip.append(d); } }
-  const a = document.createElement('div'); a.append(self ? 'Seu ping até o servidor: ' : 'Ping dele: ');
-  const i = document.createElement('i'); i.textContent = v === undefined || v < 0 ? 'medindo…' : v + ' ms'; a.append(i); tip.append(a);
+  const cp = self ? callPing() : -1, shown = cp >= 0 ? cp : v;   // o seu: só um ping (o da chamada; fora dela, o único que existe)
+  const a = document.createElement('div'); a.append(self ? 'Seu ping: ' : 'Ping dele: ');
+  const i = document.createElement('i'); i.textContent = shown === undefined || shown < 0 ? 'medindo…' : shown + ' ms'; a.append(i); tip.append(a);
   if (!self && p2p[id] !== undefined) { const b = document.createElement('div'); b.append('Direto com você: '); const j = document.createElement('i'); j.textContent = p2p[id] + ' ms'; b.append(j); tip.append(b); }
 }
 let tipId = null;
@@ -1599,7 +1599,7 @@ function card(id, anchor) {
   if (pr.about) { const t = document.createElement('p'); t.textContent = pr.about; sec('Sobre mim', t); }
   const al = actLines(u); if (al.length) sec('Atividade', ...al);
   if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
-  const pv = id === me ? myPing : pings[id];
+  const pv = id === me ? (callPing() >= 0 ? callPing() : myPing) : pings[id];
   if (pv !== undefined && pv >= 0) { const t = document.createElement('p'); t.textContent = pv + ' ms'; sec('Ping', t); }
   if (id === me) { const b = document.createElement('button'); b.className = 'go'; b.textContent = 'Editar perfil'; b.onclick = () => { w.remove(); $('#bCfg').click(); }; bx.append(b); }
   c.append(bn, av, bx); w.append(c); document.body.append(w);
