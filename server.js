@@ -76,7 +76,7 @@ const UP_URL = (process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/+$/, '').re
 const UP_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || '';
 const SAVE_ON = !!(process.env.UPSTASH_REDIS_REST_URL && UP_TOKEN);
 async function up(cmd) {
-  const r = await fetch(UP_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + UP_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
+  const r = await fetch(UP_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + UP_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd), signal: AbortSignal.timeout(6000) });
   const j = await r.json();
   if (j.error) throw new Error(j.error);
   return j.result;
@@ -119,7 +119,7 @@ async function loadSaved() {
     if (Array.isArray(ch) && ch.some(c => c.kind === 'text') && ch.some(c => c.kind === 'voice')) { CH.length = 0; ch.forEach(c => CH.push(c)); }
     for (const c of CH.filter(c => c.kind === 'text')) {
       const h = await up(['GET', 'guri:h:' + c.id]);
-      if (h) hist.set(c.id, JSON.parse(h).slice(-40));
+      if (h && !hist.has(c.id)) hist.set(c.id, JSON.parse(h).slice(-40));
     }
     console.log('Mensagens e canais carregados do Upstash.');
   } catch (e) { console.error('não consegui carregar o que estava salvo:', e.message); }
@@ -251,4 +251,4 @@ setInterval(() => {
 // o Render avisa (SIGTERM) antes de desligar: grava o que faltar
 process.on('SIGTERM', async () => { clearTimeout(flushTimer); await flush().catch(() => {}); process.exit(0); });
 
-loadSaved().finally(() => srv.listen(PORT, () => console.log('Discord dos Guri em http://localhost:' + PORT)));
+Promise.race([loadSaved(), new Promise(r => setTimeout(r, 10000))]).finally(() => srv.listen(PORT, () => console.log('Discord dos Guri em http://localhost:' + PORT)));
