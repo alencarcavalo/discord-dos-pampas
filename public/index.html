@@ -82,6 +82,7 @@ small{color:var(--mut)}
 .tile.s{order:1}.tile.pin{order:-1}
 .tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .tile.p:not(.hascam) video{display:none}.tile.p.hascam .pav{display:none}
+.pbg{position:absolute;inset:0;background-size:cover;background-position:center}.tile.p.hascam .pbg{display:none}
 .pav{--s:min(46cqh,30cqw);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:var(--s);height:var(--s);font-size:calc(var(--s)*.42)}
 .tile .nm{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);display:flex;align-items:center;gap:6px;background:#000b;padding:2px 8px;border-radius:6px;font-size:.85rem;color:#fff;z-index:2;overflow:hidden;white-space:nowrap}
 .tile::after{content:"";position:absolute;inset:0;border-radius:inherit;border:3px solid var(--blur);opacity:0;pointer-events:none;z-index:3}
@@ -595,10 +596,13 @@ function mkPerson(uid) {
   const t = mkTile('p:' + uid, uid, 'p');
   const a = document.createElement('div'); a.className = 'av pav'; a.dataset.uid = uid;
   if (speaking.has(uid)) a.classList.add('speaking');
-  t.av = a; t.el.prepend(a); return t;
+  const bg = document.createElement('div'); bg.className = 'pbg'; t.bg = bg;
+  t.av = a; t.el.prepend(a); t.el.prepend(bg); return t;
 }
 function updPerson(t, u) {
   paintAv(t.av, u.name, prof[u.id]);
+  const pf = prof[u.id] || {};   // foto/GIF do perfil atrás da pessoa; sem foto, a cor do perfil
+  if (t.bg) t.bg.style.background = pf.banner ? 'linear-gradient(#0007,#0007), url("' + pf.banner + '") center/cover' : (() => { const c = pf.color || colorOf(u.name); return 'linear-gradient(160deg,' + c + ',' + c + '66)'; })();
   t.nm.replaceChildren(document.createTextNode(u.name + (u.id === me ? ' (você)' : '')), badges(u));
 }
 function setCam(uid, s) {
@@ -851,7 +855,7 @@ function handle(m) {
   else if (m.type === 'peer-leave') { st.users = st.users.map(u => u.id === m.id ? { ...u, room: null } : u); dropPeer(m.id); delete names[m.id]; sfx('sai'); }
   else if (m.type === 'signal') onSignal(m.from, m.data);
   else if (m.type === 'profiles') m.list.forEach(p => { prof[p.id] = p.prof; renderMem(); renderChans(); })
-  else if (m.type === 'profile') { prof[m.id] = m.prof; renderMem(); renderChans(); }
+  else if (m.type === 'profile') { prof[m.id] = m.prof; renderMem(); renderChans(); syncStage(); }
 }
 
 // quais fluxos são microfone / câmera / tela (o outro lado precisa saber para montar a tela certa)
@@ -1464,7 +1468,7 @@ function callPing() {   // atraso direto médio com quem está na chamada (-1 se
   const v = Object.keys(peers).map(id => p2p[id]).filter(x => x !== undefined);
   return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : -1;
 }
-function paintPing() { const b = $('#sig'); if (b) { b.classList.remove('n', 'm', 'r'); const cp = callPing(), c = pingCls(cp >= 0 ? cp : myPing); if (c) b.classList.add(c); } }
+function paintPing() { const b = $('#sig'); if (b) { b.classList.remove('n', 'm', 'r'); const c = pingCls(callPing()); if (c) b.classList.add(c); } }
 async function measureP2P() {
   for (const id of Object.keys(peers)) {
     try {
@@ -1480,9 +1484,9 @@ const tip = document.createElement('div'); tip.id = 'ptip'; tip.hidden = true; d
 function tipFill(id) {
   const self = id === 'me' || id === me, v = self ? myPing : pings[id];
   tip.replaceChildren();
-  const cp = self ? callPing() : -1, shown = cp >= 0 ? cp : v;   // o seu: só um ping (o da chamada; fora dela, o único que existe)
+  const cp = self ? callPing() : -1, shown = self ? cp : v;   // o seu ping é só o da chamada (o do servidor não aparece mais)
   const a = document.createElement('div'); a.append(self ? 'Seu ping: ' : 'Ping dele: ');
-  const i = document.createElement('i'); i.textContent = shown === undefined || shown < 0 ? 'medindo…' : shown + ' ms'; a.append(i); tip.append(a);
+  const i = document.createElement('i'); i.textContent = self && cp < 0 ? 'ninguém na chamada' : (shown === undefined || shown < 0 ? 'medindo…' : shown + ' ms'); a.append(i); tip.append(a);
   if (!self && p2p[id] !== undefined) { const b = document.createElement('div'); b.append('Direto com você: '); const j = document.createElement('i'); j.textContent = p2p[id] + ' ms'; b.append(j); tip.append(b); }
 }
 let tipId = null;
@@ -1603,7 +1607,7 @@ function card(id, anchor) {
   if (pr.about) { const t = document.createElement('p'); t.textContent = pr.about; sec('Sobre mim', t); }
   const al = actLines(u); if (al.length) sec('Atividade', ...al);
   if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
-  const pv = id === me ? (callPing() >= 0 ? callPing() : myPing) : pings[id];
+  const pv = id === me ? callPing() : pings[id];
   if (pv !== undefined && pv >= 0) { const t = document.createElement('p'); t.textContent = pv + ' ms'; sec('Ping', t); }
   if (id === me) { const b = document.createElement('button'); b.className = 'go'; b.textContent = 'Editar perfil'; b.onclick = () => { w.remove(); $('#bCfg').click(); }; bx.append(b); }
   c.append(bn, av, bx); w.append(c); document.body.append(w);
