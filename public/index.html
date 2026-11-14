@@ -426,6 +426,18 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .pop .bx p{margin:0;font-size:.9rem;word-break:break-word}
 .pop .bx .act{max-width:none;white-space:normal;font-size:.88rem;color:var(--txt);margin:2px 0}
 .pop .bx .go,.pop .bx .sec{justify-self:stretch;padding:8px;border-radius:6px}
+/* animações simples nos ícones da barra de baixo e da chamada (ao passar o mouse) */
+#me button svg,#vc button svg{transition:transform .35s cubic-bezier(.34,1.56,.64,1);transform-origin:center;transform-box:fill-box}
+#bCfg:hover svg{transform:rotate(90deg)}
+#me .sp:hover>#bDeaf svg{transform:scaleX(1.16)}
+#me .sp:hover>#bMic svg{animation:aniMic .55s ease}
+#bSair:hover svg{animation:aniFone .6s ease}
+#vc .vb button:hover svg{transform:scale(1.16) rotate(-4deg)}
+#vc #bSom:hover svg{animation:aniSom .5s ease}
+@keyframes aniMic{0%,100%{transform:none}25%{transform:rotate(-14deg) translateY(-1px)}55%{transform:rotate(10deg)}80%{transform:rotate(-4deg)}}
+@keyframes aniFone{0%,100%{transform:none}15%{transform:rotate(-20deg)}35%{transform:rotate(17deg)}55%{transform:rotate(-12deg)}75%{transform:rotate(7deg)}}
+@keyframes aniSom{0%,100%{transform:none}30%{transform:translateY(-3px) scale(1.1)}60%{transform:translateY(1px)}}
+@media(prefers-reduced-motion:reduce){#me button svg,#vc button svg{transition:none}#me .sp:hover>#bMic svg,#bSair:hover svg,#vc #bSom:hover svg{animation:none}}
 </style>
 </head>
 <body>
