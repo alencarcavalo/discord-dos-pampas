@@ -68,6 +68,62 @@ const CH = [
   { id: 'voz-geral', name: 'Geral', kind: 'voice', def: 1 },
 ];
 let next = 1;
+
+// ---------- salvar mensagens e canais (Upstash Redis, grátis) ----------
+// Sem isso, tudo some quando o Render reinicia. Precisa de 2 variáveis no Render:
+//   UPSTASH_REDIS_REST_URL   e   UPSTASH_REDIS_REST_TOKEN
+const UP_URL = (process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/+$/, '').replace(/^(?!https?:\/\/)(.+)/, 'https://$1');
+const UP_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || '';
+const SAVE_ON = !!(process.env.UPSTASH_REDIS_REST_URL && UP_TOKEN);
+async function up(cmd) {
+  const r = await fetch(UP_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + UP_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
+  const j = await r.json();
+  if (j.error) throw new Error(j.error);
+  return j.result;
+}
+// no plano grátis cada gravação aceita ~1 MB: anexos grandes não são guardados (só o nome), e o histórico é aparado se passar do limite
+const KEEP_ATT = 150000, KEEP_MAX = 800000;
+function slim(m) {
+  const keep = [], lost = [];
+  (m.att || []).forEach(a => (a.data.length <= KEEP_ATT ? keep : lost).push(a));
+  const text = lost.length ? (m.text ? m.text + '\n' : '') + lost.map(a => '📎 ' + a.name + ' (anexo grande, não foi guardado)').join('\n') : m.text;
+  return { ...m, text, att: keep };
+}
+const dirty = new Set();
+let flushTimer = 0;
+function markDirty(id) {
+  if (!SAVE_ON) return;
+  dirty.add(id);
+  if (!flushTimer) flushTimer = setTimeout(flush, 3000);   // junta várias mudanças numa gravação só
+}
+async function flush() {
+  flushTimer = 0;
+  const ids = [...dirty]; dirty.clear();
+  for (const id of ids) {
+    try {
+      if (id === '\0ch') { await up(['SET', 'guri:canais', JSON.stringify(CH)]); continue; }
+      const h = hist.get(id);
+      if (!h) { await up(['DEL', 'guri:h:' + id]); continue; }
+      let arr = h.map(slim), js = JSON.stringify(arr);
+      while (js.length > KEEP_MAX && arr.length > 1) { arr.shift(); js = JSON.stringify(arr); }
+      await up(['SET', 'guri:h:' + id, js]);
+    } catch (e) { console.error('não consegui salvar', id === '\0ch' ? 'canais' : id, e.message); dirty.add(id); }
+  }
+  if (dirty.size && !flushTimer) flushTimer = setTimeout(flush, 15000);   // tenta de novo daqui a pouco
+}
+async function loadSaved() {
+  if (!SAVE_ON) { console.log('AVISO: sem UPSTASH_REDIS_REST_URL/TOKEN, as mensagens NÃO são salvas.'); return; }
+  try {
+    const raw = await up(['GET', 'guri:canais']);
+    const ch = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(ch) && ch.some(c => c.kind === 'text') && ch.some(c => c.kind === 'voice')) { CH.length = 0; ch.forEach(c => CH.push(c)); }
+    for (const c of CH.filter(c => c.kind === 'text')) {
+      const h = await up(['GET', 'guri:h:' + c.id]);
+      if (h) hist.set(c.id, JSON.parse(h).slice(-40));
+    }
+    console.log('Mensagens e canais carregados do Upstash.');
+  } catch (e) { console.error('não consegui carregar o que estava salvo:', e.message); }
+}
 const send = (ws, m) => ws.readyState === 1 && ws.send(JSON.stringify(m));
 const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'canal';
 
@@ -121,12 +177,14 @@ wss.on('connection', ws => {
       let id = slug(name), i = 2;
       while (CH.some(c => c.id === id)) id = slug(name) + '-' + i++;
       CH.push({ id, name: kind === 'text' ? slug(name) : name, kind });
+      markDirty('\0ch');
       state();
     } else if (m.type === 'chan-del') {
       const i = CH.findIndex(c => c.id === m.id);
       if (i < 0 || (rooms.get(m.id) || { size: 0 }).size) return;
       if (CH[i].kind === 'text' && CH.filter(c => c.kind === 'text').length <= 1) return; // sempre sobra 1 canal de texto
       CH.splice(i, 1); hist.delete(m.id);
+      markDirty('\0ch'); markDirty(m.id);
       state();
     } else if (m.type === 'act') {
       const g = String(m.game || '').slice(0, 40), mu = String(m.music || '').slice(0, 80);
@@ -159,6 +217,7 @@ wss.on('connection', ws => {
       const h = hist.get(m.channel) || [];
       h.push(msg); if (h.length > 40) h.shift();
       hist.set(m.channel, h);
+      markDirty(m.channel);
       clients.forEach(c => c.nick && send(c, { type: 'msg', channel: m.channel, msg }));
     } else if (m.type === 'join') {
       const c = CH.find(c => c.id === m.room && c.kind === 'voice');
@@ -188,4 +247,7 @@ setInterval(() => {
   clients.forEach(c => c.nick && send(c, { type: 'pings', p }));
 }, 4000);
 
-srv.listen(PORT, () => console.log('Discord dos Guri em http://localhost:' + PORT));
+// o Render avisa (SIGTERM) antes de desligar: grava o que faltar
+process.on('SIGTERM', async () => { clearTimeout(flushTimer); await flush().catch(() => {}); process.exit(0); });
+
+loadSaved().finally(() => srv.listen(PORT, () => console.log('Discord dos Guri em http://localhost:' + PORT)));
