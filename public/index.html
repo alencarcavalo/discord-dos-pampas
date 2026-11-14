@@ -256,6 +256,31 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 #ask{background:var(--side);padding:20px;border-radius:10px;width:340px;max-width:92vw;display:grid;gap:12px;box-shadow:0 2px 10px #000a}
 #ask .row{justify-content:flex-end}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111214;padding:10px 16px;border-radius:8px;z-index:9;box-shadow:0 2px 10px #0008}
+/* reações nas mensagens */
+.rxs{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.rx{display:inline-flex;gap:5px;align-items:center;padding:2px 8px;border-radius:8px;background:var(--side);border:1px solid transparent;font-size:.95rem}
+.rx:hover{border-color:var(--mut)}
+.rx.me{border-color:var(--blur);background:color-mix(in srgb,var(--blur) 25%,var(--side))}
+.rx b{margin:0;font-size:.8rem;color:var(--txt)}
+.mact button.del:hover{color:var(--verm)}
+#rxpick{position:fixed;z-index:10;background:#111214;border-radius:8px;padding:8px;box-shadow:0 2px 10px #000a;display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+#rxpick button{font-size:1.4rem;padding:4px 6px;border-radius:6px}
+#rxpick button:hover{background:var(--hover)}
+/* soundboard */
+#sbp{position:fixed;z-index:10;background:#111214;border-radius:10px;padding:12px;width:310px;max-width:94vw;max-height:70vh;overflow:auto;box-shadow:0 2px 12px #000b;display:grid;gap:10px}
+#sbp h4{margin:0;font-size:.95rem}
+#sbp small{color:var(--mut)}
+#sbp .sbg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+#sbp .sbb{position:relative;display:grid;justify-items:center;gap:2px;padding:8px 4px;background:var(--input);border-radius:8px;font-size:1.6rem;line-height:1.1;min-width:0}
+#sbp .sbb:hover{background:var(--hover)}
+#sbp .sbb span{font-size:.72rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
+#sbp .sbb .sx{font-style:normal;position:absolute;top:2px;right:2px;font-size:.7rem;line-height:1;padding:2px 4px;display:none;color:var(--mut);background:#111214aa}
+#sbp .sbb:hover .sx{display:block}
+#sbp .sbb .sx:hover{color:var(--verm)}
+#sbp form{display:grid;gap:6px}
+#sbp form input{padding:.5rem .6rem}
+#sbp .row input[name=emoji]{width:64px;text-align:center}
+#sbn{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:#111214;padding:6px 14px;border-radius:16px;z-index:9;font-size:.85rem;box-shadow:0 2px 10px #0008}
 
 /* ---- painel de baixo estilo Discord ---- */
 #vc,#me{background:#232428;border:0}
@@ -315,6 +340,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     <h1>Discord dos Guri</h1>
     <small>Voz, câmera, tela e chat pra turma.</small>
     <label>Como a turma te chama?<input id="nome" maxlength="24" required autocomplete="nickname"></label>
+    <label id="senhaW" hidden>Senha da turma<input id="senha" type="password" maxlength="100" autocomplete="current-password"></label>
     <button class="go">Entrar</button>
     <button type="button" id="instalar">Instalar como app</button>
     <div id="erro" role="alert"></div>
@@ -336,6 +362,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
         <button id="bCam" title="Câmera">📷</button>
         <button id="bTela" title="Compartilhar tela">🖥️</button>
         <button id="bTrocar" title="Trocar a tela / janela que você está transmitindo" hidden>🔄</button>
+        <button id="bSom" title="Soundboard: tocar um som para todo mundo na chamada">🎵</button>
       </div>
     </div>
     <div id="me"><div class="av" id="meav"></div><div><b id="meN"></b><small>Online</small></div><div class="sp"><button id="bMic" title="Mutar / desmutar microfone">🎤</button><button class="ar" id="aMic" type="button" title="Opções do microfone"></button></div><div class="sp"><button id="bDeaf" title="Ficar sem áudio (fone mudo)">🎧</button><button class="ar" id="aDeaf" type="button" title="Opções de áudio"></button></div><button id="bCfg" title="Configurações">⚙️</button></div>
@@ -398,6 +425,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     </section>
     <section data-p="voz" hidden><h2>Voz e áudio</h2>
       <label>Volume do aplicativo <small id="appVolT"></small><input type="range" id="appVol" min="0" max="100" step="1"></label>
+      <label>Volume do soundboard <small id="sbVolT"></small><input type="range" id="sbVol" min="0" max="100" step="1"></label>
       <label>Saída de áudio (alto-falantes ou fone)<select id="outSel"></select></label>
       <label>Microfone<select id="micSel"></select></label>
       <label>Volume do microfone <small id="micVolT"></small><input type="range" id="micVol" min="0" max="200" step="5"></label>
@@ -508,11 +536,13 @@ const P = {
   swap: '<path d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>',
   pin: '<path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/>',
   reply: '<path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>',
-  edit: '<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>'
+  edit: '<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>',
+  trash: '<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>',
+  music: '<path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>'
 };
 const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[n] + '</svg>';
 function ico(n) { const s = document.createElement('span'); s.className = 'ico'; s.innerHTML = svg(n); return s; }
-[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bTrocar', 'swap'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bDeaf', 'head'], ['#bCfg', 'gear'], ['#aMic', 'down'], ['#aDeaf', 'down'], ['#sig', 'sig'], ['#bAnexo', 'plus'], ['#bFig', 'smile']]
+[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bTrocar', 'swap'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bDeaf', 'head'], ['#bCfg', 'gear'], ['#aMic', 'down'], ['#aDeaf', 'down'], ['#sig', 'sig'], ['#bAnexo', 'plus'], ['#bFig', 'smile'], ['#bSom', 'music']]
   .forEach(([s, n]) => { const b = $(s); b.classList.add('ico'); b.innerHTML = svg(n); });
 
 // ---------- áudio: saída, volume do app e sons ----------
@@ -895,14 +925,47 @@ function mkMsg(m, ch) {
     if (a.type.startsWith('image/')) { const i = document.createElement('img'); i.className = 'a'; i.src = a.data; c.append(i); }
     else { const l = document.createElement('a'); l.className = 'file'; l.href = a.data; l.download = a.name; l.textContent = '📎 ' + a.name + ' (' + Math.ceil(a.size / 1024) + ' KB)'; c.append(l); }
   });
+  const rxs = mkRx(m, ch); if (rxs) c.append(rxs);
   d.append(avatar(m.from, 0, m.uid), c);
   if (m.mid && ch) {
     const t = document.createElement('div'); t.className = 'mact';
-    const r = document.createElement('button'); r.type = 'button'; r.className = 'ico'; r.innerHTML = svg('reply'); r.title = 'Responder'; r.onclick = () => startReply(m, ch); t.append(r);
-    if (m.own && (m.text || (m.att || []).length)) { const e = document.createElement('button'); e.type = 'button'; e.className = 'ico'; e.innerHTML = svg('edit'); e.title = 'Editar'; e.onclick = () => startEdit(m, ch); t.append(e); }
+    const ab = (icon, title, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ico' + (cls ? ' ' + cls : ''); b.innerHTML = svg(icon); b.title = title; b.onclick = fn; t.append(b); return b; };
+    ab('smile', 'Reagir', e => rxMenu(e.currentTarget, m, ch));
+    ab('reply', 'Responder', () => startReply(m, ch));
+    if (m.own && (m.text || (m.att || []).length)) ab('edit', 'Editar', () => startEdit(m, ch));
+    if (m.own) ab('trash', 'Apagar (segure Shift para apagar sem perguntar)', e => delMsg(m, ch, e.shiftKey), 'del');
     p.append(t);   // ao lado do nome e da hora, bem perto da mensagem
   }
   return d;
+}
+// ---------- reações e apagar mensagem ----------
+const RX = ['👍', '👎', '❤️', '😂', '🤣', '😮', '😢', '😡', '🔥', '🎉', '👏', '🙏', '💀', '🤔', '😍', '😎', '🥩', '🧉', '🤠', '💯', '👀', '😭', '😅', '🥲', '🤝', '✅', '❌', '🍺', '🎮', '⚡', '🫡', '🤯'];
+function mkRx(m, ch) {
+  const ks = Object.keys(m.rx || {}); if (!ks.length || !m.mid || !ch) return null;
+  const w = document.createElement('div'); w.className = 'rxs';
+  ks.forEach(e => {
+    const r = m.rx[e], b = document.createElement('button'); b.type = 'button'; b.className = 'rx' + (r.me ? ' me' : '');
+    b.title = (r.who || []).join(', ') + (r.n > (r.who || []).length ? ' e mais ' + (r.n - r.who.length) : '');
+    const s = document.createElement('span'); s.textContent = e; const n = document.createElement('b'); n.textContent = r.n; b.append(s, n);
+    b.onclick = () => send({ type: 'react', channel: ch, mid: m.mid, emoji: e });
+    w.append(b);
+  });
+  return w;
+}
+function rxMenu(btn, m, ch) {
+  $('#rxpick')?.remove();
+  const p = document.createElement('div'); p.id = 'rxpick';
+  RX.forEach(e => { const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.onclick = () => { send({ type: 'react', channel: ch, mid: m.mid, emoji: e }); p.remove(); }; p.append(b); });
+  document.body.append(p);
+  const r = btn.getBoundingClientRect();
+  p.style.left = Math.max(4, Math.min(r.left, innerWidth - p.offsetWidth - 4)) + 'px';
+  p.style.top = (r.bottom + 4 + p.offsetHeight > innerHeight ? Math.max(4, r.top - p.offsetHeight - 4) : r.bottom + 4) + 'px';
+  const off = ev => { if (!p.contains(ev.target)) { p.remove(); document.removeEventListener('mousedown', off, true); } };
+  setTimeout(() => document.addEventListener('mousedown', off, true), 0);
+}
+async function delMsg(m, ch, quick) {
+  if (!quick && !(await askYes('Apagar essa mensagem? Isso não tem volta.', 'Apagar'))) return;
+  send({ type: 'msg-del', channel: ch, mid: m.mid });
 }
 function addMsg(m, ch) {
   const d = mkMsg(m, ch);
@@ -955,12 +1018,18 @@ $('#login').onsubmit = e => {
   e.preventDefault();
   myName = $('#nome').value.trim() || 'Guri';
   try { localStorage.setItem('pampas-nome', myName); } catch {}
-  fetch('/ice').then(r => r.json()).then(j => ICE = j).catch(() => {});
+  PASS = $('#senha').value; badPass = false; $('#erro').textContent = '';
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-  ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof, cid: CID });
+  ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof, cid: CID, pass: PASS });
   ws.onmessage = ev => handle(JSON.parse(ev.data));
-  ws.onclose = () => showReload(kickedBy ? 'Você foi removido por ' + kickedBy + '.' : 'Conexão perdida ou o app foi atualizado.');
+  ws.onclose = () => { if (badPass) return; showReload(kickedBy ? 'Você foi removido por ' + kickedBy + '.' : 'Conexão perdida ou o app foi atualizado.'); };
 };
+// senha da turma: se o servidor pedir, aparece o campo (e a senha fica lembrada neste aparelho)
+let PASS = '', badPass = false;
+const authH = () => PASS ? { 'x-senha': PASS } : {};
+const loadIce = () => fetch('/ice', { headers: authH(), cache: 'no-store' }).then(r => r.json()).then(j => { if (Array.isArray(j)) ICE = j; }).catch(() => {});
+fetch('/need-pass', { cache: 'no-store' }).then(r => r.json()).then(j => { if (j.pass) { $('#senhaW').hidden = false; $('#senha').required = true; } }).catch(() => {});
+try { $('#senha').value = localStorage.getItem('pampas-senha') || ''; } catch {}
 // aviso com botão: quando o servidor reinicia (ex.: depois de subir uma atualização) ou a conexão cai
 function showReload(msg) {
   let b = $('#rlbar');
@@ -972,7 +1041,7 @@ function showReload(msg) {
     g.style.cssText = 'background:var(--blur,#5865f2);color:#fff;padding:6px 14px;border-radius:6px;font-weight:700';
     g.onclick = () => {   // só recarrega quando o servidor já voltou; se ainda estiver subindo, avisa
       g.disabled = true; g.textContent = 'Verificando…';
-      fetch('/ice', { cache: 'no-store' }).then(r => { if (!r.ok) throw 0; location.reload(); })
+      fetch('/ok', { cache: 'no-store' }).then(r => { if (!r.ok) throw 0; location.reload(); })
         .catch(() => { g.disabled = false; g.textContent = 'Recarregar'; toast('O servidor ainda está reiniciando. Tenta de novo em alguns segundos.'); });
     };
     b.append(t, g); document.body.append(b);
@@ -992,13 +1061,15 @@ async function joinCh(id) {
 }
 function dropAll() {
   Object.keys(peers).forEach(dropPeer); dropLocal('cam'); stopShare();
-  press($('#bCam'), false); names = {}; cur = null; pinKey = null; syncStage();
+  press($('#bCam'), false); names = {}; cur = null; pinKey = null; syncStage(); closeSb();
   muted = false; wasMuted = false; deaf = false; applyVol(); paintMic();   // ao sair da chamada o microfone volta ao normal
 }
 
 function handle(m) {
   if (m.type === 'hello-ok') {
     me = m.id; $('#login').hidden = true; $('#app').hidden = false;
+    try { if (PASS) localStorage.setItem('pampas-senha', PASS); } catch {}
+    loadIce();
     lastAct = ''; setTimeout(() => pushAct(true), 500); paintMic();
     $('#meN').textContent = myName; prof[me] = cfg.prof; paintAv($('#meav'), myName, cfg.prof); loadCustom();
   } else if (m.type === 'state') {
@@ -1016,11 +1087,32 @@ function handle(m) {
   } else if (m.type === 'msg-edit') {
     const x = (hist[m.channel] || []).find(y => y.mid === m.mid);
     if (x) { x.text = m.text; x.edited = m.edited; if (view?.k === 't' && view.id === m.channel) patchMsg(x, m.channel); }
+  } else if (m.type === 'msg-del') {
+    const h = hist[m.channel]; if (h) { const i = h.findIndex(y => y.mid === m.mid); if (i >= 0) h.splice(i, 1); }
+    if (replyTo && replyTo.mid === m.mid) { replyTo = null; paintReply(); }
+    if (view?.k === 't' && view.id === m.channel) msgEl(m.mid)?.remove();
+  } else if (m.type === 'react') {
+    const x = (hist[m.channel] || []).find(y => y.mid === m.mid);
+    if (x) {
+      x.rx = m.rx;
+      const el = view?.k === 't' && view.id === m.channel ? msgEl(x.mid) : null;
+      if (el) {
+        const c = el.querySelector('.cb'), old = c.querySelector('.rxs'), nw = mkRx(x, m.channel);
+        if (old && nw) old.replaceWith(nw); else if (old) old.remove(); else if (nw) c.append(nw);
+      }
+    }
+  } else if (m.type === 'sb') { SBL = m.list; sbPrefetch(); if ($('#sbp')) renderSb(); }
+  else if (m.type === 'sb-err') toast(m.msg || 'Não deu para adicionar o som.');
+  else if (m.type === 'sb-play') sbPlay(m.id, m.from, m.name);
+  else if (m.type === 'bad-pass') {
+    badPass = true; $('#senhaW').hidden = false; $('#senha').required = true; $('#senha').value = ''; $('#senha').focus();
+    $('#erro').textContent = m.wait ? 'Muitas tentativas erradas. Espere uns 10 minutos e tente de novo.' : 'Senha incorreta.';
+    try { localStorage.removeItem('pampas-senha'); } catch {}
   } else if (m.type === 'kicked') { kickedBy = m.by || 'alguém'; dropAll(); }
   else if (m.type === 'full') { toast('Esse canal está cheio (máximo de 8 pessoas).'); firstText(); }
   else if (m.type === 'joined') {
     cur = m.room; m.peers.forEach(p => { names[p.id] = p.name; makePeer(p.id); });
-    sfx('eu_entra'); renderChans(); renderTop(); sendVs();
+    sfx('eu_entra'); renderChans(); renderTop(); sendVs(); sbPrefetch();
   } else if (m.type === 'peer-join') { names[m.id] = m.name; sfx('entra'); }
   else if (m.type === 'peer-leave') { st.users = st.users.map(u => u.id === m.id ? { ...u, room: null } : u); dropPeer(m.id); delete names[m.id]; sfx('sai'); }
   else if (m.type === 'signal') onSignal(m.from, m.data);
@@ -1322,8 +1414,131 @@ STK.forEach((s, i) => {
 });
 $('#bFig').onclick = () => { $('#figs').hidden = !$('#figs').hidden; };
 
+// ---------- soundboard: botões de som que tocam para todo mundo na chamada ----------
+// Cada pessoa toca o som no próprio computador (o servidor só avisa "toca o som tal"), então vale o volume do app e o fone mudo.
+let SBL = [];   // sons adicionados pela turma (vêm do servidor)
+const BI = [    // sons que já vêm no app (gerados aqui mesmo, sem arquivo)
+  { id: 'b:buzina', emoji: '📯', name: 'Buzina', dur: 1.4, fill(d, sr) {
+    const saw = (t, f) => 2 * ((t * f) % 1) - 1;
+    for (let i = 0; i < d.length; i++) {
+      const t = i / sr; let e = 0;
+      for (const [s, l] of [[0, .3], [.4, .9]]) if (t >= s && t < s + l) { const x = t - s; e = Math.min(1, x / .015, (l - x) / .06); }
+      d[i] = e * .45 * (saw(t, 392) + saw(t, 494) + saw(t, 587)) / 3;
+    }
+  } },
+  { id: 'b:tss', emoji: '🥁', name: 'Ba-dum-tss', dur: 1.7, fill(d, sr) {
+    let p = 0;
+    for (let i = 0; i < d.length; i++) {
+      const t = i / sr; let v = 0;
+      for (const t0 of [0, .2]) if (t >= t0 && t < t0 + .3) { const x = t - t0; v += Math.sin(2 * Math.PI * (60 * x + 120 * (1 - Math.exp(-30 * x)) / 30)) * Math.exp(-x * 12) * .9; }
+      if (t >= .2 && t < .45) v += (Math.random() * 2 - 1) * Math.exp(-(t - .2) * 25) * .3;
+      if (t >= .5) { const n = Math.random() * 2 - 1, h = n - p; p = n; v += h * Math.exp(-(t - .5) * 4) * .45; }
+      d[i] = Math.max(-1, Math.min(1, v));
+    }
+  } },
+  { id: 'b:fanfarra', emoji: '🎺', name: 'Fanfarra', dur: 1.3, fill(d, sr) {
+    for (let i = 0; i < d.length; i++) {
+      const t = i / sr; let v = 0;
+      for (const [f, s, l] of [[523, 0, .14], [523, .17, .14], [523, .34, .14], [698, .51, .7]]) if (t >= s && t < s + l) {
+        const x = t - s, w = 2 * Math.PI * f * x, e = Math.min(1, x / .01, (l - x) / .05);
+        v += e * .3 * (Math.sin(w) + Math.sin(2 * w) / 2 + Math.sin(3 * w) / 3 + Math.sin(4 * w) / 4);
+      }
+      d[i] = v;
+    }
+  } },
+  { id: 'b:errou', emoji: '❌', name: 'Errou!', dur: .8, fill(d, sr) {
+    const saw = (t, f) => 2 * ((t * f) % 1) - 1;
+    for (let i = 0; i < d.length; i++) {
+      const t = i / sr; let e = 0;
+      for (const [s, l] of [[0, .3], [.38, .4]]) if (t >= s && t < s + l) { const x = t - s; e = Math.min(1, x / .01, (l - x) / .04); }
+      d[i] = e * .4 * (saw(t, 110) + saw(t, 117)) / 2;
+    }
+  } },
+  { id: 'b:aplausos', emoji: '👏', name: 'Aplausos', dur: 2.6, fill(d, sr) {
+    for (let k = 0; k < 220; k++) {
+      const t0 = Math.random() * 2.2, a = .3 + Math.random() * .7, env = Math.sin(Math.PI * Math.min(1, t0 / 2.2)) ** .6, st = Math.floor(t0 * sr), len = Math.floor(sr * .025);
+      for (let j = 0; j < len && st + j < d.length; j++) d[st + j] += (Math.random() * 2 - 1) * a * env * Math.exp(-j / (sr * .006)) * .22;
+    }
+    for (let i = 0; i < d.length; i++) d[i] = Math.max(-1, Math.min(1, d[i]));
+  } },
+];
+const SBUF = {};   // id -> promessa do áudio já decodificado (baixa uma vez só)
+function sbBuf(id) {
+  if (SBUF[id]) return SBUF[id];
+  const b = BI.find(x => x.id === id);
+  if (b) { const c = getAC(), buf = c.createBuffer(1, Math.floor(c.sampleRate * b.dur), c.sampleRate); b.fill(buf.getChannelData(0), c.sampleRate); return SBUF[id] = Promise.resolve(buf); }
+  return SBUF[id] = fetch('/sb/' + encodeURIComponent(id), { headers: authH() }).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+    .then(a => getAC().decodeAudioData(a)).catch(() => { delete SBUF[id]; return null; });
+}
+const sbPrefetch = () => { if (cur) [...BI, ...SBL].forEach(s => sbBuf(s.id)); };   // já deixa tudo pronto para tocar sem atraso
+const sbInfo = id => BI.find(s => s.id === id) || SBL.find(s => s.id === id);
+let sbT = 0;
+function sbNow(t) {
+  let e = $('#sbn'); if (!e) { e = document.createElement('div'); e.id = 'sbn'; document.body.append(e); }
+  e.textContent = '🔊 ' + t; clearTimeout(sbT); sbT = setTimeout(() => e.remove(), 2500);
+}
+async function sbPlay(id, from, name) {
+  if (!cur) return;
+  const s = sbInfo(id);
+  if (from !== me) sbNow((name || 'Alguém') + ' · ' + (s ? s.emoji + ' ' + s.name : 'som'));
+  if (deaf || !cfg.sbv) return;
+  const buf = await sbBuf(id); if (!buf) return;
+  const c = getAC(), g = c.createGain(), src = c.createBufferSource();
+  g.gain.value = cfg.sbv; src.buffer = buf; src.connect(g); g.connect(outG); src.start();
+}
+let sbOff = null;
+function closeSb() { $('#sbp')?.remove(); if (sbOff) document.removeEventListener('mousedown', sbOff, true); sbOff = null; }
+function renderSb() {
+  const p = $('#sbp'); if (!p) return;
+  const h = document.createElement('h4'); h.textContent = 'Soundboard';
+  const sm = document.createElement('small'); sm.textContent = 'Clique num som: todo mundo na chamada ouve. Um som por segundo.';
+  const g = document.createElement('div'); g.className = 'sbg';
+  [...BI, ...SBL].forEach(s => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sbb'; b.title = s.name + (s.by ? ' · adicionado por ' + s.by : '');
+    b.append(s.emoji); const sp = document.createElement('span'); sp.textContent = s.name; b.append(sp);
+    b.onclick = () => send({ type: 'sb-play', id: s.id });
+    if (s.own) {
+      const x = document.createElement('em'); x.className = 'sx'; x.textContent = '✕'; x.title = 'Apagar este som';
+      x.onclick = async e => { e.stopPropagation(); if (await askYes('Apagar o som "' + s.name + '" do soundboard?', 'Apagar')) send({ type: 'sb-del', id: s.id }); };
+      b.append(x);
+    }
+    g.append(b);
+  });
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'sec'; add.textContent = '➕ Adicionar um som';
+  const f = document.createElement('form'); f.hidden = true;
+  f.innerHTML = '<small>Arquivo MP3, WAV ou OGG com até 8 segundos e 450 KB.</small><input type="file" name="f" accept="audio/*" required>'
+    + '<div class="row"><input name="emoji" value="🔊" maxlength="8" aria-label="Emoji"><input name="nome" placeholder="Nome do som" maxlength="24" required style="flex:1"></div><button class="go">Enviar som</button>';
+  add.onclick = () => { f.hidden = !f.hidden; };
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(f), file = fd.get('f'), nome = String(fd.get('nome') || '').trim();
+    if (!file || !file.size) return;
+    if (file.size > 450000) return toast('Esse arquivo tem ' + Math.ceil(file.size / 1024) + ' KB. O máximo é 450 KB: corte o som ou use MP3.');
+    const go = f.querySelector('.go'); go.disabled = true;
+    try {
+      const au = await getAC().decodeAudioData(await file.arrayBuffer());
+      if (au.duration > 8) { toast('Esse som tem ' + au.duration.toFixed(1) + ' segundos. O máximo é 8.'); return; }
+      let d = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+      if (!d.startsWith('data:audio/')) d = 'data:audio/mpeg;base64,' + d.slice(d.indexOf(',') + 1);
+      send({ type: 'sb-add', name: nome, emoji: String(fd.get('emoji') || '').trim(), data: d });
+      f.reset(); f.hidden = true; toast('Som enviado!');
+    } catch { toast('Não consegui ler esse áudio. Tente um MP3 ou WAV.'); }
+    finally { go.disabled = false; }
+  };
+  p.replaceChildren(h, sm, g, add, f);
+}
+$('#bSom').onclick = e => {
+  if ($('#sbp')) return closeSb();
+  const p = document.createElement('div'); p.id = 'sbp'; document.body.append(p); renderSb(); sbPrefetch();
+  const r = e.currentTarget.getBoundingClientRect();
+  p.style.left = Math.max(4, Math.min(r.left, innerWidth - p.offsetWidth - 4)) + 'px';
+  p.style.bottom = Math.max(4, innerHeight - r.top + 8) + 'px';
+  sbOff = ev => { if (!p.contains(ev.target) && !$('#bSom').contains(ev.target) && !$('#askw')) closeSb(); };
+  document.addEventListener('mousedown', sbOff, true);
+};
+
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338' }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof };
@@ -1866,6 +2081,7 @@ navigator.mediaDevices && navigator.mediaDevices.addEventListener('devicechange'
 function fillVoz() {
   ['ns', 'ec', 'agc', 'ai', 'gate', 'gAuto', 'duck', 'aec'].forEach(k => $('#' + k).checked = !!cfg[k]); paintAec(); $('#sq').value = cfg.sq || '720p30';
   $('#appVol').value = Math.round(cfg.app * 100); $('#appVolT').textContent = Math.round(cfg.app * 100) + '%';
+  $('#sbVol').value = Math.round(cfg.sbv * 100); $('#sbVolT').textContent = Math.round(cfg.sbv * 100) + '%';
   $('#micVol').value = Math.round(cfg.micv * 100); $('#micVolT').textContent = Math.round(cfg.micv * 100) + '%';
   $('#gThr').value = cfg.gThr; $('#gThrT').textContent = cfg.gThr + ' dB';
   $('#gAutoW').hidden = !cfg.gate; $('#gThrW').hidden = !cfg.gate || cfg.gAuto;
@@ -1878,6 +2094,7 @@ function drawMeter() {
 }
 $('#outSel').onchange = e => { cfg.out = e.target.value; saveCfg(); applyOut(); };
 $('#appVol').oninput = e => { cfg.app = e.target.value / 100; saveCfg(); applyVol(); $('#appVolT').textContent = e.target.value + '%'; };
+$('#sbVol').oninput = e => { cfg.sbv = e.target.value / 100; saveCfg(); $('#sbVolT').textContent = e.target.value + '%'; };
 $('#micVol').oninput = e => { cfg.micv = e.target.value / 100; saveCfg(); if (mic) mic.gain.gain.value = cfg.micv; $('#micVolT').textContent = e.target.value + '%'; };
 $('#gThr').oninput = e => { cfg.gThr = +e.target.value; saveCfg(); pushGate(); $('#gThrT').textContent = cfg.gThr + ' dB'; };
 $('#aec').onchange = e => {
