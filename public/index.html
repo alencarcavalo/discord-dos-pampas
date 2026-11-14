@@ -186,7 +186,7 @@ small{color:var(--mut)}
 .cpick::-webkit-color-swatch-wrapper{padding:0}
 .cpick::-webkit-color-swatch{border:3px solid color-mix(in srgb,var(--txt) 35%,transparent);border-radius:50%}
 .cpick::-moz-color-swatch{border:3px solid color-mix(in srgb,var(--txt) 35%,transparent);border-radius:50%}
-#kMute{background:var(--input);padding:8px 16px;border-radius:8px;font-weight:700;font-family:ui-monospace,Consolas,monospace;border:1px solid color-mix(in srgb,var(--txt) 18%,transparent);border-bottom-width:3px}
+#kMute,#kDeaf,#kLeave{background:var(--input);padding:8px 16px;border-radius:8px;font-weight:700;font-family:ui-monospace,Consolas,monospace;border:1px solid color-mix(in srgb,var(--txt) 18%,transparent);border-bottom-width:3px}
 .pgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:26px;align-items:start}
 .pside{position:sticky;top:0;display:grid;gap:12px}
 #meter{margin-top:4px}
@@ -429,15 +429,21 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 /* animações simples nos ícones da barra de baixo e da chamada (ao passar o mouse) */
 #me button svg,#vc button svg{transition:transform .35s cubic-bezier(.34,1.56,.64,1);transform-origin:center;transform-box:fill-box}
 #bCfg:hover svg{transform:rotate(90deg)}
-#me .sp:hover>#bDeaf svg{transform:scaleX(1.16)}
+#me #bDeaf{position:relative}
+#me #bDeaf svg{transition:transform .22s ease-out}
+#me .sp:hover>#bDeaf svg{transform:scale(1.14)}
+#me #bDeaf::after{content:"";position:absolute;inset:0;border-radius:6px;pointer-events:none;opacity:0;--ring:color-mix(in srgb,var(--txt) 55%,transparent)}
+#me #bDeaf.off::after{--ring:#f23f43aa}
+#me .sp:hover>#bDeaf::after{animation:deafRing .65s ease-out}
 #me .sp:hover>#bMic svg{animation:aniMic .55s ease}
 #bSair:hover svg{animation:aniFone .6s ease}
 #vc .vb button:hover svg{transform:scale(1.16) rotate(-4deg)}
 #vc #bSom:hover svg{animation:aniSom .5s ease}
 @keyframes aniMic{0%,100%{transform:none}25%{transform:rotate(-14deg) translateY(-1px)}55%{transform:rotate(10deg)}80%{transform:rotate(-4deg)}}
+@keyframes deafRing{0%{opacity:1;box-shadow:0 0 0 0 var(--ring)}100%{opacity:0;box-shadow:0 0 0 9px transparent}}
 @keyframes aniFone{0%,100%{transform:none}15%{transform:rotate(-20deg)}35%{transform:rotate(17deg)}55%{transform:rotate(-12deg)}75%{transform:rotate(7deg)}}
 @keyframes aniSom{0%,100%{transform:none}30%{transform:translateY(-3px) scale(1.1)}60%{transform:translateY(1px)}}
-@media(prefers-reduced-motion:reduce){#me button svg,#vc button svg{transition:none}#me .sp:hover>#bMic svg,#bSair:hover svg,#vc #bSom:hover svg{animation:none}}
+@media(prefers-reduced-motion:reduce){#me button svg,#vc button svg{transition:none}#me .sp:hover>#bMic svg,#me .sp:hover>#bDeaf::after,#bSair:hover svg,#vc #bSom:hover svg{animation:none}}
 
 /* ---- aba Câmera ---- */
 #camStage{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;display:grid;place-items:center}
@@ -678,7 +684,6 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
         <div class="rw col"><div class="rh"><div class="rt"><b>Contraste</b></div><span class="pill" id="csT_con"></span></div><input type="range" id="cs_con" min="50" max="150" step="1"></div>
         <div class="rw col"><div class="rh"><div class="rt"><b>Saturação</b></div><span class="pill" id="csT_sat"></span></div><input type="range" id="cs_sat" min="0" max="200" step="1"></div>
         <div class="rw col"><div class="rh"><div class="rt"><b>Matiz</b><small>Gira as cores.</small></div><span class="pill" id="csT_hue"></span></div><input type="range" id="cs_hue" min="-180" max="180" step="1"></div>
-        <div class="rw col"><div class="rh"><div class="rt"><b>Desfoque geral</b><small>Desfoca a imagem inteira, rosto junto.</small></div><span class="pill" id="csT_blur"></span></div><input type="range" id="cs_blur" min="0" max="10" step="0.5"></div>
         <div class="rw col"><div class="rh"><div class="rt"><b>Zoom</b><small>Aproxima o centro da imagem.</small></div><span class="pill" id="csT_zoom"></span></div><input type="range" id="cs_zoom" min="100" max="200" step="1"></div>
       </div>
 
@@ -700,8 +705,11 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     <section data-p="atalho" hidden><h2>Atalhos</h2>
       <p class="sub">Clique no botão e aperte as teclas que você quer usar.</p>
       <div class="cc">
-        <div class="rw"><div class="rt"><b>Mutar / desmutar o microfone</b></div><button type="button" id="kMute"></button></div>
+        <div class="rw"><div class="rt"><b>Mutar / desmutar o microfone</b></div><button type="button" id="kMute" class="kb" data-k="mute"></button></div>
+        <div class="rw"><div class="rt"><b>Ensurdecer / desensurdecer</b><small>Liga e desliga o fone mudo (também muta o microfone).</small></div><button type="button" id="kDeaf" class="kb" data-k="kDeaf"></button></div>
+        <div class="rw"><div class="rt"><b>Sair da chamada</b><small>Desconecta do canal de voz em que você está.</small></div><button type="button" id="kLeave" class="kb" data-k="kLeave"></button></div>
       </div>
+      <p class="nt" id="kOld" hidden>Seu app de computador é uma versão antiga: nele só o atalho de mutar funciona em qualquer lugar. Os outros dois funcionam com a janela em foco. Atualize o app para liberar todos.</p>
       <p class="nt">No app de computador o atalho funciona em qualquer lugar, até com o jogo aberto. No navegador só funciona com a janela em foco. Você precisa já estar em um canal de voz.</p>
     </section>
 
@@ -1843,10 +1851,10 @@ $('#bSom').onclick = e => {
 };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, blur: 0, bgb: 0, bgm: 'ia', bgi: false, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, bgb: 0, bgm: 'ia', bgi: false, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', kDeaf: 'Ctrl+Alt+D', kLeave: 'Ctrl+Alt+L', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
-cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof }; cfg.cam = { ...DEF.cam, ...cfg.cam };
+cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof }; cfg.cam = { ...DEF.cam, ...cfg.cam }; delete cfg.cam.blur;   // o antigo "desfoque geral" foi removido
 // foto/fundo do perfil (GIFs grandes) ficam no IndexedDB; o localStorage é pequeno demais para isso
 const idb = {
   open: () => new Promise((res, rej) => { const r = indexedDB.open('pampas', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }),
@@ -2272,22 +2280,47 @@ function toggleMute() { if (deaf) { wasMuted = false; setDeaf(false); } else set
 $('#bMic').onclick = toggleMute;
 $('#bDeaf').onclick = () => setDeaf(!deaf);
 
-let capt = false;
+// ---------- atalhos de teclado (mutar, ensurdecer, sair da chamada) ----------
+const KEYS = {
+  mute:   { cfg: 'mute',   el: '#kMute',  nome: 'mutar o microfone', run: () => toggleMute() },
+  deaf:   { cfg: 'kDeaf',  el: '#kDeaf',  nome: 'ensurdecer',        run: () => setDeaf(!deaf) },
+  leave:  { cfg: 'kLeave', el: '#kLeave', nome: 'sair da chamada',   run: () => { const u = st.users.find(u => u.id === me); if (u && u.room) $('#bSair').click(); } }
+};
+let capt = null;
+const paintKeys = () => Object.values(KEYS).forEach(k => { $(k.el).textContent = cfg[k.cfg] || 'Sem atalho'; });
+// o app de computador (Electron) registra os atalhos globais; versões antigas dele só sabem o de mutar
+const globalOk = name => !!window.pampas && (!!pampas.setKeys || name === 'mute');
 if (window.pampas) {
   const toAccel = c => c.split('+').map(k => ({ Meta: 'Super', ' ': 'Space', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Escape: 'Esc' }[k] || k)).join('+');
-  window.regMute = () => pampas.setMute(toAccel(cfg.mute)).then(ok => { if (!ok) toast('Não consegui registrar esse atalho. Tente outro.'); });
-  pampas.onMute(() => toggleMute()); window.regMute();
-  addEventListener('DOMContentLoaded', () => {});
+  window.regMute = () => {
+    const map = {}; Object.entries(KEYS).forEach(([n, k]) => { if (cfg[k.cfg]) map[n] = toAccel(cfg[k.cfg]); });
+    if (pampas.setKeys) pampas.setKeys(map).then(bad => { if (bad && bad.length) toast('Não consegui registrar o atalho de ' + bad.map(n => KEYS[n].nome).join(' e ') + '. Tente outro.'); });
+    else pampas.setMute(map.mute || '').then(ok => { if (!ok) toast('Não consegui registrar esse atalho. Tente outro.'); });
+  };
+  if (pampas.onKey) pampas.onKey(n => KEYS[n] && KEYS[n].run()); else pampas.onMute(() => KEYS.mute.run());
+  if (!pampas.setKeys) $('#kOld').hidden = false;
+  window.regMute();
 }
 const combo = e => ['Control', 'Alt', 'Shift', 'Meta'].includes(e.key) ? null :
   [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift', e.metaKey && 'Meta', e.key.length === 1 ? e.key.toUpperCase() : e.key].filter(Boolean).join('+');
 addEventListener('keydown', e => {
   const c = combo(e); if (!c) return;
-  if (capt) { e.preventDefault(); capt = false; if (c !== 'Escape') { cfg.mute = c; saveCfg(); } $('#kMute').textContent = cfg.mute; window.regMute?.(); return; }
+  if (capt) {
+    e.preventDefault(); const k = KEYS[capt]; capt = null;
+    if (c !== 'Escape') {
+      const outro = Object.values(KEYS).find(o => o !== k && cfg[o.cfg] === c);
+      if (outro) toast('Esse atalho já está em uso para ' + outro.nome + '.'); else { cfg[k.cfg] = c; saveCfg(); }
+    }
+    paintKeys(); window.regMute?.(); return;
+  }
   const typing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
-  if (!window.pampas && c === cfg.mute && (!typing || e.ctrlKey || e.altKey || e.metaKey)) { e.preventDefault(); toggleMute(); }
+  if (typing && !(e.ctrlKey || e.altKey || e.metaKey)) return;
+  for (const [n, k] of Object.entries(KEYS)) if (!globalOk(n) && c === cfg[k.cfg]) { e.preventDefault(); k.run(); return; }
 });
-$('#kMute').onclick = e => { capt = true; window.pampas?.setMute(''); e.target.textContent = 'Pressione as teclas… (Esc cancela)'; };
+Object.entries(KEYS).forEach(([n, k]) => { $(k.el).onclick = e => {
+  if (capt) paintKeys();
+  capt = n; window.pampas?.setKeys ? pampas.setKeys({}) : window.pampas?.setMute(''); e.target.textContent = 'Pressione as teclas… (Esc cancela)';
+}; });
 
 function resize(file, w, h, cb) {
   const img = new Image();
@@ -2351,7 +2384,7 @@ function tab(t) {
 document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => tab(b.dataset.t));
 $('#bCfg').onclick = () => {
   ed = { ...cfg.prof }; $('#pNome').value = myName; $('#pSobre').value = ed.about; $('#pCor').value = ed.color || colorOf(myName).slice(0, 7);
-  fillVoz(); $('#kMute').textContent = cfg.mute;
+  fillVoz(); paintKeys();
   $('#icSz').value = cfg.ic || 20; fillTheme(); renderPrev(); tab('perfil'); $('#cfg').hidden = false;
 };
 $('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; camPrevOff(); };
@@ -2493,7 +2526,7 @@ const CAMF = {
   pixel: { n: '🟦 Pixelado', px: 1 },
 };
 const CAMB = { none: '🚫 Nenhuma', solid: '🟦 Sólida', double: '🔲 Dupla', neon: '💡 Neon', rainbow: '🌈 Arco-íris', grad: '🎨 Degradê girando', dash: '➖ Pontilhada', pulse: '💓 Pulsando', voice: '🎙️ Acende quando falo', round: '⬜ Cantos redondos', polaroid: '📷 Polaroid', film: '🎞️ Filme' };
-const CAM_SL = [['bri', '%'], ['con', '%'], ['sat', '%'], ['hue', '°'], ['blur', ' px'], ['zoom', '%'], ['bgb', ' px'], ['bgs', '%'], ['bgy', '%']];
+const CAM_SL = [['bri', '%'], ['con', '%'], ['sat', '%'], ['hue', '°'], ['zoom', '%'], ['bgb', ' px'], ['bgs', '%'], ['bgy', '%']];
 
 // relógio que não congela com a janela minimizada (setInterval/rAF são freados em segundo plano, um Worker não)
 function mkTicker(cb, ms) {
@@ -2554,7 +2587,7 @@ function camLost() {   // a câmera foi desconectada
 }
 function camNeedFx() {
   const o = cfg.cam;
-  return !!(o.mirror || o.f !== 'none' || o.bri !== 100 || o.con !== 100 || o.sat !== 100 || o.hue || o.blur || o.bgb || o.zoom > 100 || o.bd !== 'none' || o.vig || o.scan || o.tag);
+  return !!(o.mirror || o.f !== 'none' || o.bri !== 100 || o.con !== 100 || o.sat !== 100 || o.hue || o.bgb || o.zoom > 100 || o.bd !== 'none' || o.vig || o.scan || o.tag);
 }
 function camSetMode() {   // câmera pura ou canvas com efeitos?
   const c = CAM; if (!c) return;
@@ -2672,7 +2705,6 @@ function camDraw() {
     if (o.con !== 100) f += ' contrast(' + o.con + '%)';
     if (o.sat !== 100) f += ' saturate(' + o.sat + '%)';
     if (o.hue) f += ' hue-rotate(' + o.hue + 'deg)';
-    if (o.blur) f += ' blur(' + (o.blur * H / 720).toFixed(1) + 'px)';
     f = f.trim();
   }
   // g = contexto onde desenhar, k = quanto aproximar a mais (esconde a borda esmaecida do desfoque)
