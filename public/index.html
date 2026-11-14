@@ -128,6 +128,7 @@ small{color:var(--mut)}
 #updbar button{background:#0003;padding:4px 12px;border-radius:6px}
 #chatw{display:flex;flex-direction:column;min-height:0;flex:1}
 #msgs{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+.dv{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:.72rem;font-weight:700;margin:4px 0}.dv::before,.dv::after{content:"";flex:1;height:1px;background:#ffffff1f}
 .m{display:flex;gap:12px}
 .m p{margin:0;overflow-wrap:anywhere}
 .m b{margin-right:.4rem}
@@ -821,7 +822,8 @@ function openText(id) {
   if (!(id in hist)) { hist[id] = null; send({ type: 'history', channel: id }); }
   renderMsgs(); renderChans(); renderTop();
 }
-function renderMsgs() { $('#msgs').replaceChildren(); (hist[view?.id] || []).forEach(addMsg); $('#msgs').scrollTop = 1e9; }
+let lastDay = '';
+function renderMsgs() { $('#msgs').replaceChildren(); lastDay = ''; (hist[view?.id] || []).forEach(addMsg); $('#msgs').scrollTop = 1e9; }
 function addMsg(m) {
   const d = document.createElement('div'), c = document.createElement('div'), p = document.createElement('div'); d.className = 'msg';
   const b = document.createElement('b'); b.textContent = m.from;
@@ -833,6 +835,12 @@ function addMsg(m) {
     if (a.type.startsWith('image/')) { const i = document.createElement('img'); i.className = 'a'; i.src = a.data; c.append(i); }
     else { const l = document.createElement('a'); l.className = 'file'; l.href = a.data; l.download = a.name; l.textContent = '📎 ' + a.name + ' (' + Math.ceil(a.size / 1024) + ' KB)'; c.append(l); }
   });
+  const dt = new Date(m.t), day = dt.toDateString();   // linha com a data quando muda o dia (igual ao Discord)
+  if (day !== lastDay) {
+    lastDay = day;
+    const dv = document.createElement('div'); dv.className = 'dv'; const sp = document.createElement('span');
+    sp.textContent = dt.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }); dv.append(sp); $('#msgs').append(dv);
+  }
   d.append(avatar(m.from, 0, m.uid), c); $('#msgs').append(d); $('#msgs').scrollTop = 1e9;
 }
 
