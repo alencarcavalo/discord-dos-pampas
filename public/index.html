@@ -601,8 +601,8 @@ function mkPerson(uid) {
 }
 function updPerson(t, u) {
   paintAv(t.av, u.name, prof[u.id]);
-  const pf = prof[u.id] || {};   // foto/GIF do perfil atrás da pessoa; sem foto, a cor do perfil
-  if (t.bg) t.bg.style.background = pf.banner ? 'linear-gradient(#0007,#0007), url("' + pf.banner + '") center/cover' : (() => { const c = pf.color || colorOf(u.name); return 'linear-gradient(160deg,' + c + ',' + c + '66)'; })();
+  const pf = prof[u.id] || {};   // na chamada: só a cor que a pessoa escolheu (sem cor, fica o fundo de sempre)
+  if (t.bg) t.bg.style.background = pf.color ? 'linear-gradient(160deg,' + pf.color + ',' + pf.color + '66)' : '';
   t.nm.replaceChildren(document.createTextNode(u.name + (u.id === me ? ' (você)' : '')), badges(u));
 }
 function setCam(uid, s) {
@@ -773,6 +773,7 @@ function renderMem() {
     actLines(u).forEach(x => t.append(x));
     const pr = prof[u.id] || {}; // fundo do perfil (imagem ou GIF) atrás do nome e da foto
     if (pr.banner) { d.classList.add('hasb'); d.style.backgroundImage = 'linear-gradient(90deg,#000b 0%,#0005 70%,#0002 100%), url("' + pr.banner + '")'; }
+    else if (pr.color) { d.classList.add('hasb'); d.style.backgroundImage = 'linear-gradient(90deg,' + pr.color + ' 0%,' + pr.color + '99 100%)'; }   // sem foto: a cor do perfil
     d.append(avatar(u.name, 0, u.id), t, badges(u, true, true)); d.onclick = () => card(u.id, d); d.style.cursor = "pointer";
     if (u.id !== me) {
       d.oncontextmenu = e => volMenu(e, u.name);
