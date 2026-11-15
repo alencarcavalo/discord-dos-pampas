@@ -300,6 +300,15 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .msg b{margin-right:.2rem}
 .msg time{color:var(--mut);font-size:.75rem;margin-left:.4rem}
 .msg img.a{max-width:min(420px,100%);max-height:320px;border-radius:6px;display:block;margin-top:4px}
+.lk{color:#00a8fc;text-decoration:none;overflow-wrap:anywhere}.lk:hover{text-decoration:underline}
+.lkimg{display:block;width:fit-content;max-width:100%}
+.lp{margin-top:6px;max-width:440px}.lp[hidden]{display:none}
+.lpc{display:block;padding:10px 12px;background:var(--side);border-left:4px solid var(--blur,#5865f2);border-radius:6px;color:inherit;text-decoration:none}
+.lpc small{display:block;color:var(--mut);font-size:.72rem;margin-bottom:2px}
+.lpc b{display:block;color:#00a8fc;font-size:.95rem;overflow-wrap:anywhere}
+.lpc:hover b{text-decoration:underline}
+.lpc span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-top:3px;font-size:.82rem;opacity:.85}
+.lpc img{display:block;margin-top:8px;max-width:100%;max-height:240px;border-radius:6px;object-fit:cover}
 .file{display:inline-block;margin-top:4px;padding:8px 12px;background:var(--side);border-radius:6px;color:#00a8fc;text-decoration:none}
 .stk{display:inline-grid;justify-items:center;margin-top:4px;padding:8px 14px;font-size:3.6rem;line-height:1.1;background:var(--side);border-radius:12px}
 .stk small{font-size:.9rem;color:var(--txt);font-weight:700}
@@ -1196,7 +1205,9 @@ let lastDay = '', replyTo = null;
 // identidade fixa deste aparelho: prova ao servidor que a mensagem é sua (para editar). Fica só aqui e no servidor, nunca vai para os outros.
 let CID = ''; try { CID = localStorage.getItem('pampas-cid') || ''; if (!CID) { CID = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)); localStorage.setItem('pampas-cid', CID); } } catch {}
 function renderMsgs() { $('#msgs').replaceChildren(); lastDay = ''; const id = view?.id; (hist[id] || []).forEach(m => addMsg(m, id)); $('#msgs').scrollTop = 1e9; }
-const snipOf = x => (x.text || '').replace(/\s+/g, ' ').slice(0, 100) || (x.att && x.att[0] ? '📎 ' + x.att[0].name : x.st != null ? 'Figurinha' : '');
+const URL_RE = /https?:\/\/[^\s<>"']+/gi;
+const IMG_URL = /^https?:\/\/[^\s?#]+\.(png|jpe?g|gif|webp)(\?[^\s#]*)?$/i;   // link direto para uma imagem
+const snipOf = x => (IMG_URL.test((x.text || '').trim()) ? '🖼️ Imagem' : (x.text || '').replace(/\s+/g, ' ').slice(0, 100)) || (x.att && x.att[0] ? '📎 ' + x.att[0].name : x.st != null ? 'Figurinha' : '');
 const msgEl = mid => $('#msgs').querySelector('.msg[data-mid="' + CSS.escape(mid) + '"]');
 function mkMsg(m, ch) {
   const d = document.createElement('div'), c = document.createElement('div'), p = document.createElement('div'); d.className = 'msg'; c.className = 'cb'; p.className = 'hd';
@@ -1213,7 +1224,11 @@ function mkMsg(m, ch) {
     q.append(qb, qs); q.onclick = () => jumpTo(m.re.mid); c.append(q);
   }
   c.append(p);
-  if (m.text) { const t = document.createElement('p'); t.className = 'tx'; t.textContent = m.text; c.append(t); }
+  if (m.text) {
+    const u1 = firstUrl(m.text), onlyImg = u1 && IMG_URL.test(u1) && m.text.trim() === u1;   // mensagem que é só um link de imagem: mostra a imagem no lugar do texto
+    if (!onlyImg) { const t = document.createElement('p'); t.className = 'tx'; t.append(linkify(m.text)); c.append(t); }
+    if (u1) c.append(linkExtra(u1));
+  }
   if (m.st != null && STK[m.st]) { const s = document.createElement('div'); s.className = 'stk'; s.textContent = STK[m.st][0]; const l = document.createElement('small'); l.textContent = STK[m.st][1]; s.append(l); c.append(s); }
   (m.att || []).forEach(a => {
     if (a.type.startsWith('image/')) { const i = document.createElement('img'); i.className = 'a'; i.src = a.data; c.append(i); }
@@ -1306,6 +1321,53 @@ function startEdit(m, ch) {
     }
   };
   i.focus(); i.setSelectionRange(i.value.length, i.value.length);
+}
+
+// ---------- links clicáveis e prévia de link (título + imagem, YouTube inclusive) ----------
+function cleanUrl(u) {   // tira pontuação que ficou grudada no fim do link ("olha isso https://x.com.")
+  while (/[.,;:!?'"\]}]$/.test(u) || (u.endsWith(')') && (u.match(/\(/g) || []).length < (u.match(/\)/g) || []).length)) u = u.slice(0, -1);
+  return u;
+}
+function firstUrl(text) { const m = String(text || '').match(URL_RE); return m ? cleanUrl(m[0]) : ''; }
+function linkify(text) {   // monta o texto com <a> só nos links (sem innerHTML, então nada de HTML vindo de outra pessoa)
+  const f = document.createDocumentFragment(); let last = 0;
+  text.replace(URL_RE, (m, i) => {
+    const u = cleanUrl(m); if (!u) return m;
+    if (i > last) f.append(text.slice(last, i));
+    const a = document.createElement('a'); a.className = 'lk'; a.href = u; a.textContent = u; a.target = '_blank'; a.rel = 'noopener noreferrer'; f.append(a);
+    last = i + u.length; return m;
+  });
+  if (last < text.length) f.append(text.slice(last));
+  return f;
+}
+// quando uma imagem/prévia carrega depois, mantém o chat no fim se a pessoa já estava lá embaixo
+const msgsBox = $('#msgs');
+msgsBox.addEventListener('scroll', () => { msgsBox._stick = msgsBox.scrollHeight - msgsBox.scrollTop - msgsBox.clientHeight < 120; });
+const stickEnd = () => { if (msgsBox._stick !== false) msgsBox.scrollTop = 1e9; };
+const PVC = new Map(), pvQ = []; let pvBusy = 0;   // prévias já buscadas + fila (3 por vez, para não pesar)
+const pvRun = () => { while (pvBusy < 3 && pvQ.length) { pvBusy++; pvQ.shift()().then(() => { pvBusy--; pvRun(); }); } };
+function getPreview(u) {
+  if (PVC.has(u)) return PVC.get(u);
+  const p = new Promise(res => { pvQ.push(() => fetch('/preview?u=' + encodeURIComponent(u), { headers: authH() }).then(r => r.ok ? r.json() : null).catch(() => null).then(res)); pvRun(); });
+  PVC.set(u, p); return p;
+}
+function linkExtra(u) {
+  if (IMG_URL.test(u)) {   // link direto de imagem: mostra a imagem
+    const a = document.createElement('a'); a.className = 'lkimg'; a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    const i = document.createElement('img'); i.className = 'a'; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; i.alt = ''; i.src = u;
+    i.onload = stickEnd; i.onerror = () => a.remove(); a.append(i); return a;
+  }
+  const box = document.createElement('div'); box.className = 'lp'; box.hidden = true;
+  getPreview(u).then(v => {
+    if (!v || (!v.title && !v.image)) return;
+    const a = document.createElement('a'); a.className = 'lpc'; a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    if (v.site) { const s = document.createElement('small'); s.textContent = v.site; a.append(s); }
+    if (v.title) { const b = document.createElement('b'); b.textContent = v.title; a.append(b); }
+    if (v.desc) { const d = document.createElement('span'); d.textContent = v.desc; a.append(d); }
+    if (v.image) { const i = document.createElement('img'); i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; i.alt = ''; i.src = v.image; i.onload = stickEnd; i.onerror = () => i.remove(); a.append(i); }
+    box.append(a); box.hidden = false; stickEnd();
+  });
+  return box;
 }
 
 $('#login').onsubmit = e => {
