@@ -1312,7 +1312,7 @@ $('#login').onsubmit = e => {
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
   ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof, cid: CID, pass: PASS });
   ws.onmessage = ev => handle(JSON.parse(ev.data));
-  ws.onclose = () => { if (badPass) return; showReload(kickedBy ? 'Você foi removido por ' + kickedBy + '.' : 'Conexão perdida ou o app foi atualizado.'); };
+  ws.onclose = () => { if (badPass) return; showReload(kickedBy === '\0' ? 'Você entrou em outro lugar (outra aba ou aparelho). Esta conexão foi encerrada.' : kickedBy ? 'Você foi removido por ' + kickedBy + '.' : 'Conexão perdida ou o app foi atualizado.'); };
 };
 // senha da turma: se o servidor pedir, aparece o campo (e a senha fica lembrada neste aparelho)
 let PASS = '', badPass = false;
@@ -1398,7 +1398,8 @@ function handle(m) {
     badPass = true; $('#senhaW').hidden = false; $('#senha').required = true; $('#senha').value = ''; $('#senha').focus();
     $('#erro').textContent = m.wait ? 'Muitas tentativas erradas. Espere uns 10 minutos e tente de novo.' : 'Senha incorreta.';
     try { localStorage.removeItem('pampas-senha'); } catch {}
-  } else if (m.type === 'kicked') { kickedBy = m.by || 'alguém'; dropAll(); }
+  } else if (m.type === 'kicked') { kickedBy = m.by || 'alguém'; dropAll();
+  } else if (m.type === 'replaced') { kickedBy = '\0'; dropAll(); }
   else if (m.type === 'full') { toast('Esse canal está cheio (máximo de 8 pessoas).'); firstText(); }
   else if (m.type === 'joined') {
     cur = m.room; m.peers.forEach(p => { names[p.id] = p.name; makePeer(p.id); });
