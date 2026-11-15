@@ -186,6 +186,10 @@ small{color:var(--mut)}
 .cpick::-webkit-color-swatch-wrapper{padding:0}
 .cpick::-webkit-color-swatch{border:3px solid color-mix(in srgb,var(--txt) 35%,transparent);border-radius:50%}
 .cpick::-moz-color-swatch{border:3px solid color-mix(in srgb,var(--txt) 35%,transparent);border-radius:50%}
+.kg{display:flex;align-items:center;gap:8px}
+.kx{width:34px;height:34px;padding:0;border-radius:8px;border:1px solid color-mix(in srgb,var(--txt) 18%,transparent);background:var(--input);color:var(--txt);font-size:14px;line-height:1;cursor:pointer;opacity:.75}
+.kx:hover{opacity:1;background:color-mix(in srgb,#ed4245 35%,var(--input))}
+.kx[hidden]{display:none}
 #kMute,#kDeaf,#kLeave{background:var(--input);padding:8px 16px;border-radius:8px;font-weight:700;font-family:ui-monospace,Consolas,monospace;border:1px solid color-mix(in srgb,var(--txt) 18%,transparent);border-bottom-width:3px}
 .pgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:26px;align-items:start}
 .pside{position:sticky;top:0;display:grid;gap:12px}
@@ -699,9 +703,9 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     <section data-p="atalho" hidden><h2>Atalhos</h2>
       <p class="sub">Clique no botão e aperte as teclas que você quer usar.</p>
       <div class="cc">
-        <div class="rw"><div class="rt"><b>Mutar / desmutar o microfone</b></div><button type="button" id="kMute" class="kb" data-k="mute"></button></div>
-        <div class="rw"><div class="rt"><b>Ensurdecer / desensurdecer</b><small>Liga e desliga o fone mudo (também muta o microfone).</small></div><button type="button" id="kDeaf" class="kb" data-k="kDeaf"></button></div>
-        <div class="rw"><div class="rt"><b>Sair da chamada</b><small>Desconecta do canal de voz em que você está.</small></div><button type="button" id="kLeave" class="kb" data-k="kLeave"></button></div>
+        <div class="rw"><div class="rt"><b>Mutar / desmutar o microfone</b></div><div class="kg"><button type="button" id="kMute" class="kb" data-k="mute"></button><button type="button" class="kx" data-x="mute" title="Limpar atalho" aria-label="Limpar atalho">✕</button></div></div>
+        <div class="rw"><div class="rt"><b>Ensurdecer / desensurdecer</b><small>Liga e desliga o fone mudo (também muta o microfone).</small></div><div class="kg"><button type="button" id="kDeaf" class="kb" data-k="kDeaf"></button><button type="button" class="kx" data-x="deaf" title="Limpar atalho" aria-label="Limpar atalho">✕</button></div></div>
+        <div class="rw"><div class="rt"><b>Sair da chamada</b><small>Desconecta do canal de voz em que você está.</small></div><div class="kg"><button type="button" id="kLeave" class="kb" data-k="kLeave"></button><button type="button" class="kx" data-x="leave" title="Limpar atalho" aria-label="Limpar atalho">✕</button></div></div>
       </div>
       <p class="nt" id="kOld" hidden>Seu app de computador é uma versão antiga: nele só o atalho de mutar funciona em qualquer lugar. Os outros dois funcionam com a janela em foco. Atualize o app para liberar todos.</p>
       <p class="nt">No app de computador o atalho funciona em qualquer lugar, até com o jogo aberto. No navegador só funciona com a janela em foco. Você precisa já estar em um canal de voz.</p>
@@ -2282,7 +2286,10 @@ const KEYS = {
   leave:  { cfg: 'kLeave', el: '#kLeave', nome: 'sair da chamada',   run: () => { const u = st.users.find(u => u.id === me); if (u && u.room) $('#bSair').click(); } }
 };
 let capt = null;
-const paintKeys = () => Object.values(KEYS).forEach(k => { $(k.el).textContent = cfg[k.cfg] || 'Sem atalho'; });
+const paintKeys = () => Object.entries(KEYS).forEach(([n, k]) => {
+  $(k.el).textContent = cfg[k.cfg] || 'Sem atalho';
+  const x = document.querySelector('.kx[data-x="' + n + '"]'); if (x) x.hidden = !cfg[k.cfg];   // o X só aparece se tem atalho
+});
 // o app de computador (Electron) registra os atalhos globais; versões antigas dele só sabem o de mutar
 const globalOk = name => !!window.pampas && (!!pampas.setKeys || name === 'mute');
 if (window.pampas) {
@@ -2312,6 +2319,9 @@ addEventListener('keydown', e => {
   if (typing && !(e.ctrlKey || e.altKey || e.metaKey)) return;
   for (const [n, k] of Object.entries(KEYS)) if (!globalOk(n) && c === cfg[k.cfg]) { e.preventDefault(); k.run(); return; }
 });
+document.querySelectorAll('.kx').forEach(b => { b.onclick = () => {
+  capt = null; cfg[KEYS[b.dataset.x].cfg] = ''; saveCfg(); paintKeys(); window.regMute?.();
+}; });
 Object.entries(KEYS).forEach(([n, k]) => { $(k.el).onclick = e => {
   if (capt) paintKeys();
   capt = n; window.pampas?.setKeys ? pampas.setKeys({}) : window.pampas?.setMute(''); e.target.textContent = 'Pressione as teclas… (Esc cancela)';
