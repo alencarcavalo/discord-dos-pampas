@@ -254,6 +254,8 @@ function leave(ws) {
 
 wss.on('connection', (ws, req) => {
   ws.id = String(next++);
+  ws.alive = true;
+  ws.on('pong', () => { ws.alive = true; });
   ws.ip = ipOf(req);
   clients.add(ws);
   ws.on('message', raw => {
@@ -265,6 +267,13 @@ wss.on('connection', (ws, req) => {
       }
       ws.nick = String(m.name || 'Guri').slice(0, 24);
       ws.cid = String(m.cid || '').slice(0, 64);   // identidade fixa deste aparelho (nunca é enviada aos outros): é ela que prova que a mensagem é sua para editar
+      // mesma pessoa/aparelho já conectada (conexão "fantasma" ou outra aba): derruba a antiga para não aparecer duplicado
+      if (ws.cid) [...clients].filter(c => c !== ws && c.nick && c.cid === ws.cid).forEach(old => {
+        send(old, { type: 'replaced' });
+        old.nick = '';
+        leave(old);
+        setTimeout(() => { try { old.terminate(); } catch {} }, 200);
+      });
       setProf(ws, m.prof);
       send(ws, { type: 'hello-ok', id: ws.id });
       sendSb(ws);
@@ -405,6 +414,15 @@ setInterval(() => {
   const mem = { used: Math.round(process.memoryUsage().rss / 1048576), limit: +process.env.MEM_LIMIT_MB || 512 };   // plano grátis do Render = 512 MB
   clients.forEach(c => c.nick && send(c, { type: 'pings', p, mem }));
 }, 4000);
+
+// a cada 15 s confere se cada conexão ainda responde; as que sumiram (queda de internet, celular dormindo) são derrubadas
+setInterval(() => {
+  clients.forEach(c => {
+    if (c.alive === false) return c.terminate();   // o 'close' cuida de tirar da lista
+    c.alive = false;
+    try { c.ping(); } catch {}
+  });
+}, 15000);
 
 setInterval(prune, 3600e3);   // limpeza das mensagens/anexos antigos, de hora em hora
 
