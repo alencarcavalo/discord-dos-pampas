@@ -38,6 +38,7 @@ input[type=range]::-moz-range-thumb{width:var(--tw);height:22px;border:0;border-
 small{color:var(--mut)}
 .av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:600;color:#fff;flex:none}
 .av.s{width:24px;height:24px;font-size:.75rem}
+.av .avi{display:block;grid-area:1/1;width:100%;height:100%;border-radius:50%;pointer-events:none}
 .avad{display:flex;gap:18px;align-items:center;margin:4px 0 8px}
 #avEd{width:120px;height:120px;flex:none;font-size:2.6rem;cursor:grab;touch-action:none;user-select:none;box-shadow:0 0 0 3px var(--blur)}
 #avEd:active{cursor:grabbing}
@@ -583,11 +584,13 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
             <div class="rc"><label class="sec up">📷 Escolher foto<input type="file" id="pFoto" accept="image/*" hidden></label><button type="button" class="sec" id="pRmFoto">Remover</button></div>
             <small>JPG, PNG ou GIF animado (GIF até 4 MB).</small></div>
           <div class="fld" id="avEdBox" hidden><span>Ajustar foto</span>
-            <div class="avad"><div class="av" id="avEd" title="Arraste para mover · roda do mouse para zoom"></div>
+            <div class="avad"><div class="av" id="avEd" title="Arraste para mover · roda do mouse para zoom · Shift + roda para girar"></div>
               <div class="avctl"><input type="range" id="avZ" min="50" max="300" step="1">
                 <div class="avzl"><small>Afastar</small><small>Aproximar</small></div>
-                <button type="button" class="sec mini" id="avReset">Centralizar</button></div></div>
-            <small>Arraste a foto dentro do círculo para mover. Ao afastar, sobra a cor do perfil em volta.</small></div>
+                <input type="range" id="avR" min="-180" max="180" step="1">
+                <div class="avzl"><small>↺ Girar</small><small>Girar ↻</small></div>
+                <div class="rc"><button type="button" class="sec mini" id="avRL">⟲ 90°</button><button type="button" class="sec mini" id="avRR">90° ⟳</button><button type="button" class="sec mini" id="avReset">Centralizar</button></div></div></div>
+            <small>Arraste a foto dentro do círculo para mover. Ao afastar, sobra a cor do perfil em volta. Use o controle de baixo para girar.</small></div>
           <div class="fld" ><span>Borda da foto</span>
             <div id="frGrid"></div>
             <small>Aparece em volta da sua foto no chat, na lista e na chamada. Lembre de clicar em <b>Salvar perfil</b>.</small></div>
@@ -961,6 +964,22 @@ const FRAMES = (() => {
       const one = `<g>${wing(1, '#2a1b36', '#e9b8f5')}${wing(.7, '#120b19', '#ffd9f5')}<animateTransform attributeName="transform" type="rotate" values="0 24 62;-4 24 62;0 24 62" dur="3.2s" repeatCount="indefinite"/></g>`;
       return ring(34.6, 1.6, '#e9b8f5aa') + `<g>${one}</g><g transform="translate(100 0) scale(-1 1)">${one}</g>`;
     })()],
+    ['cartola', 'Cartola',
+      ring(39, 2.6, '#2a1d40') + ring(36.6, .8, '#ffffff44') +
+      `<g transform="rotate(-8 50 19)"><ellipse cx="50" cy="19.5" rx="29" ry="5.8" fill="#101013" stroke="#000" stroke-width="1"/><ellipse cx="50" cy="20.2" rx="27.6" ry="4.8" fill="none" stroke="#45454d" stroke-width=".7"/>` +
+      `<path d="M35 19L36.5 3.4Q36.5 1.2 39 1.2L61 1.2Q63.5 1.2 63.5 3.4L65 19Z" fill="#17171b" stroke="#000" stroke-width="1"/><path d="M35.5 14.2L64.5 14.2L65 19L35 19Z" fill="#c8372d"/><rect x="46.8" y="13.6" width="6.4" height="5.8" rx="1" fill="none" stroke="#f5c542" stroke-width="1.3"/><path d="M40.4 4.2L41.2 12.6" stroke="#ffffff40" stroke-width="2.2" stroke-linecap="round"/></g>`],
+    ['bone', 'Boné',
+      ring(39, 2.6, '#8f1a1a') + ring(36.6, .8, '#ffffff44') +
+      `<g transform="rotate(-6 50 21)"><path d="M62 19.5Q88 12 97 27Q80 25 58 25.5Z" fill="#8f1a1a" stroke="#4a0a0a" stroke-width="1.1" stroke-linejoin="round"/><path d="M63 20.2Q86 15.8 94.4 25.6" fill="none" stroke="#ff8a8a" stroke-width=".8" opacity=".6"/>` +
+      `<path d="M27 22Q27 .6 51 .6Q75 .6 75 22Z" fill="#d62828" stroke="#6e0f0f" stroke-width="1.1"/><path d="M51 .6Q44 11 44.6 22M51 .6Q58 11 57.4 22" fill="none" stroke="#8f1a1a" stroke-width=".8"/><path d="M27 21.6L75 21.6" stroke="#6e0f0f" stroke-width="2.2"/><circle cx="51" cy="1.2" r="1.8" fill="#f5c542" stroke="#8a6410" stroke-width=".6"/>${star(51, 11.4, 4.6, 2, '#ffd33d')}</g>`],
+    ['boina', 'Boina Gaúcha',
+      ring(39, 2.6, '#262b2f') + ring(36.6, .8, '#ffffff44') +
+      `<g transform="rotate(-14 50 13)"><ellipse cx="50" cy="12.6" rx="27.5" ry="9.8" fill="#262b2f" stroke="#0f1214" stroke-width="1"/><path d="M28.5 11.6Q50 3.6 71.5 11.6" fill="none" stroke="#3d454c" stroke-width=".9"/><path d="M33 7.6Q50 1.6 67 7.6" fill="none" stroke="#3d454c" stroke-width=".7"/><path d="M47.6 3.8Q48.6 .8 51 .8Q53.2 1.2 52.8 3.8Z" fill="#111" stroke="#000" stroke-width=".6"/><path d="M27.6 15.4Q50 25.4 72.4 15.4" fill="none" stroke="#111418" stroke-width="2.6"/>${star(37, 16.6, 3.6, 1.6, '#d62828')}</g>`],
+    ['palha', 'Chapéu de Palha',
+      ring(39, 2.6, '#8a6a2c') + ring(36.6, .8, '#ffffff55') +
+      `<g transform="rotate(7 50 19)"><ellipse cx="50" cy="19.5" rx="39" ry="9.4" fill="#e6c987" stroke="#8a6a2c" stroke-width="1.2"/><ellipse cx="50" cy="19.8" rx="31" ry="7" fill="none" stroke="#b8975a" stroke-width=".7"/><ellipse cx="50" cy="20" rx="23" ry="4.8" fill="none" stroke="#b8975a" stroke-width=".7"/>` +
+      `<path d="M34 18.6Q33 1.6 50 1.6Q67 1.6 66 18.6Z" fill="#f1d99a" stroke="#8a6a2c" stroke-width="1.2"/><path d="M37.6 10.4Q50 13.4 62.4 10.4M36.4 5.8Q50 8.6 63.6 5.8" fill="none" stroke="#c7a560" stroke-width=".7"/>` +
+      `<path d="M33.6 13Q50 16.6 66.4 13L66 18.8Q50 22.4 34 18.8Z" fill="#5a3515" stroke="#2e1b0c" stroke-width=".8"/><path d="M62 15.6Q73 8 80 2.4Q77.4 11.6 66.4 17.4Z" fill="#2f9d55" stroke="#1d6b38" stroke-width=".8" stroke-linejoin="round"/><path d="M64 16.4Q73 9.6 79 3.6" fill="none" stroke="#1d6b38" stroke-width=".7"/></g>`],
     ['neitzke', 'Neitzke',
       spin(14, [['#e40303', 0], ['#ff8c00', 1], ['#ffed00', 2], ['#008026', 3], ['#004dff', 4], ['#750787', 5]].map(([c, k]) => ring(39, 7, c, `stroke-dasharray="${C1 / 6} ${C1 * 5 / 6}" stroke-dashoffset="${-k * C1 / 6}"`)).join('')) +
       ring(35.6, 1, '#ffffffbb') + ring(42.6, 1, '#0006') +
@@ -981,12 +1000,19 @@ const frameOk = id => FRAMES.some(f => f.id === id);
 function paintAv(el, n, p) {
   p = p || {};
   if (frameOk(p.frame)) el.dataset.frame = p.frame; else delete el.dataset.frame;
-  if (p.avatar) {   // zoom e posição escolhidos pela pessoa (1 = a foto inteira preenchendo o círculo; menos que 1 = afastada)
+  let rot = 0;
+  if (p.avatar) {   // zoom, posição e giro escolhidos pela pessoa (1 = a foto inteira preenchendo o círculo; menos que 1 = afastada)
     const z = Math.min(3, Math.max(.5, +p.avZ || 1)), ar = Math.min(5, Math.max(.2, +p.avAr || 1));
     const px = v => Math.min(1, Math.max(0, v == null || isNaN(+v) ? .5 : +v)) * 100;
-    el.style.background = (p.color || colorOf(n)) + ' url("' + p.avatar + '") ' + px(p.avX) + '% ' + px(p.avY) + '% / ' + (ar >= 1 ? 'auto ' + z * 100 + '%' : z * 100 + '% auto') + ' no-repeat';
-  } else el.style.background = p.color || colorOf(n);
-  el.textContent = p.avatar ? '' : (n[0] || '?').toUpperCase();
+    rot = Math.round(Math.min(360, Math.max(-360, +p.avR || 0)));
+    const img = 'url("' + p.avatar + '") ' + px(p.avX) + '% ' + px(p.avY) + '% / ' + (ar >= 1 ? 'auto ' + z * 100 + '%' : z * 100 + '% auto') + ' no-repeat';
+    el.style.background = (p.color || colorOf(n)) + (rot ? '' : ' ' + img);
+    el.textContent = '';
+    if (rot) { const i = document.createElement('i'); i.className = 'avi'; i.style.background = img; i.style.transform = 'rotate(' + rot + 'deg)'; el.append(i); }   // girada: a foto vai numa camada que gira dentro do círculo
+    return;
+  }
+  el.style.background = p.color || colorOf(n);
+  el.textContent = (n[0] || '?').toUpperCase();
 }
 function avatar(n, small, id, live) { // live = true só na lista de voz da esquerda (borda pisca quando a pessoa fala)
   const d = document.createElement('div'); d.className = 'av' + (small ? ' s' : '') + (live && speaking.has(id) ? ' speaking' : '');
@@ -2644,7 +2670,7 @@ const clamp01 = v => Math.min(1, Math.max(0, v));
 function fillAvEd(slider) {   // círculo de ajuste da foto (só aparece se tem foto)
   $('#avEdBox').hidden = !ed.avatar; if (!ed.avatar) return;
   paintAv($('#avEd'), $('#pNome').value || myName, { ...ed, frame: '' });
-  if (slider) $('#avZ').value = Math.round((ed.avZ || 1) * 100);
+  if (slider) { $('#avZ').value = Math.round((ed.avZ || 1) * 100); $('#avR').value = Math.round(ed.avR || 0); }
 }
 const renderPrev = () => { $('#pPrev').replaceChildren(cardEl($('#pNome').value || myName, ed)); fillAvEd(); };
 { let dg = null; const e1 = $('#avEd');
@@ -2653,14 +2679,19 @@ const renderPrev = () => { $('#pPrev').replaceChildren(cardEl($('#pNome').value 
     if (!dg) return;
     const box = e1.offsetWidth, z = ed.avZ || 1, ar = ed.avAr || 1, iw = ar >= 1 ? box * z * ar : box * z, ih = ar >= 1 ? box * z : box * z / ar;
     const mv = (d, i) => Math.abs(box - i) < 1 ? 0 : d / (box - i);
-    ed.avX = clamp01(dg.px + mv(e.clientX - dg.x, iw)); ed.avY = clamp01(dg.py + mv(e.clientY - dg.y, ih)); renderPrev();
+    const th = (ed.avR || 0) * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th), ax = e.clientX - dg.x, ay = e.clientY - dg.y;   // desfaz o giro para a foto seguir o dedo
+    ed.avX = clamp01(dg.px + mv(ax * c + ay * sn, iw)); ed.avY = clamp01(dg.py + mv(-ax * sn + ay * c, ih)); renderPrev();
   };
   e1.onpointerup = e1.onpointercancel = () => { if (dg) { dg = null; fillFrames(); } };
-  e1.onwheel = e => { e.preventDefault(); ed.avZ = Math.min(3, Math.max(.5, (ed.avZ || 1) * (e.deltaY < 0 ? 1.06 : 1 / 1.06))); fillAvEd(true); renderPrev(); clearTimeout(e1.t); e1.t = setTimeout(fillFrames, 250); };
+  e1.onwheel = e => { e.preventDefault(); if (e.shiftKey) { const d = e.deltaY || e.deltaX; ed.avR = Math.round(((((ed.avR || 0) + (d < 0 ? 5 : -5)) + 180) % 360 + 360) % 360 - 180); fillAvEd(true); renderPrev(); clearTimeout(e1.t); e1.t = setTimeout(fillFrames, 250); return; } ed.avZ = Math.min(3, Math.max(.5, (ed.avZ || 1) * (e.deltaY < 0 ? 1.06 : 1 / 1.06))); fillAvEd(true); renderPrev(); clearTimeout(e1.t); e1.t = setTimeout(fillFrames, 250); };
 }
 $('#avZ').oninput = e => { ed.avZ = +e.target.value / 100; renderPrev(); };
 $('#avZ').onchange = () => fillFrames();
-$('#avReset').onclick = () => { ed.avZ = 1; ed.avX = .5; ed.avY = .5; fillAvEd(true); renderPrev(); fillFrames(); };
+$('#avR').oninput = e => { ed.avR = +e.target.value; renderPrev(); };
+$('#avR').onchange = () => fillFrames();
+const rotBy = d => { ed.avR = Math.round((((ed.avR || 0) + d + 180) % 360 + 360) % 360 - 180); fillAvEd(true); renderPrev(); fillFrames(); };
+$('#avRL').onclick = () => rotBy(-90); $('#avRR').onclick = () => rotBy(90);
+$('#avReset').onclick = () => { ed.avZ = 1; ed.avX = .5; ed.avY = .5; ed.avR = 0; fillAvEd(true); renderPrev(); fillFrames(); };
 function tab(t) {
   document.querySelectorAll('#cfgbody section').forEach(s => s.hidden = s.dataset.p !== t);
   document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
@@ -2680,7 +2711,7 @@ $('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; camPrevOff()
 $('#pNome').oninput = () => { renderPrev(); fillFrames(); };
 $('#pSobre').oninput = () => { ed.about = $('#pSobre').value; renderPrev(); };
 $('#pCor').oninput = () => { ed.color = $('#pCor').value; renderPrev(); };
-$('#pRmFoto').onclick = () => { ed.avatar = ''; ed.avZ = 1; ed.avX = .5; ed.avY = .5; ed.avAr = 1; $('#pFoto').value = ''; renderPrev(); fillFrames(); };
+$('#pRmFoto').onclick = () => { ed.avatar = ''; ed.avR = 0; ed.avZ = 1; ed.avX = .5; ed.avY = .5; ed.avAr = 1; $('#pFoto').value = ''; renderPrev(); fillFrames(); };
 $('#pRmBanner').onclick = () => { ed.banner = ''; $('#pBanner').value = ''; renderPrev(); };
 $('#pRmCor').onclick = () => { ed.color = ''; $('#pCor').value = colorOf($('#pNome').value || myName).slice(0, 7); renderPrev(); };
 $('#pRmSobre').onclick = () => { ed.about = ''; $('#pSobre').value = ''; renderPrev(); };
@@ -2693,7 +2724,7 @@ function pickImg(e, key, w, h, maxGif) {
     const r = new FileReader(); r.onload = () => { ed[key] = r.result; renderPrev(); fillFrames(); }; r.readAsDataURL(f);
   } else resize(f, w, h, d => { ed[key] = d; renderPrev(); fillFrames(); });
 }
-function newAvatar(url, ar) { ed.avatar = url; ed.avAr = ar; ed.avZ = 1; ed.avX = .5; ed.avY = .5; renderPrev(); fillAvEd(true); fillFrames(); }
+function newAvatar(url, ar) { ed.avatar = url; ed.avAr = ar; ed.avR = 0; ed.avZ = 1; ed.avX = .5; ed.avY = .5; renderPrev(); fillAvEd(true); fillFrames(); }
 $('#pFoto').onchange = e => {
   const f = e.target.files[0]; if (!f) return;
   if (f.type === 'image/gif') {   // GIF fica animado (sem redimensionar)
