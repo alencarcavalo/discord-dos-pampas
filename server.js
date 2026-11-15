@@ -269,6 +269,7 @@ wss.on('connection', (ws, req) => {
       ws.cid = String(m.cid || '').slice(0, 64);   // identidade fixa deste aparelho (nunca é enviada aos outros): é ela que prova que a mensagem é sua para editar
       // mesma pessoa/aparelho já conectada (conexão "fantasma" ou outra aba): derruba a antiga para não aparecer duplicado
       if (ws.cid) [...clients].filter(c => c !== ws && c.nick && c.cid === ws.cid).forEach(old => {
+        console.log('Duplicada: ' + ws.nick + ' entrou de novo, derrubando a conexão antiga.');
         send(old, { type: 'replaced' });
         old.nick = '';
         leave(old);
@@ -415,10 +416,10 @@ setInterval(() => {
   clients.forEach(c => c.nick && send(c, { type: 'pings', p, mem }));
 }, 4000);
 
-// a cada 15 s confere se cada conexão ainda responde; as que sumiram (queda de internet, celular dormindo) são derrubadas
+// a cada 15 s confere se cada conexão ainda responde; as que ficam ~45 s mudas (queda de internet, celular dormindo) são derrubadas
 setInterval(() => {
   clients.forEach(c => {
-    if (c.alive === false) return c.terminate();   // o 'close' cuida de tirar da lista
+    if ((c.miss = c.alive ? 0 : (c.miss || 0) + 1) >= 3) { console.log('Heartbeat: derrubando conexão sem resposta de ' + (c.nick || c.id)); return c.terminate(); }   // 3 falhas seguidas (~45 s); o 'close' cuida de tirar da lista
     c.alive = false;
     try { c.ping(); } catch {}
   });
