@@ -282,7 +282,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 #cardw{position:fixed;inset:0;z-index:9}
 #loginc img.logo{width:150px;height:auto;margin:0 auto;border-radius:0;background:none}
 #rail img{width:48px;height:48px;border-radius:16px;object-fit:cover}
-#mem{background:var(--side);padding:12px 8px;overflow:auto}
+#mem{background:var(--side);padding:12px 8px;overflow:auto;border-left:1px solid color-mix(in srgb,var(--txt) 9%,transparent)}
 #mem h3{margin:4px 8px 8px;font-size:.75rem;color:var(--mut);text-transform:uppercase}
 .u{display:flex;align-items:center;gap:10px;padding:10px 10px;min-height:64px;margin-bottom:6px;border-radius:8px;background-size:cover;background-position:center}
 .u:hover{background-color:var(--hover)}
@@ -849,6 +849,30 @@ const FRAMES = (() => {
       spin(10, ring(39, 6.5, 'url(#o)')) + ring(35.8, 1, '#fff9') + ring(42.5, 1, '#6b4e0a') +
       `<polygon points="50,0 56,7 50,15 44,7" fill="#7be9ff" stroke="#fff" stroke-width="1"/><polygon points="50,0 56,7 44,7" fill="#c8f6ff"/>` +
       spark(14, 30, 4, '#fff', 1.8, 0) + spark(88, 40, 3.5, '#fff6c8', 2.4, .6) + spark(78, 86, 4, '#fff', 2.1, 1.1) + spark(22, 82, 3, '#fff6c8', 2.7, 1.6)],
+    ['neon', 'Neon',
+      `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
+      `<g filter="url(#f)">` + ring(39, 3.2, '#22e5ff') + spin(5, ring(43.5, 2, '#ff2fd0', 'stroke-dasharray="20 14" stroke-linecap="round"')) + `</g>`],
+    ['coracao', 'Corações',
+      ring(38.5, 3, '#ff8fb8') +
+      N(12, (i, a) => { const [x, y] = P(41.5, a); return `<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(a * 180 / Math.PI + 90).toFixed(0)}) scale(${i % 2 ? .85 : 1.05})" d="M0 -1.5C-1 -4.6 -5.6 -3.8 -5.6 -.2C-5.6 3.2 0 6 0 7.4C0 6 5.6 3.2 5.6 -.2C5.6 -3.8 1 -4.6 0 -1.5Z" fill="${i % 2 ? '#ff8fb8' : '#ff3d7f'}" stroke="#fff" stroke-width=".9"/>`; })],
+    ['coroa', 'Coroa',
+      `<defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="1" stop-color="#d49a12"/></linearGradient></defs>` +
+      ring(39, 3.5, 'url(#c)') +
+      `<path d="M29 17L31 3L41 11L50 0L59 11L69 3L71 17Z" fill="url(#c)" stroke="#8a6410" stroke-width="1" stroke-linejoin="round"/><rect x="29" y="13" width="42" height="4.5" fill="#b8860b"/>` +
+      `<circle cx="50" cy="2.5" r="2" fill="#ff4d6d"/><circle cx="31" cy="4" r="1.6" fill="#7be9ff"/><circle cx="69" cy="4" r="1.6" fill="#7be9ff"/><circle cx="50" cy="15.3" r="1.5" fill="#ff4d6d"/>`],
+    ['gato', 'Orelhas de Gato',
+      ring(39, 4, '#2b2b33') + ring(36.2, 1, '#ffffff55') +
+      `<path d="M21 31L22 2L44 13Z" fill="#2b2b33" stroke="#15151a" stroke-width="1.2" stroke-linejoin="round"/><path d="M26 25L26.5 9L38 15Z" fill="#ff9ec4"/>` +
+      `<path d="M79 31L78 2L56 13Z" fill="#2b2b33" stroke="#15151a" stroke-width="1.2" stroke-linejoin="round"/><path d="M74 25L73.5 9L62 15Z" fill="#ff9ec4"/>`],
+    ['galaxia', 'Galáxia',
+      `<defs><linearGradient id="x" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2ec5ff"/><stop offset=".5" stop-color="#6a3fd6"/><stop offset="1" stop-color="#e14ad8"/></linearGradient></defs>` +
+      spin(9, ring(39, 7, 'url(#x)')) + ring(35.7, 1, '#ffffff88') + ring(42.6, 1, '#1a1040') +
+      spark(16, 22, 4.5, '#fff', 2.0, 0) + spark(86, 30, 3.5, '#d9ccff', 2.5, .5) + spark(82, 84, 4, '#fff', 2.2, 1.0) + spark(20, 80, 3, '#bfeaff', 2.8, 1.4) + spark(50, 4, 3, '#fff', 1.9, .9)],
+    ['neitzke', 'Neitzke',
+      spin(14, [['#e40303', 0], ['#ff8c00', 1], ['#ffed00', 2], ['#008026', 3], ['#004dff', 4], ['#750787', 5]].map(([c, k]) => ring(39, 7, c, `stroke-dasharray="${C1 / 6} ${C1 * 5 / 6}" stroke-dashoffset="${-k * C1 / 6}"`)).join('')) +
+      ring(35.6, 1, '#ffffffbb') + ring(42.6, 1, '#0006') +
+      `<defs><linearGradient id="n" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e40303"/><stop offset=".2" stop-color="#ff8c00"/><stop offset=".4" stop-color="#ffed00"/><stop offset=".6" stop-color="#008026"/><stop offset=".8" stop-color="#004dff"/><stop offset="1" stop-color="#750787"/></linearGradient></defs>` +
+      `<rect x="19" y="82" width="62" height="16" rx="8" fill="#16161a" stroke="url(#n)" stroke-width="2"/><text x="50" y="93.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="9.5" fill="#fff" textLength="48" lengthAdjust="spacingAndGlyphs">NEITZKE</text>`],
   ];
   return L.map(([id, name, body]) => ({ id, name, url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`) }));
 })();
