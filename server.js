@@ -358,10 +358,12 @@ const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '
 const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:image/jpeg;base64,') && v.length < max) || (v.startsWith('data:image/gif;base64,') && v.length < maxGif)) ? v : '';
 // bordas de foto liberadas (ids iguais aos do index.html)
 const FRAMES = ['bandeira', 'erva', 'chimarrao', 'lenco', 'chapeu', 'fogo', 'estrela', 'poente', 'lendario', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'neitzke'];
+const numIn = (v, lo, hi, def) => (Number.isFinite(+v) && v !== null && v !== '' ? Math.min(hi, Math.max(lo, +v)) : def);   // número dentro de um intervalo (zoom/posição da foto)
 function setProf(ws, p) {
   p = p || {};
   ws.prof = { about: String(p.about || '').slice(0, 120), avatar: okImg(p.avatar, 60000, 5.8e6), banner: okImg(p.banner, 120000, 5.8e6),
-    color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '', frame: FRAMES.includes(p.frame) ? p.frame : '' };
+    color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '', frame: FRAMES.includes(p.frame) ? p.frame : '',
+    avZ: numIn(p.avZ, .5, 3, 1), avX: numIn(p.avX, 0, 1, .5), avY: numIn(p.avY, 0, 1, .5), avAr: numIn(p.avAr, .2, 5, 1) };
 }
 const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {} });
 
