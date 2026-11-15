@@ -822,6 +822,18 @@ const FRAMES = (() => {
   const star = (cx, cy, R, r, fill) => `<polygon fill="${fill}" points="${Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r : R; return (cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy + rr * Math.sin(a)).toFixed(1); }).join(' ')}"/>`;
   const spark = (cx, cy, s, fill, dur, begin) => `<path fill="${fill}" d="M${cx} ${cy - s}Q${cx} ${cy} ${cx + s} ${cy}Q${cx} ${cy} ${cx} ${cy + s}Q${cx} ${cy} ${cx - s} ${cy}Q${cx} ${cy} ${cx} ${cy - s}Z"><animate attributeName="opacity" values="0;1;0" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/></path>`;
   const spin = (s, g) => `<g>${g}<animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="${s}s" repeatCount="indefinite"/></g>`;
+  const R = i => { const x = Math.sin(i * 127.1 + 31.7) * 43758.5453; return x - Math.floor(x); };
+  const f1 = v => (+v).toFixed(1);
+  const skull = (cx, cy, s, rot) => `<g transform="translate(${f1(cx)} ${f1(cy)}) rotate(${f1(rot)}) scale(${s})"><path d="M-6 2C-8 -5 -4 -9 0 -9C4 -9 8 -5 6 2C6 4 4.5 5 4 6.5L4 9L-4 9L-4 6.5C-4.5 5 -6 4 -6 2Z" fill="#f1eee4" stroke="#0b0b0e" stroke-width="1.1" stroke-linejoin="round"/><ellipse cx="-2.7" cy="0" rx="2.1" ry="2.5" fill="#0b0b0e"/><ellipse cx="2.7" cy="0" rx="2.1" ry="2.5" fill="#0b0b0e"/><circle cx="-2.7" cy=".3" r=".8" fill="#ff3030"><animate attributeName="opacity" values=".2;1;.2" dur="2.2s" repeatCount="indefinite"/></circle><circle cx="2.7" cy=".3" r=".8" fill="#ff3030"><animate attributeName="opacity" values=".2;1;.2" dur="2.2s" repeatCount="indefinite"/></circle><path d="M0 3L-1.2 5.4L1.2 5.4Z" fill="#0b0b0e"/><path d="M-2.4 6.8V9M0 6.8V9M2.4 6.8V9" stroke="#0b0b0e" stroke-width=".7"/></g>`;
+  const hand = (cx, cy, s, rot) => {
+    const fg = [[-3, -7, -4.8, -16], [-1, -7, -1.8, -18], [1.2, -7, 1.6, -18], [3.2, -7, 4.8, -15], [-4, -2, -9.5, -8]];
+    const ln = (l, w, c) => `<line x1="${l[0]}" y1="${l[1]}" x2="${l[2]}" y2="${l[3]}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+    return `<g transform="translate(${f1(cx)} ${f1(cy)}) rotate(${f1(rot)}) scale(${s})">` + fg.map(l => ln(l, 3.6, '#0b0b0e')).join('') + fg.map(l => ln(l, 2.1, '#f1eee4')).join('') +
+      `<path d="M-4.4 0Q-5.8 -5 -3.8 -7.6L3.8 -7.6Q5.8 -5 4.4 0Z" fill="#f1eee4" stroke="#0b0b0e" stroke-width="1"/><path d="M-2 -3.5H2M-3 -5.2H3" stroke="#0b0b0e" stroke-width=".6"/>` +
+      [[-3.9, -11.6], [-1.4, -12.6], [1.4, -12.6], [4, -10.8]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".7" fill="#0b0b0e"/>`).join('') + `</g>`;
+  };
+  const blob = (rf, M) => { const p = Array.from({ length: M }, (_, i) => { const a = i / M * 2 * Math.PI, r = rf(i); return [50 + r * Math.cos(a), 50 + r * Math.sin(a)]; }); const m = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; let d = 'M' + m(p[M - 1], p[0]).map(f1).join(' '); p.forEach((q, i) => { const e = m(q, p[(i + 1) % M]); d += `Q${f1(q[0])} ${f1(q[1])} ${f1(e[0])} ${f1(e[1])}`; }); return d + 'Z'; };
+  const deg = a => a * 180 / Math.PI;
   const C1 = 2 * Math.PI * 39, seg = C1 / 3;
   const L = [
     ['bandeira', 'Bandeira do RS',
@@ -930,6 +942,25 @@ const FRAMES = (() => {
       ring(39, 4, '#2b2118') + ring(36.4, 1, '#ffffff33') +
       `<path d="M44 87Q29 91 24 79Q34 85 45 83Z" fill="#efe6d2" stroke="#4a3a22" stroke-width="1.1" stroke-linejoin="round"/><path d="M56 87Q71 91 76 79Q66 85 55 83Z" fill="#efe6d2" stroke="#4a3a22" stroke-width="1.1" stroke-linejoin="round"/>` +
       `<path d="M42 83Q50 79 58 83L56.5 93Q55.5 99.5 50 99.5Q44.5 99.5 43.5 93Z" fill="#efe6d2" stroke="#4a3a22" stroke-width="1.2" stroke-linejoin="round"/><ellipse cx="46.2" cy="87.6" rx="2.3" ry="2.8" fill="#1d1510"/><ellipse cx="53.8" cy="87.6" rx="2.3" ry="2.8" fill="#1d1510"/><path d="M48.4 94.4L50 91.8L51.6 94.4Z" fill="#1d1510"/>`],
+    ['tinta', 'Tinta e Caveiras',
+      `<path fill-rule="evenodd" fill="#0b0b0e" d="${blob(i => 42.5 + 6 * R(i), 30)}${blob(i => 31.2 + 4.2 * R(i + 50), 24)}"/>` +
+      ring(45, .7, '#ffffffcc', 'stroke-dasharray="7 4 2 6 11 3"') + ring(37.4, .7, '#ffffffaa', 'stroke-dasharray="3 5 9 4 2 8"') +
+      N(16, (i, a) => { const r = 46 + 3 * R(i + 9), [x, y] = P(r, a + R(i) * .4); return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(.5 + 1.1 * R(i + 3))}" fill="#0b0b0e"/>`; }) +
+      hand(...P(41, Math.PI * .83), 1.05, deg(Math.PI * .83) - 90) +
+      hand(...P(41, -Math.PI * .1), .95, deg(-Math.PI * .1) - 90) +
+      skull(...P(38.5, -Math.PI * .28), 1.35, deg(-Math.PI * .28) + 90 + 8) +
+      skull(...P(39.5, Math.PI * .45), .95, deg(Math.PI * .45) + 90 - 10) +
+      skull(...P(40, -Math.PI * .78), .8, deg(-Math.PI * .78) + 90 + 6)],
+    ['chamas', 'Chamas Selvagens',
+      ring(34.6, 3.4, '#1a0a05') +
+      N(22, (i, a) => { const [x, y] = P(32.4, a), s = .62 + .3 * R(i + 4), d = (1.1 + R(i) * .8).toFixed(2); return `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(deg(a) + 90 + 16)})"><g><path d="M-6 0C-7 -9 -2 -12 -1 -21C3 -13 7 -9 6 0Z" fill="#e8321a"/><path d="M-4 0C-4.4 -6 -1.4 -9 0 -14C2 -9 4.4 -6 4 0Z" fill="#ff8a16"/><path d="M-2.2 0C-2.4 -3.6 -.8 -5.4 0 -8C1 -5.4 2.4 -3.6 2.2 0Z" fill="#ffe27a"/><animateTransform attributeName="transform" type="scale" values="${s} ${s};${s} ${(s * 1.22).toFixed(2)};${(s * 1.06).toFixed(2)} ${(s * .9).toFixed(2)};${s} ${s}" dur="${d}s" repeatCount="indefinite"/></g></g>`; }) +
+      skull(50, 11, 1.05, 0) +
+      N(9, (i, a) => { const [x, y] = P(44 + 4 * R(i), a * 1.0 + R(i + 7)), r = .7 + .7 * R(i + 1); return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="#ffd23f"><animate attributeName="cy" values="${f1(y)};${f1(y - 9)}" dur="${(1.4 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="${(1.4 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/></circle>`; })],
+    ['asas', 'Asas Negras', (() => {
+      const wing = (sc, col, edge) => Array.from({ length: 9 }, (_, k) => { const t = k / 8, th = -4 - t * 68, L = (46 - t * 24) * sc, w = 7.2 * sc; return `<path transform="rotate(${f1(th)} 24 62)" d="M24 62Q${f1(24 - w)} ${f1(62 - L / 2)} 24 ${f1(62 - L)}Q${f1(24 + w)} ${f1(62 - L / 2)} 24 62Z" fill="${col}" stroke="${edge}" stroke-width=".8" stroke-linejoin="round"/>`; }).join('');
+      const one = `<g>${wing(1, '#2a1b36', '#e9b8f5')}${wing(.7, '#120b19', '#ffd9f5')}<animateTransform attributeName="transform" type="rotate" values="0 24 62;-4 24 62;0 24 62" dur="3.2s" repeatCount="indefinite"/></g>`;
+      return ring(34.6, 1.6, '#e9b8f5aa') + `<g>${one}</g><g transform="translate(100 0) scale(-1 1)">${one}</g>`;
+    })()],
     ['neitzke', 'Neitzke',
       spin(14, [['#e40303', 0], ['#ff8c00', 1], ['#ffed00', 2], ['#008026', 3], ['#004dff', 4], ['#750787', 5]].map(([c, k]) => ring(39, 7, c, `stroke-dasharray="${C1 / 6} ${C1 * 5 / 6}" stroke-dashoffset="${-k * C1 / 6}"`)).join('')) +
       ring(35.6, 1, '#ffffffbb') + ring(42.6, 1, '#0006') +
