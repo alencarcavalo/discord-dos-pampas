@@ -357,7 +357,7 @@ const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '
 // aceita JPEG (imagem reduzida) ou GIF animado (limite maior)
 const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:image/jpeg;base64,') && v.length < max) || (v.startsWith('data:image/gif;base64,') && v.length < maxGif)) ? v : '';
 // bordas de foto liberadas (ids iguais aos do index.html)
-const FRAMES = ['bandeira', 'erva', 'chimarrao', 'lenco', 'chapeu', 'fogo', 'estrela', 'poente', 'lendario', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'neitzke'];
+const FRAMES = ['bandeira', 'erva', 'chimarrao', 'lenco', 'chapeu', 'fogo', 'estrela', 'poente', 'lendario', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'laco', 'couro', 'touro', 'ferradura', 'facoes', 'corrente', 'caveira', 'neitzke'];
 const numIn = (v, lo, hi, def) => (Number.isFinite(+v) && v !== null && v !== '' ? Math.min(hi, Math.max(lo, +v)) : def);   // número dentro de um intervalo (zoom/posição da foto)
 function setProf(ws, p) {
   p = p || {};
