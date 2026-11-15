@@ -38,6 +38,13 @@ input[type=range]::-moz-range-thumb{width:var(--tw);height:22px;border:0;border-
 small{color:var(--mut)}
 .av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:600;color:#fff;flex:none}
 .av.s{width:24px;height:24px;font-size:.75rem}
+#frGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin:6px 0 8px}
+#frGrid button{display:grid;justify-items:center;gap:14px;padding:16px 6px 8px;border-radius:10px;background:var(--input);border:2px solid transparent;color:var(--mut);font-size:.74rem;font-weight:600;line-height:1.15;text-align:center}
+#frGrid button:hover{background:var(--hover);color:var(--txt)}
+#frGrid button.on{border-color:var(--blur);color:var(--txt);background:color-mix(in srgb,var(--blur) 18%,transparent)}
+#frGrid .av{width:44px;height:44px}
+.u .av[data-frame]{margin:0 6px 0 4px}
+
 
 #login{min-height:100%;display:grid;place-items:center;background:var(--rail);padding:1rem}
 #loginc{background:var(--main);border-radius:8px;padding:2rem;width:100%;max-width:440px;display:grid;gap:1rem;text-align:center;box-shadow:0 2px 10px #0006}
@@ -568,6 +575,9 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
           <div class="fld"><span>Foto</span>
             <div class="rc"><label class="sec up">📷 Escolher foto<input type="file" id="pFoto" accept="image/*" hidden></label><button type="button" class="sec" id="pRmFoto">Remover</button></div>
             <small>JPG, PNG ou GIF animado (GIF até 4 MB).</small></div>
+          <div class="fld" ><span>Borda da foto</span>
+            <div id="frGrid"></div>
+            <small>Aparece em volta da sua foto no chat, na lista e na chamada. Lembre de clicar em <b>Salvar perfil</b>.</small></div>
           <div class="fld"><span>Fundo do perfil</span>
             <div class="rc"><label class="sec up">🖼️ Escolher fundo<input type="file" id="pBanner" accept="image/*" hidden></label><button type="button" class="sec" id="pRmBanner">Remover</button></div>
             <small>A faixa que aparece no topo do seu cartão.</small></div>
@@ -791,8 +801,64 @@ let CAM = null, camP = null, camBusy = false;   // câmera aberta (pipeline com 
 const send = m => ws.readyState === 1 && ws.send(JSON.stringify(m));
 const COLORS = ['#5865f2', '#23a559', '#c27c0e', '#eb459e', '#f23f43', '#0b8fd6'];
 const colorOf = n => COLORS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
+// ---------- bordas de foto (desenhadas em SVG; o círculo da foto fica no meio) ----------
+const FRAMES = (() => {
+  const P = (r, a) => [50 + r * Math.cos(a), 50 + r * Math.sin(a)];
+  const N = (n, f) => Array.from({ length: n }, (_, i) => f(i, i / n * 2 * Math.PI)).join('');
+  const ring = (r, w, stroke, extra = '') => `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${stroke}" stroke-width="${w}" ${extra}/>`;
+  const star = (cx, cy, R, r, fill) => `<polygon fill="${fill}" points="${Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r : R; return (cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy + rr * Math.sin(a)).toFixed(1); }).join(' ')}"/>`;
+  const spark = (cx, cy, s, fill, dur, begin) => `<path fill="${fill}" d="M${cx} ${cy - s}Q${cx} ${cy} ${cx + s} ${cy}Q${cx} ${cy} ${cx} ${cy + s}Q${cx} ${cy} ${cx - s} ${cy}Q${cx} ${cy} ${cx} ${cy - s}Z"><animate attributeName="opacity" values="0;1;0" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/></path>`;
+  const spin = (s, g) => `<g>${g}<animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="${s}s" repeatCount="indefinite"/></g>`;
+  const C1 = 2 * Math.PI * 39, seg = C1 / 3;
+  const L = [
+    ['bandeira', 'Bandeira do RS',
+      ring(39, 7, '#1f9d55', `stroke-dasharray="${seg} ${seg * 2}" transform="rotate(-90 50 50)"`) +
+      ring(39, 7, '#d62828', `stroke-dasharray="${seg} ${seg * 2}" stroke-dashoffset="${-seg}" transform="rotate(-90 50 50)"`) +
+      ring(39, 7, '#f5c542', `stroke-dasharray="${seg} ${seg * 2}" stroke-dashoffset="${-2 * seg}" transform="rotate(-90 50 50)"`) +
+      ring(35.6, 1.2, '#ffffffcc') + ring(42.6, 1, '#0006')],
+    ['erva', 'Erva-mate',
+      ring(39, 2.5, '#2f6b2c') +
+      N(20, (i, a) => { const [x, y] = P(41.5, a); return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="3.4" ry="7" transform="rotate(${(a * 180 / Math.PI - 90 + 38).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i % 2 ? '#4da043' : '#7ccf55'}" stroke="#25521f" stroke-width=".6"/>`; })],
+    ['chimarrao', 'Chimarrão',
+      ring(39, 4.5, '#5f9a3f') + ring(36.2, 1, '#ffffff88') +
+      `<path d="M63 69Q63 90 77 90Q91 90 91 69Z" fill="#9a6232" stroke="#5a3515" stroke-width="1.4"/>` +
+      `<path d="M65 76Q77 83 89 76" fill="none" stroke="#d8dde2" stroke-width="2.2"/>` +
+      `<ellipse cx="77" cy="69" rx="14" ry="4.5" fill="#6b8e23" stroke="#3f5a12" stroke-width="1.2"/>` +
+      `<path d="M78 69L92 47" stroke="#e5e8ec" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="92.5" cy="46.5" rx="2.6" ry="1.6" transform="rotate(-55 92.5 46.5)" fill="#cfd3d8"/>` +
+      `<path d="M70 62Q67 56 70 51Q73 46 70 41" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"><animate attributeName="opacity" values=".15;.8;.15" dur="2.4s" repeatCount="indefinite"/></path>` +
+      `<path d="M78 60Q75 54 78 49Q81 44 78 39" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"><animate attributeName="opacity" values=".8;.15;.8" dur="2.4s" repeatCount="indefinite"/></path>`],
+    ['lenco', 'Lenço Maragato',
+      ring(39, 7.5, '#c8372d') + ring(35.8, 1, '#ffffffcc') + ring(42.4, 1, '#0006') +
+      N(22, (i, a) => { const [x, y] = P(39, a); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.3" fill="#fff"/>`; }) +
+      `<path d="M50 90L40 100L47 100Z M50 90L60 100L53 100Z" fill="#c8372d" stroke="#fff" stroke-width="1" stroke-linejoin="round"/><circle cx="50" cy="89" r="4.6" fill="#c8372d" stroke="#fff" stroke-width="1.2"/>`],
+    ['chapeu', 'Chapéu Gaúcho',
+      ring(39, 3, '#6b4423') +
+      `<g transform="rotate(-9 50 20)"><path d="M34 20Q34 0 50 0Q66 0 66 20Z" fill="#1d1d1f"/><rect x="34" y="14.5" width="32" height="4.5" fill="#c8372d"/><ellipse cx="50" cy="20.5" rx="30" ry="6" fill="#111"/><ellipse cx="50" cy="19.5" rx="30" ry="5.2" fill="none" stroke="#3a3a3d" stroke-width=".8"/></g>`],
+    ['fogo', 'Fogo de Chão',
+      ring(38.5, 3, '#7a1f0f') +
+      N(16, (i, a) => `<g transform="rotate(${(i * 22.5).toFixed(1)} 50 50)"><path d="M45.5 15C43 8 48 6 50 -1C52 6 57 8 54.5 15Z" fill="#ff6a13"><animate attributeName="opacity" values="1;.65;1" dur="${(0.5 + (i % 4) * 0.13).toFixed(2)}s" repeatCount="indefinite"/></path><path d="M48 15C47 10 49.5 9 50 4C50.5 9 53 10 52 15Z" fill="#ffd23f"/></g>`)],
+    ['estrela', 'Estrela Farroupilha',
+      ring(39, 6, '#1f7a3a') + ring(42.4, 1.3, '#d62828') + ring(35.7, 1.3, '#f5c542') +
+      N(8, (i, a) => { const [x, y] = P(39, a - Math.PI / 2); return star(x, y, 6, 2.6, '#ffd33d'); })],
+    ['poente', 'Pôr do Sol no Pampa',
+      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset=".45" stop-color="#ff5e62"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>` +
+      spin(7, ring(39, 7, 'url(#g)')) + ring(35.7, 1, '#fff8') +
+      spark(18, 20, 4, '#fff', 2.2, 0) + spark(84, 76, 3.5, '#fff', 2.6, .8) + spark(80, 17, 3, '#ffe9a8', 3, 1.5)],
+    ['lendario', 'Ouro Lendário',
+      `<defs><linearGradient id="o" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".35" stop-color="#f5c542"/><stop offset=".7" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient></defs>` +
+      spin(10, ring(39, 6.5, 'url(#o)')) + ring(35.8, 1, '#fff9') + ring(42.5, 1, '#6b4e0a') +
+      `<polygon points="50,0 56,7 50,15 44,7" fill="#7be9ff" stroke="#fff" stroke-width="1"/><polygon points="50,0 56,7 44,7" fill="#c8f6ff"/>` +
+      spark(14, 30, 4, '#fff', 1.8, 0) + spark(88, 40, 3.5, '#fff6c8', 2.4, .6) + spark(78, 86, 4, '#fff', 2.1, 1.1) + spark(22, 82, 3, '#fff6c8', 2.7, 1.6)],
+  ];
+  return L.map(([id, name, body]) => ({ id, name, url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`) }));
+})();
+const FRAME_CSS = '.av[data-frame]:not(.pav){position:relative}.av[data-frame]::after{content:"";position:absolute;inset:-20%;background:center/100% 100% no-repeat;pointer-events:none;z-index:2}' +
+  FRAMES.map(f => `.av[data-frame="${f.id}"]::after{background-image:url("${f.url}")}`).join('');
+document.head.append(Object.assign(document.createElement('style'), { textContent: FRAME_CSS }));
+const frameOk = id => FRAMES.some(f => f.id === id);
 function paintAv(el, n, p) {
   p = p || {};
+  if (frameOk(p.frame)) el.dataset.frame = p.frame; else delete el.dataset.frame;
   el.style.background = p.avatar ? 'url("' + p.avatar + '") center/cover' : (p.color || colorOf(n));
   el.textContent = p.avatar ? '' : (n[0] || '?').toUpperCase();
 }
@@ -2436,6 +2502,16 @@ function card(id, anchor) {
 }
 
 let ed = {};
+function fillFrames() {   // grade de bordas: cada botão mostra a sua foto (ou letra) com a borda
+  const g = $('#frGrid'); g.replaceChildren();
+  [{ id: '', name: 'Sem borda' }, ...FRAMES].forEach(f => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = (ed.frame || '') === f.id ? 'on' : ''; b.title = f.name;
+    const a = document.createElement('div'); a.className = 'av'; paintAv(a, $('#pNome').value || myName, { ...ed, frame: f.id });
+    const t = document.createElement('span'); t.textContent = f.name; b.append(a, t);
+    b.onclick = () => { ed.frame = f.id; fillFrames(); renderPrev(); };
+    g.append(b);
+  });
+}
 const renderPrev = () => $('#pPrev').replaceChildren(cardEl($('#pNome').value || myName, ed));
 function tab(t) {
   document.querySelectorAll('#cfgbody section').forEach(s => s.hidden = s.dataset.p !== t);
@@ -2450,13 +2526,13 @@ document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => ta
 $('#bCfg').onclick = () => {
   ed = { ...cfg.prof }; $('#pNome').value = myName; $('#pSobre').value = ed.about; $('#pCor').value = ed.color || colorOf(myName).slice(0, 7);
   fillVoz(); paintKeys();
-  $('#icSz').value = cfg.ic || 20; fillTheme(); renderPrev(); tab('perfil'); $('#cfg').hidden = false;
+  $('#icSz').value = cfg.ic || 20; fillTheme(); renderPrev(); fillFrames(); tab('perfil'); $('#cfg').hidden = false;
 };
 $('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; camPrevOff(); };
-$('#pNome').oninput = renderPrev;
+$('#pNome').oninput = () => { renderPrev(); fillFrames(); };
 $('#pSobre').oninput = () => { ed.about = $('#pSobre').value; renderPrev(); };
 $('#pCor').oninput = () => { ed.color = $('#pCor').value; renderPrev(); };
-$('#pRmFoto').onclick = () => { ed.avatar = ''; $('#pFoto').value = ''; renderPrev(); };
+$('#pRmFoto').onclick = () => { ed.avatar = ''; $('#pFoto').value = ''; renderPrev(); fillFrames(); };
 $('#pRmBanner').onclick = () => { ed.banner = ''; $('#pBanner').value = ''; renderPrev(); };
 $('#pRmCor').onclick = () => { ed.color = ''; $('#pCor').value = colorOf($('#pNome').value || myName).slice(0, 7); renderPrev(); };
 $('#pRmSobre').onclick = () => { ed.about = ''; $('#pSobre').value = ''; renderPrev(); };
@@ -2466,8 +2542,8 @@ function pickImg(e, key, w, h, maxGif) {
   const f = e.target.files[0]; if (!f) return;
   if (f.type === 'image/gif') {
     if (f.size > maxGif) { toast('Esse GIF tem ' + (f.size / 1048576).toFixed(1) + ' MB. O máximo é ' + (maxGif / 1048576).toFixed(1) + ' MB.'); e.target.value = ''; return; }
-    const r = new FileReader(); r.onload = () => { ed[key] = r.result; renderPrev(); }; r.readAsDataURL(f);
-  } else resize(f, w, h, d => { ed[key] = d; renderPrev(); });
+    const r = new FileReader(); r.onload = () => { ed[key] = r.result; renderPrev(); fillFrames(); }; r.readAsDataURL(f);
+  } else resize(f, w, h, d => { ed[key] = d; renderPrev(); fillFrames(); });
 }
 $('#pFoto').onchange = e => pickImg(e, 'avatar', 128, 128, 4 * 1048576);
 $('#pBanner').onchange = e => pickImg(e, 'banner', 360, 130, 4 * 1048576);
