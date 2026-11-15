@@ -1120,7 +1120,7 @@ function renderChans() {
       b.append(x);
       box.append(b);
       if (k === 'voice') st.users.filter(u => u.room === c.id).forEach(u => {
-        const m = document.createElement('div'); m.className = 'mem';
+        const m = document.createElement('div'); m.className = 'mem'; m.dataset.pid = u.id;
         const t2 = document.createElement('span'); t2.textContent = u.name + (u.id === me ? ' (você)' : '');
         m.onclick = () => card(u.id, m); m.style.cursor = 'pointer';
         if (u.id !== me) m.oncontextmenu = e => volMenu(e, u.name);
@@ -1167,7 +1167,7 @@ function renderMem() {
   const b = $('#mem'); b.replaceChildren();
   const h = document.createElement('h3'); h.textContent = 'Online — ' + st.users.length; b.append(h);
   st.users.forEach(u => {
-    const d = document.createElement('div'); d.className = 'u'; d.dataset.pid = u.id; const t = document.createElement('div');
+    const d = document.createElement('div'); d.className = 'u'; const t = document.createElement('div');
     const n = document.createElement('span'); n.textContent = u.name + (u.id === me ? ' (você)' : ''); t.append(n);
     if (u.room) { const s = document.createElement('small'); s.textContent = '🔊 ' + label(u.room); t.append(s); }
     actLines(u).forEach(x => t.append(x));
