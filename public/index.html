@@ -61,7 +61,7 @@ small{color:var(--mut)}
 #instalar{background:var(--input);padding:.7rem}
 #erro{color:var(--verm);min-height:1.2em}
 
-#app{height:100%;display:grid;grid-template-columns:72px 280px 1fr 240px;grid-template-rows:1fr}
+#app{height:100%;display:grid;grid-template-columns:280px 1fr 240px;grid-template-rows:1fr}
 #rail{background:var(--rail);padding:12px 0;display:flex;flex-direction:column;align-items:center}
 #rail .av{width:48px;height:48px;background:var(--pampa);font-size:1.3rem;border-radius:16px;position:relative}
 #rail .av::before{content:"";position:absolute;left:-12px;top:12px;width:4px;height:24px;background:#fff;border-radius:0 4px 4px 0}
@@ -491,12 +491,8 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
   #camInfo{display:none}
   .campv .rc{margin-top:8px!important}
 }
-/* painel com o canto de cima arredondado e a linha fina em volta (igual ao Discord) */
-@media(min-width:901px){
- #app{--bd:color-mix(in srgb,var(--txt) 13%,transparent);background:var(--rail)}
- #side{border-top:1px solid var(--bd);border-top-left-radius:12px}
- #main,#mem{border-top:1px solid var(--bd)}
-}
+#rail{display:none}
+#sname::before{content:"";flex:none;width:26px;height:26px;margin-right:10px;border-radius:8px;background:url(/icon-192.png) center/cover}
 </style>
 </head>
 <body>
