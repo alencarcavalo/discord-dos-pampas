@@ -881,6 +881,26 @@ const FRAMES = (() => {
       `<defs><linearGradient id="x" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2ec5ff"/><stop offset=".5" stop-color="#6a3fd6"/><stop offset="1" stop-color="#e14ad8"/></linearGradient></defs>` +
       spin(9, ring(39, 7, 'url(#x)')) + ring(35.7, 1, '#ffffff88') + ring(42.6, 1, '#1a1040') +
       spark(16, 22, 4.5, '#fff', 2.0, 0) + spark(86, 30, 3.5, '#d9ccff', 2.5, .5) + spark(82, 84, 4, '#fff', 2.2, 1.0) + spark(20, 80, 3, '#bfeaff', 2.8, 1.4) + spark(50, 4, 3, '#fff', 1.9, .9)],
+    ['termica', 'Térmica e Cuia',
+      ring(39, 4.5, '#5f9a3f') + ring(36.2, 1, '#ffffff77') +
+      N(14, (i, a) => { const [x, y] = P(41.6, a + .2); return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="2" ry="4.2" transform="rotate(${(a * 180 / Math.PI + 38).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i % 2 ? '#4da043' : '#7ccf55'}" stroke="#25521f" stroke-width=".5"/>`; }) +
+      // cuia (por cima da foto, embaixo à direita)
+      `<path d="M61 70Q61 94 75 94Q89 94 89 70Z" fill="#9a6232" stroke="#5a3515" stroke-width="1.4"/><path d="M64 76Q75 83 86 76" fill="none" stroke="#d8dde2" stroke-width="2.2"/><path d="M64.5 80Q75 87 85.5 80" fill="none" stroke="#5a3515" stroke-width=".8" opacity=".6"/>` +
+      `<ellipse cx="75" cy="70" rx="14" ry="4.4" fill="#6b8e23" stroke="#3f5a12" stroke-width="1.2"/>` +
+      // água enchendo a cuia
+      `<ellipse cx="75" cy="70.3" rx="0" ry="0" fill="#8fd8f0" opacity=".95"><animate attributeName="rx" values="0;11.6;11.6;0" keyTimes="0;.7;.92;1" dur="4s" repeatCount="indefinite"/><animate attributeName="ry" values="0;3.2;3.2;0" keyTimes="0;.7;.92;1" dur="4s" repeatCount="indefinite"/></ellipse>` +
+      `<ellipse cx="75" cy="70" rx="14" ry="4.4" fill="none" stroke="#fff" stroke-width=".8" opacity=".5"/>` +
+      // bombilla
+      `<path d="M71 70L58 49" stroke="#e5e8ec" stroke-width="2.6" stroke-linecap="round"/><path d="M71 70L58 49" stroke="#9aa0a8" stroke-width=".7" stroke-linecap="round"/><ellipse cx="57.4" cy="48.2" rx="2.7" ry="1.7" transform="rotate(-57 57.4 48.2)" fill="#cfd3d8" stroke="#8a9098" stroke-width=".6"/>` +
+      // térmica inclinada, derramando
+      `<g transform="translate(73 47) rotate(-140) scale(.74)"><rect x="-7.5" y="0" width="15" height="37" rx="3.5" fill="#d9dee4" stroke="#4d535b" stroke-width="1.5"/><rect x="-7.5" y="9" width="15" height="10" fill="#c8372d"/><rect x="-4.6" y="2" width="2.4" height="33" rx="1.2" fill="#fff" opacity=".55"/><rect x="-8.4" y="31" width="16.8" height="7" rx="2.2" fill="#2a2d31" stroke="#15151a" stroke-width="1"/><rect x="-8" y="-6" width="16" height="7" rx="2" fill="#2a2d31" stroke="#15151a" stroke-width="1"/><path d="M-8 -5L-14 -8L-8 0Z" fill="#2a2d31" stroke="#15151a" stroke-width="1" stroke-linejoin="round"/></g>` +
+      // fio d'água caindo
+      `<path d="M78.4 56.5Q79.6 63 77.4 69" fill="none" stroke="#bdeaf7" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="4 2.6"><animate attributeName="stroke-dashoffset" from="13.2" to="0" dur=".45s" repeatCount="indefinite"/></path>` +
+      `<path d="M78.4 56.5Q79.6 63 77.4 69" fill="none" stroke="#5fb8d8" stroke-width=".7" stroke-linecap="round" opacity=".7"/>` +
+      `<ellipse cx="77.4" cy="70" rx="3" ry="1" fill="none" stroke="#fff" stroke-width=".8"><animate attributeName="rx" values="1;5.5" dur=".8s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur=".8s" repeatCount="indefinite"/></ellipse>` +
+      `<circle cx="73.5" cy="67" r="1" fill="#bdeaf7"><animate attributeName="cy" values="69;63;69" dur=".7s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur=".7s" repeatCount="indefinite"/></circle><circle cx="82" cy="67" r=".9" fill="#bdeaf7"><animate attributeName="cy" values="69;64;69" dur=".6s" begin=".2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur=".6s" begin=".2s" repeatCount="indefinite"/></circle>` +
+      // vapor
+      `<path d="M66 64Q63 59 66 55Q69 51 66 47" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".6"><animate attributeName="opacity" values=".1;.7;.1" dur="2.4s" repeatCount="indefinite"/></path><path d="M83 63Q86 58 83 54" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".6"><animate attributeName="opacity" values=".7;.1;.7" dur="2.4s" repeatCount="indefinite"/></path>`],
     ['laco', 'Laço Trançado',
       ring(39, 7, '#2a1a0a') + ring(39, 5.6, '#c9a45c') +
       N(44, (i, a) => { const [x, y] = P(39, a), d = a * 180 / Math.PI + 38; return `<line x1="${(x - 3.6 * Math.cos(d * Math.PI / 180)).toFixed(1)}" y1="${(y - 3.6 * Math.sin(d * Math.PI / 180)).toFixed(1)}" x2="${(x + 3.6 * Math.cos(d * Math.PI / 180)).toFixed(1)}" y2="${(y + 3.6 * Math.sin(d * Math.PI / 180)).toFixed(1)}" stroke="#6b4a1e" stroke-width="1.5" stroke-linecap="round"/>`; }) +
