@@ -254,11 +254,11 @@ function leave(ws) {
 
 wss.on('connection', (ws, req) => {
   ws.id = String(next++);
-  ws.alive = true;
-  ws.on('pong', () => { ws.alive = true; });
+  ws.seen = Date.now();   // última vez que esta conexão deu sinal de vida (o app manda um ping a cada 4 s)
   ws.ip = ipOf(req);
   clients.add(ws);
   ws.on('message', raw => {
+    ws.seen = Date.now();
     let m; try { m = JSON.parse(raw); } catch { return; }
     if (m.type === 'hello') {
       if (SENHA && !ws.nick) {   // senha da turma: sem ela certa, a pessoa nem aparece na lista
@@ -416,14 +416,13 @@ setInterval(() => {
   clients.forEach(c => c.nick && send(c, { type: 'pings', p, mem }));
 }, 4000);
 
-// a cada 15 s confere se cada conexão ainda responde; as que ficam ~45 s mudas (queda de internet, celular dormindo) são derrubadas
+// a cada 20 s derruba conexões que ficaram mais de 2 minutos sem dar sinal (queda de internet, celular dormindo); o 'close' tira da lista
 setInterval(() => {
+  const now = Date.now();
   clients.forEach(c => {
-    if ((c.miss = c.alive ? 0 : (c.miss || 0) + 1) >= 3) { console.log('Heartbeat: derrubando conexão sem resposta de ' + (c.nick || c.id)); return c.terminate(); }   // 3 falhas seguidas (~45 s); o 'close' cuida de tirar da lista
-    c.alive = false;
-    try { c.ping(); } catch {}
+    if (now - c.seen > 120000) { console.log('Sem sinal há 2 min: derrubando ' + (c.nick || c.id)); c.terminate(); }
   });
-}, 15000);
+}, 20000);
 
 setInterval(prune, 3600e3);   // limpeza das mensagens/anexos antigos, de hora em hora
 
