@@ -1,5 +1,6 @@
 const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto');
 const { WebSocketServer } = require('ws');
+const dns = require('dns'), net = require('net'), https = require('https'), zlib = require('zlib');
 
 const PORT = process.env.PORT || 3000;
 
@@ -66,9 +67,134 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.
   '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav' };
 const PUB = path.join(__dirname, 'public');
 
+// ---------- prévia de link (título + imagem do site) ----------
+// O servidor abre a página do link e devolve só título, descrição e imagem. Como o endereço é digitado por
+// qualquer pessoa da turma, ele só aceita sites públicos (nada de localhost nem rede interna do Render).
+
+function publicIp(ip) {
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split('.').map(Number);
+    return !(a === 0 || a === 10 || a === 127 || a >= 224 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 192 && b === 0 && ip.startsWith('192.0.0.')) || (a === 198 && (b === 18 || b === 19)));
+  }
+  if (net.isIPv6(ip)) {
+    const l = ip.toLowerCase();
+    if (l.startsWith('::ffff:')) { const m = l.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/); return m ? publicIp(m[1]) : false; }
+    return /^[23]/.test(l) && !l.startsWith('2002:') && !l.startsWith('2001:0:') && !l.startsWith('2001:db8');   // só endereços públicos normais
+  }
+  return false;
+}
+// a conexão usa exatamente o endereço conferido aqui (assim ninguém troca o endereço no meio do caminho)
+function safeLookup(host, opts, cb) {
+  dns.lookup(host, { all: true, verbatim: true }, (err, list) => {
+    if (err) return cb(err);
+    if (!list.length || list.some(a => !publicIp(a.address))) return cb(new Error('bloqueado'));
+    if (opts && opts.all) return cb(null, list);
+    cb(null, list[0].address, list[0].family);
+  });
+}
+function fetchSafe(u, want, hops = 0) {
+  return new Promise((resolve, reject) => {
+    let url; try { url = new URL(u); } catch { return reject(new Error('url')); }
+    if (!/^https?:$/.test(url.protocol) || url.username || url.password) return reject(new Error('url'));
+    if (url.port && url.port !== '80' && url.port !== '443') return reject(new Error('porta'));
+    const host = url.hostname.replace(/^\[|\]$/g, '');
+    if (net.isIP(host) && !publicIp(host)) return reject(new Error('bloqueado'));
+    const req = (url.protocol === 'https:' ? https : http).request(url, {
+      method: 'GET', lookup: safeLookup, timeout: 5000,
+      headers: { 'user-agent': 'Mozilla/5.0 (compatible; DiscordDosGuriBot/1.0; link-preview)', accept: want === 'json' ? 'application/json' : 'text/html,image/*;q=0.8,*/*;q=0.5',
+        'accept-language': 'pt-BR,pt;q=0.9,en;q=0.5', 'accept-encoding': 'gzip, deflate, br' }
+    }, res => {
+      const code = res.statusCode;
+      if (code >= 300 && code < 400 && res.headers.location) {
+        res.resume();
+        if (hops >= 3) return reject(new Error('redirects'));
+        let next; try { next = new URL(res.headers.location, url).href; } catch { return reject(new Error('url')); }
+        return fetchSafe(next, want, hops + 1).then(resolve, reject);
+      }
+      if (code !== 200) { res.resume(); return reject(new Error('status ' + code)); }
+      const type = String(res.headers['content-type'] || '').toLowerCase();
+      if (want === 'html' && type.startsWith('image/')) { res.resume(); return resolve({ url: url.href, image: true }); }
+      if (!type.includes(want)) { res.resume(); return reject(new Error('tipo')); }
+      let s = res; const enc = String(res.headers['content-encoding'] || '').toLowerCase();
+      if (enc === 'gzip') s = res.pipe(zlib.createGunzip()); else if (enc === 'br') s = res.pipe(zlib.createBrotliDecompress()); else if (enc === 'deflate') s = res.pipe(zlib.createInflate());
+      const chunks = []; let n = 0, done = false;
+      const finish = () => { if (done) return; done = true; res.destroy(); resolve({ url: url.href, type, body: Buffer.concat(chunks) }); };
+      s.on('data', c => { chunks.push(c); n += c.length; if (n > 300e3 || (want === 'html' && c.toString('latin1').toLowerCase().includes('</head>'))) finish(); });
+      s.on('end', finish); s.on('error', finish);
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–', mdash: '—', hellip: '…', laquo: '«', raquo: '»', ordm: 'º', ordf: 'ª', copy: '©',
+  aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú', Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú',
+  agrave: 'à', Agrave: 'À', acirc: 'â', ecirc: 'ê', ocirc: 'ô', Acirc: 'Â', Ecirc: 'Ê', Ocirc: 'Ô',
+  atilde: 'ã', otilde: 'õ', Atilde: 'Ã', Otilde: 'Õ', ccedil: 'ç', Ccedil: 'Ç', uuml: 'ü', ntilde: 'ñ' };
+const unent = s => String(s).replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => {
+  if (e[0] === '#') { const n = e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : +e.slice(1); try { return String.fromCodePoint(n); } catch { return ''; } }
+  return ENT[e] ?? ENT[e.toLowerCase()] ?? m;
+});
+const clean = (s, n) => unent(s || '').replace(/\s+/g, ' ').trim().slice(0, n);
+const httpsOnly = s => { try { const x = new URL(s); if (x.protocol === 'http:') x.protocol = 'https:'; return x.protocol === 'https:' ? x.href : ''; } catch { return ''; } };
+function parseHead(buf, type, base) {
+  let cs = (type.match(/charset=([\w-]+)/i) || [])[1] || (buf.subarray(0, 2048).toString('latin1').match(/<meta[^>]+charset=["']?([\w-]+)/i) || [])[1];
+  let html; try { html = new TextDecoder(cs || 'utf-8').decode(buf); } catch { html = buf.toString('utf8'); }
+  const end = html.search(/<\/head>/i); if (end > 0) html = html.slice(0, end);
+  const meta = {};
+  for (const tag of html.match(/<meta\b[^>]*>/gi) || []) {
+    const at = {};
+    tag.replace(/([a-zA-Z:_-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g, (_, k, a, b, c) => { at[k.toLowerCase()] = a ?? b ?? c; return _; });
+    const key = String(at.property || at.name || '').toLowerCase();
+    if (key && at.content != null && !(key in meta)) meta[key] = at.content;
+  }
+  const ti = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1];
+  let image = ''; try { if (meta['og:image'] || meta['twitter:image']) image = httpsOnly(new URL(unent(meta['og:image'] || meta['twitter:image']), base).href); } catch {}
+  const title = clean(meta['og:title'] || meta['twitter:title'] || ti, 140);
+  if (!title && !image) return null;
+  return { title, desc: clean(meta['og:description'] || meta['twitter:description'] || meta.description, 220), image, site: clean(meta['og:site_name'], 40) || new URL(base).hostname.replace(/^www\./, '') };
+}
+async function buildPreview(u) {
+  const host = new URL(u).hostname.toLowerCase();
+  if (/^(www\.|m\.|music\.)?youtube\.com$/.test(host) || host === 'youtu.be') {   // YouTube: título e miniatura pelo oEmbed oficial
+    const r = await fetchSafe('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(u), 'json');
+    const j = JSON.parse(r.body.toString('utf8'));
+    return j.title ? { site: 'YouTube', title: clean(j.title, 140), desc: clean(j.author_name, 100), image: httpsOnly(j.thumbnail_url) } : null;
+  }
+  const r = await fetchSafe(u, 'html');
+  if (r.image) return { site: new URL(r.url).hostname.replace(/^www\./, ''), title: '', desc: '', image: httpsOnly(r.url) };
+  return parseHead(r.body, r.type, r.url);
+}
+const PV = new Map(), PV_BUSY = new Map(), PV_RATE = new Map();
+function linkPreview(u) {
+  const hit = PV.get(u); if (hit && hit.exp > Date.now()) return Promise.resolve(hit.v);
+  if (PV_BUSY.has(u)) return PV_BUSY.get(u);
+  const p = (async () => {
+    let v = null; try { v = await buildPreview(u); } catch {}
+    PV.set(u, { v, exp: Date.now() + (v ? 6 * 3600e3 : 10 * 60e3) });
+    if (PV.size > 300) PV.delete(PV.keys().next().value);
+    return v;
+  })().finally(() => PV_BUSY.delete(u));
+  PV_BUSY.set(u, p); return p;
+}
+function previewRate(ip) {   // no máximo 120 prévias por minuto por pessoa
+  const now = Date.now(), r = PV_RATE.get(ip) || { n: 0, t: now };
+  if (now - r.t > 60e3) { r.n = 0; r.t = now; }
+  r.n++; PV_RATE.set(ip, r); return r.n <= 120;
+}
+setInterval(() => { const now = Date.now(); PV_RATE.forEach((r, ip) => { if (now - r.t > 120e3) PV_RATE.delete(ip); }); }, 600e3);
+
 const srv = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/ok') { res.setHeader('cache-control', 'no-store'); return res.end('ok'); }   // só para saber se o servidor já acordou
+  if (url === '/preview') {
+    if (!httpAuth(req, res)) return;
+    let q = ''; try { q = new URL(req.url, 'http://x').searchParams.get('u') || ''; } catch {}
+    res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'private, max-age=600');
+    if (!/^https?:\/\//i.test(q) || q.length > 600 || !previewRate(ipOf(req))) return res.end('null');
+    return linkPreview(q).then(v => res.end(JSON.stringify(v || null)));
+  }
   if (url === '/need-pass') { res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); return res.end(JSON.stringify({ pass: !!SENHA })); }
   const sbm = url.match(/^\/sb\/([a-z0-9]+)$/);   // arquivo de um som do soundboard
   if (sbm) {
