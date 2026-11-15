@@ -38,6 +38,11 @@ input[type=range]::-moz-range-thumb{width:var(--tw);height:22px;border:0;border-
 small{color:var(--mut)}
 .av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:600;color:#fff;flex:none}
 .av.s{width:24px;height:24px;font-size:.75rem}
+.avad{display:flex;gap:18px;align-items:center;margin:4px 0 8px}
+#avEd{width:120px;height:120px;flex:none;font-size:2.6rem;cursor:grab;touch-action:none;user-select:none;box-shadow:0 0 0 3px var(--blur)}
+#avEd:active{cursor:grabbing}
+.avctl{flex:1;min-width:0;display:grid;gap:6px;justify-items:start}.avctl input{width:100%}
+.avzl{display:flex;justify-content:space-between;width:100%;color:var(--mut)}
 #frGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin:6px 0 8px}
 #frGrid button{display:grid;justify-items:center;gap:14px;padding:16px 6px 8px;border-radius:10px;background:var(--input);border:2px solid transparent;color:var(--mut);font-size:.74rem;font-weight:600;line-height:1.15;text-align:center}
 #frGrid button:hover{background:var(--hover);color:var(--txt)}
@@ -575,6 +580,12 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
           <div class="fld"><span>Foto</span>
             <div class="rc"><label class="sec up">📷 Escolher foto<input type="file" id="pFoto" accept="image/*" hidden></label><button type="button" class="sec" id="pRmFoto">Remover</button></div>
             <small>JPG, PNG ou GIF animado (GIF até 4 MB).</small></div>
+          <div class="fld" id="avEdBox" hidden><span>Ajustar foto</span>
+            <div class="avad"><div class="av" id="avEd" title="Arraste para mover · roda do mouse para zoom"></div>
+              <div class="avctl"><input type="range" id="avZ" min="50" max="300" step="1">
+                <div class="avzl"><small>Afastar</small><small>Aproximar</small></div>
+                <button type="button" class="sec mini" id="avReset">Centralizar</button></div></div>
+            <small>Arraste a foto dentro do círculo para mover. Ao afastar, sobra a cor do perfil em volta.</small></div>
           <div class="fld" ><span>Borda da foto</span>
             <div id="frGrid"></div>
             <small>Aparece em volta da sua foto no chat, na lista e na chamada. Lembre de clicar em <b>Salvar perfil</b>.</small></div>
@@ -883,7 +894,11 @@ const frameOk = id => FRAMES.some(f => f.id === id);
 function paintAv(el, n, p) {
   p = p || {};
   if (frameOk(p.frame)) el.dataset.frame = p.frame; else delete el.dataset.frame;
-  el.style.background = p.avatar ? 'url("' + p.avatar + '") center/cover' : (p.color || colorOf(n));
+  if (p.avatar) {   // zoom e posição escolhidos pela pessoa (1 = a foto inteira preenchendo o círculo; menos que 1 = afastada)
+    const z = Math.min(3, Math.max(.5, +p.avZ || 1)), ar = Math.min(5, Math.max(.2, +p.avAr || 1));
+    const px = v => Math.min(1, Math.max(0, v == null || isNaN(+v) ? .5 : +v)) * 100;
+    el.style.background = (p.color || colorOf(n)) + ' url("' + p.avatar + '") ' + px(p.avX) + '% ' + px(p.avY) + '% / ' + (ar >= 1 ? 'auto ' + z * 100 + '%' : z * 100 + '% auto') + ' no-repeat';
+  } else el.style.background = p.color || colorOf(n);
   el.textContent = p.avatar ? '' : (n[0] || '?').toUpperCase();
 }
 function avatar(n, small, id, live) { // live = true só na lista de voz da esquerda (borda pisca quando a pessoa fala)
@@ -2536,7 +2551,27 @@ function fillFrames() {   // grade de bordas: cada botão mostra a sua foto (ou 
     g.append(b);
   });
 }
-const renderPrev = () => $('#pPrev').replaceChildren(cardEl($('#pNome').value || myName, ed));
+const clamp01 = v => Math.min(1, Math.max(0, v));
+function fillAvEd(slider) {   // círculo de ajuste da foto (só aparece se tem foto)
+  $('#avEdBox').hidden = !ed.avatar; if (!ed.avatar) return;
+  paintAv($('#avEd'), $('#pNome').value || myName, { ...ed, frame: '' });
+  if (slider) $('#avZ').value = Math.round((ed.avZ || 1) * 100);
+}
+const renderPrev = () => { $('#pPrev').replaceChildren(cardEl($('#pNome').value || myName, ed)); fillAvEd(); };
+{ let dg = null; const e1 = $('#avEd');
+  e1.onpointerdown = e => { dg = { x: e.clientX, y: e.clientY, px: ed.avX ?? .5, py: ed.avY ?? .5 }; e1.setPointerCapture(e.pointerId); };
+  e1.onpointermove = e => {
+    if (!dg) return;
+    const box = e1.offsetWidth, z = ed.avZ || 1, ar = ed.avAr || 1, iw = ar >= 1 ? box * z * ar : box * z, ih = ar >= 1 ? box * z : box * z / ar;
+    const mv = (d, i) => Math.abs(box - i) < 1 ? 0 : d / (box - i);
+    ed.avX = clamp01(dg.px + mv(e.clientX - dg.x, iw)); ed.avY = clamp01(dg.py + mv(e.clientY - dg.y, ih)); renderPrev();
+  };
+  e1.onpointerup = e1.onpointercancel = () => { if (dg) { dg = null; fillFrames(); } };
+  e1.onwheel = e => { e.preventDefault(); ed.avZ = Math.min(3, Math.max(.5, (ed.avZ || 1) * (e.deltaY < 0 ? 1.06 : 1 / 1.06))); fillAvEd(true); renderPrev(); clearTimeout(e1.t); e1.t = setTimeout(fillFrames, 250); };
+}
+$('#avZ').oninput = e => { ed.avZ = +e.target.value / 100; renderPrev(); };
+$('#avZ').onchange = () => fillFrames();
+$('#avReset').onclick = () => { ed.avZ = 1; ed.avX = .5; ed.avY = .5; fillAvEd(true); renderPrev(); fillFrames(); };
 function tab(t) {
   document.querySelectorAll('#cfgbody section').forEach(s => s.hidden = s.dataset.p !== t);
   document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
@@ -2550,13 +2585,13 @@ document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => ta
 $('#bCfg').onclick = () => {
   ed = { ...cfg.prof }; $('#pNome').value = myName; $('#pSobre').value = ed.about; $('#pCor').value = ed.color || colorOf(myName).slice(0, 7);
   fillVoz(); paintKeys();
-  $('#icSz').value = cfg.ic || 20; fillTheme(); renderPrev(); fillFrames(); tab('perfil'); $('#cfg').hidden = false;
+  $('#icSz').value = cfg.ic || 20; fillTheme(); renderPrev(); fillAvEd(true); fillFrames(); tab('perfil'); $('#cfg').hidden = false;
 };
 $('#cfgx').onclick = () => { $('#cfg').hidden = true; capt = false; camPrevOff(); };
 $('#pNome').oninput = () => { renderPrev(); fillFrames(); };
 $('#pSobre').oninput = () => { ed.about = $('#pSobre').value; renderPrev(); };
 $('#pCor').oninput = () => { ed.color = $('#pCor').value; renderPrev(); };
-$('#pRmFoto').onclick = () => { ed.avatar = ''; $('#pFoto').value = ''; renderPrev(); fillFrames(); };
+$('#pRmFoto').onclick = () => { ed.avatar = ''; ed.avZ = 1; ed.avX = .5; ed.avY = .5; ed.avAr = 1; $('#pFoto').value = ''; renderPrev(); fillFrames(); };
 $('#pRmBanner').onclick = () => { ed.banner = ''; $('#pBanner').value = ''; renderPrev(); };
 $('#pRmCor').onclick = () => { ed.color = ''; $('#pCor').value = colorOf($('#pNome').value || myName).slice(0, 7); renderPrev(); };
 $('#pRmSobre').onclick = () => { ed.about = ''; $('#pSobre').value = ''; renderPrev(); };
@@ -2569,7 +2604,23 @@ function pickImg(e, key, w, h, maxGif) {
     const r = new FileReader(); r.onload = () => { ed[key] = r.result; renderPrev(); fillFrames(); }; r.readAsDataURL(f);
   } else resize(f, w, h, d => { ed[key] = d; renderPrev(); fillFrames(); });
 }
-$('#pFoto').onchange = e => pickImg(e, 'avatar', 128, 128, 4 * 1048576);
+function newAvatar(url, ar) { ed.avatar = url; ed.avAr = ar; ed.avZ = 1; ed.avX = .5; ed.avY = .5; renderPrev(); fillAvEd(true); fillFrames(); }
+$('#pFoto').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (f.type === 'image/gif') {   // GIF fica animado (sem redimensionar)
+    if (f.size > 4 * 1048576) { toast('Esse GIF tem ' + (f.size / 1048576).toFixed(1) + ' MB. O máximo é 4 MB.'); e.target.value = ''; return; }
+    const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => newAvatar(r.result, i.width / i.height); i.src = r.result; }; r.readAsDataURL(f);
+    return;
+  }
+  const img = new Image();   // outras imagens: reduz (maior lado 256) sem cortar, para dar para ajustar depois
+  img.onload = () => {
+    const sc = Math.min(1, 256 / Math.max(img.width, img.height)), w = Math.max(1, Math.round(img.width * sc)), h = Math.max(1, Math.round(img.height * sc));
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+    let q = .85, d = c.toDataURL('image/jpeg', q); while (d.length > 55000 && q > .4) { q -= .1; d = c.toDataURL('image/jpeg', q); }
+    URL.revokeObjectURL(img.src); newAvatar(d, w / h);
+  };
+  img.src = URL.createObjectURL(f);
+};
 $('#pBanner').onchange = e => pickImg(e, 'banner', 360, 130, 4 * 1048576);
 $('#pSalvar').onclick = () => {
   myName = $('#pNome').value.trim() || myName; ed.about = $('#pSobre').value; cfg.prof = { ...ed }; saveCfg();
