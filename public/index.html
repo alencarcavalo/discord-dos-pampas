@@ -1120,7 +1120,7 @@ function renderChans() {
       b.append(x);
       box.append(b);
       if (k === 'voice') st.users.filter(u => u.room === c.id).forEach(u => {
-        const m = document.createElement('div'); m.className = 'mem'; m.dataset.pid = u.id;
+        const m = document.createElement('div'); m.className = 'mem';
         const t2 = document.createElement('span'); t2.textContent = u.name + (u.id === me ? ' (você)' : '');
         m.onclick = () => card(u.id, m); m.style.cursor = 'pointer';
         if (u.id !== me) m.oncontextmenu = e => volMenu(e, u.name);
@@ -2349,8 +2349,6 @@ function card(id, anchor) {
   if (pr.about) { const t = document.createElement('p'); t.textContent = pr.about; sec('Sobre mim', t); }
   const al = actLines(u, true); if (al.length) sec('Atividade', ...al);
   if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
-  const pv = id === me ? callPing() : pings[id];
-  if (pv !== undefined && pv >= 0) { const t = document.createElement('p'); t.textContent = pv + ' ms'; sec('Ping', t); }
   if (id === me) { const b = document.createElement('button'); b.className = 'go'; b.textContent = 'Editar perfil'; b.onclick = () => { w.remove(); $('#bCfg').click(); }; bx.append(b); }
   c.append(bn, av, bx); w.append(c); document.body.append(w);
   const close = () => { w.remove(); document.removeEventListener('keydown', esc, true); };
