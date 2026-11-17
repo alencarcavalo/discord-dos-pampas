@@ -266,6 +266,7 @@ async function flush() {
   for (const id of ids) {
     try {
       if (id === '\0ch') { await up(['SET', 'guri:canais', JSON.stringify(CH)]); continue; }
+      if (id === '\0st') { await up(['SET', 'guri:stats', JSON.stringify([...STATS])]); continue; }
       if (id === '\0sbl') { await up(['SET', 'guri:sbl', JSON.stringify(SB.map(s => s.id))]); continue; }
       if (id.startsWith('\0sb:')) { const sid = id.slice(4), s = SB.find(x => x.id === sid); await up(s ? ['SET', 'guri:sb:' + sid, JSON.stringify(s)] : ['DEL', 'guri:sb:' + sid]); continue; }
       const h = hist.get(id);
@@ -292,6 +293,10 @@ async function loadSaved() {
       const ids = JSON.parse((await up(['GET', 'guri:sbl'])) || '[]');
       for (const id of ids) { const raw = await up(['GET', 'guri:sb:' + id]); if (raw && !SB.some(s => s.id === id)) SB.push(JSON.parse(raw)); }
     } catch (e) { console.error('não consegui carregar os sons do soundboard:', e.message); }
+    try {   // emblemas: contadores de cada pessoa
+      const raw = await up(['GET', 'guri:stats']);
+      if (raw) JSON.parse(raw).forEach(([cid, v]) => { if (!STATS.has(cid)) STATS.set(cid, { ...stOf(cid), ...v }); });
+    } catch (e) { console.error('não consegui carregar os emblemas:', e.message); }
     hist.forEach(fixMids);
     prune();
     console.log('Mensagens e canais carregados do Upstash.');
@@ -365,7 +370,90 @@ function setProf(ws, p) {
     color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '', frame: FRAMES.includes(p.frame) ? p.frame : '',
     avZ: numIn(p.avZ, .5, 3, 1), avX: numIn(p.avX, 0, 1, .5), avY: numIn(p.avY, 0, 1, .5), avAr: numIn(p.avAr, .2, 5, 1), avR: numIn(p.avR, -360, 360, 0) };
 }
-const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {} });
+// ---------- emblemas e conquistas ----------
+// Tudo é contado AQUI no servidor (ninguém consegue "dar" emblema para si mesmo). Cada pessoa (identificada pelo cid do aparelho)
+// tem contadores; cada emblema tem 5 níveis, que destravam quando o contador passa do número da lista "tiers".
+//   v = min em chamada com a turma | s = min transmitindo tela | c = min com câmera | m = mensagens | r = reações dadas
+//   p = sons tocados no soundboard | g = min em chamada com 4+ pessoas | n = min de madrugada (0h-5h) | e = min cedinho (5h-8h)
+//   d = dias diferentes que entrou | bs = maior sequência de dias seguidos
+const DEFS = [
+  { id: 'gaucho', emoji: '🤠', name: 'Gaúcho', desc: 'Passe tempo em chamada de voz com a turma.', key: 'v', unit: 'min', tiers: [60, 300, 1200, 3000, 6000], titles: ['Peão Novo', 'Peão de Estância', 'Capataz', 'Gaúcho Raiz', 'Gaúcho Master'] },
+  { id: 'guri', emoji: '🧉', name: 'Guri dos Pampas', desc: 'Apareça por aqui em dias diferentes.', key: 'd', unit: 'dias', tiers: [1, 5, 15, 30, 60], titles: ['Guri Novo', 'Guri de Casa', 'Guri Fiel', 'Guri Raiz', 'Guri dos Pampas'] },
+  { id: 'firmeza', emoji: '🔥', name: 'Firmeza', desc: 'Entre vários dias seguidos, sem faltar nenhum.', key: 'bs', unit: 'dias', tiers: [3, 7, 14, 30, 60], titles: ['Pegando Fogo', 'Semana Firme', 'Quinzena Braba', 'Mês de Ferro', 'Inabalável'] },
+  { id: 'cine', emoji: '📺', name: 'Cinegrafista', desc: 'Transmita a sua tela em chamada com a turma.', key: 's', unit: 'min', tiers: [30, 120, 600, 1500, 3000], titles: ['Estreante da Tela', 'Sessão da Tarde', 'Diretor', 'Produtor', 'Rede Pampa'] },
+  { id: 'cam', emoji: '📷', name: 'Cara Limpa', desc: 'Fique com a câmera ligada em chamada.', key: 'c', unit: 'min', tiers: [15, 60, 300, 900, 2000], titles: ['Deu a Cara', 'Cara Limpa', 'Rosto Conhecido', 'Cara de Casa', 'Astro da Câmera'] },
+  { id: 'prosa', emoji: '💬', name: 'Bochincho', desc: 'Mande mensagens nos canais de texto.', key: 'm', unit: 'n', tiers: [10, 100, 500, 1500, 5000], titles: ['Prosa Mansa', 'Conversador', 'Bochincheiro', 'Língua Solta', 'Rei do Bochincho'] },
+  { id: 'tri', emoji: '🤙', name: 'Tri Legal', desc: 'Reaja às mensagens da turma.', key: 'r', unit: 'n', tiers: [10, 50, 200, 600, 1500], titles: ['Gostei', 'Mão Aberta', 'Tri Legal', 'Tri Demais', 'Tchê Reação'] },
+  { id: 'gaita', emoji: '🪗', name: 'Gaiteiro', desc: 'Toque sons no soundboard durante a chamada.', key: 'p', unit: 'n', tiers: [5, 30, 100, 300, 1000], titles: ['Assobiador', 'Gaitinha', 'Gaiteiro', 'Maestro', 'Gaiteiro Master'] },
+  { id: 'churras', emoji: '🥩', name: 'Churrasco', desc: 'Fique em chamada quando tem 4 ou mais pessoas: resenha cheia!', key: 'g', unit: 'min', tiers: [30, 120, 600, 1500, 3000], titles: ['Fogo de Chão', 'Espeto Corrido', 'Assador', 'Churrasqueiro', 'Mestre do Braseiro'] },
+  { id: 'coruja', emoji: '🦉', name: 'Coruja', desc: 'Fique em chamada de madrugada (da meia-noite às 5h).', key: 'n', unit: 'min', tiers: [30, 120, 300, 900, 1800], titles: ['Olho Aberto', 'Insone', 'Coruja', 'Coruja Raiz', 'Guardião da Noite'] },
+  { id: 'madruga', emoji: '🌅', name: 'Madrugador', desc: 'Fique em chamada cedinho (das 5h às 8h).', key: 'e', unit: 'min', tiers: [15, 60, 180, 600, 1200], titles: ['Cedo Levantado', 'Mateando Cedo', 'Madrugador', 'Galo de Estância', 'Sol Nascente'] },
+];
+const STATS = new Map();   // cid -> { v, s, c, m, r, p, g, n, e, d, sk, bs, ld, lv: { emblema: nível }, pick: [ids] | null }
+const BRT = () => new Date(Date.now() - 3 * 3600e3);   // horário de Brasília (getUTC* dessa data = hora daqui)
+const dayKey = d => d.toISOString().slice(0, 10);
+function stOf(cid) {
+  let s = STATS.get(cid);
+  if (!s) { s = { v: 0, s: 0, c: 0, m: 0, r: 0, p: 0, g: 0, n: 0, e: 0, d: 0, sk: 0, bs: 0, ld: '', lv: {}, pick: null }; STATS.set(cid, s); }
+  return s;
+}
+const lvlOf = (def, v) => def.tiers.filter(t => v >= t).length;
+// os até 3 emblemas que aparecem no cartão: os que a pessoa escolheu, ou (sem escolha) os de maior nível
+function showcase(cid) {
+  const s = cid && STATS.get(cid); if (!s) return [];
+  const have = DEFS.filter(d => (s.lv[d.id] || 0) > 0);
+  let ids = Array.isArray(s.pick) ? s.pick.filter(id => have.some(d => d.id === id)) : have.map((d, i) => ({ d, i })).sort((a, b) => s.lv[b.d.id] - s.lv[a.d.id] || a.i - b.i).map(x => x.d.id);
+  return ids.slice(0, 3).map(id => ({ id, lvl: s.lv[id] }));
+}
+const achPayload = ws => {
+  const s = stOf(ws.cid || ''), vals = {};
+  DEFS.forEach(d => vals[d.id] = s[d.key] || 0);
+  return { type: 'ach', defs: DEFS.map(d => ({ id: d.id, emoji: d.emoji, name: d.name, desc: d.desc, unit: d.unit, tiers: d.tiers, titles: d.titles })), vals, lv: s.lv, pick: s.pick, sk: s.sk };
+};
+const tellProfile = ws => clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
+// confere se algum emblema subiu de nível; se sim, avisa a pessoa e atualiza o cartão dela para a turma
+function checkLv(ws) {
+  if (!ws.cid) return;
+  const s = stOf(ws.cid), ups = [];
+  DEFS.forEach(d => { const l = lvlOf(d, s[d.key] || 0); if (l > (s.lv[d.id] || 0)) { s.lv[d.id] = l; ups.push({ id: d.id, lvl: l }); } });
+  if (!ups.length) return;
+  markDirty('\0st');
+  ups.forEach(u => send(ws, { type: 'unlock', ...u }));
+  send(ws, achPayload(ws));
+  tellProfile(ws);
+}
+function bump(ws, key, n = 1) {
+  if (!ws.cid) return;
+  const s = stOf(ws.cid); s[key] = (s[key] || 0) + n;
+  markDirty('\0st'); checkLv(ws);
+}
+// conta 1 dia novo (e a sequência de dias seguidos) na primeira vez que a pessoa aparece no dia
+function touchDay(ws) {
+  if (!ws.cid) return;
+  const s = stOf(ws.cid), now = BRT(), t = dayKey(now);
+  if (s.ld === t) return;
+  s.sk = s.ld === dayKey(new Date(now - 864e5)) ? s.sk + 1 : 1;
+  s.d++; s.ld = t; s.bs = Math.max(s.bs || 0, s.sk);
+  markDirty('\0st'); checkLv(ws);
+}
+// a cada minuto: quem está em chamada COM mais alguém ganha tempo (sozinho na sala não conta, para não dar para "farmar")
+setInterval(() => {
+  const h = BRT().getUTCHours();
+  rooms.forEach(set => {
+    if (set.size < 2) return;
+    set.forEach(ws => {
+      if (!ws.cid || !ws.nick) return;
+      const s = stOf(ws.cid);
+      s.v++; if (ws.vs && ws.vs.screen) s.s++; if (ws.vs && ws.vs.cam) s.c++;
+      if (set.size >= 4) s.g++;
+      if (h < 5) s.n++; else if (h < 8) s.e++;
+      markDirty('\0st'); checkLv(ws);
+    });
+  });
+  clients.forEach(c => c.nick && touchDay(c));
+}, 60000);
+
+const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {}, bd: showcase(c.cid) });
 
 function state() {
   const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, room: c.room || null, vs: c.vs || {}, act: c.act || null }));
@@ -410,6 +498,7 @@ wss.on('connection', (ws, req) => {
       sendSb(ws);
       [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
+      send(ws, achPayload(ws)); touchDay(ws);
       state();
     } else if (m.type === 'profile' && ws.nick) {
       ws.nick = String(m.name || ws.nick).slice(0, 24);
@@ -418,6 +507,13 @@ wss.on('connection', (ws, req) => {
       state();
     } else if (!ws.nick) {
       return;
+    } else if (m.type === 'ach-get') {
+      send(ws, achPayload(ws));
+    } else if (m.type === 'badge-pick') {   // escolher (até 3) emblemas para o cartão; ids = null volta para o automático
+      if (!ws.cid) return;
+      const s = stOf(ws.cid);
+      s.pick = Array.isArray(m.ids) ? [...new Set(m.ids.map(String))].filter(id => (s.lv[id] || 0) > 0).slice(0, 3) : null;
+      markDirty('\0st'); tellProfile(ws); send(ws, achPayload(ws));
     } else if (m.type === 'chan-add') {
       const name = String(m.name || '').trim().slice(0, 24);
       const kind = m.kind === 'voice' ? 'voice' : 'text';
@@ -471,6 +567,7 @@ wss.on('connection', (ws, req) => {
       hist.set(m.channel, h);
       markDirty(m.channel);
       clients.forEach(c => c.nick && send(c, { type: 'msg', channel: m.channel, msg: pub(msg, c) }));
+      if (Date.now() - (ws.mAt || 0) >= 3000) { ws.mAt = Date.now(); bump(ws, 'm'); }   // no máx. 1 mensagem a cada 3 s conta (anti-spam)
     } else if (m.type === 'msg-edit') {
       const x = (hist.get(m.channel) || []).find(y => y.mid === m.mid);
       if (!x || !ws.cid || x.cid !== ws.cid) return;   // só o dono edita
@@ -492,7 +589,7 @@ wss.on('connection', (ws, req) => {
       let a = rx[e];
       if (!a) { if (Object.keys(rx).length >= 20) return; a = rx[e] = []; }
       const i = a.findIndex(y => y.c === ws.cid);   // clicou de novo na mesma reação: tira a sua
-      if (i >= 0) a.splice(i, 1); else a.push({ c: ws.cid, n: ws.nick });
+      if (i >= 0) a.splice(i, 1); else { a.push({ c: ws.cid, n: ws.nick }); if (Date.now() - (ws.rAt || 0) >= 2000) { ws.rAt = Date.now(); bump(ws, 'r'); } }
       if (!a.length) delete rx[e];
       if (!Object.keys(rx).length) delete x.rx;
       markDirty(m.channel);
@@ -517,6 +614,7 @@ wss.on('connection', (ws, req) => {
       if (!ws.room || !(/^b:[a-z]{1,16}$/.test(id) || SB.some(s => s.id === id))) return;   // só toca quem está numa chamada
       const now = Date.now(); if (now - (ws.sbAt || 0) < 1000) return; ws.sbAt = now;        // 1 som por segundo, por pessoa
       (rooms.get(ws.room) || new Map()).forEach(p => send(p, { type: 'sb-play', id, from: ws.id, name: ws.nick }));
+      bump(ws, 'p');
     } else if (m.type === 'join') {
       const c = CH.find(c => c.id === m.room && c.kind === 'voice');
       if (!c || ws.room === c.id) return;
