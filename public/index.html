@@ -323,6 +323,11 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .bc .av.fr{width:56px;height:56px;margin:0 6px 0 4px;flex:none;font-size:1.4rem}
 .bc.trv{opacity:.62}.bc.trv .av{filter:grayscale(.85)}
 .bc .tag.ex{background:#b8860b;color:#fff}
+#bdtip{position:fixed;z-index:60;max-width:250px;background:#111214;color:#fff;border:1px solid #ffffff22;border-radius:8px;padding:8px 12px;box-shadow:0 4px 16px #000b;pointer-events:none;display:grid;gap:2px}
+#bdtip[hidden]{display:none}
+#bdtip b{font-size:.92rem}
+#bdtip small{color:#ffd23f;font-weight:700;font-size:.72rem}
+#bdtip span{color:#b5bac1;font-size:.78rem;line-height:1.35;margin-top:3px}
 #bdtw{position:fixed;right:24px;bottom:24px;z-index:30;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
 .bdt{display:flex;gap:14px;align-items:center;background:#111214;color:#fff;border:1px solid #ffffff22;border-radius:14px;padding:12px 20px 12px 14px;box-shadow:0 6px 24px #000a;animation:bdin .45s cubic-bezier(.2,1.2,.4,1);pointer-events:auto;cursor:pointer;max-width:340px}
 .bdt .bd{--s:52px}
@@ -2215,7 +2220,20 @@ function bdEl(def, lvl, size, locked) {   // a medalha em si: hexágono na cor d
   const b = document.createElement('div'); b.className = 'bd' + (locked ? ' lock' : ''); b.dataset.l = Math.max(1, lvl || 1);
   if (size) b.style.setProperty('--s', size + 'px');
   const i = document.createElement('i'); i.textContent = def.emoji; b.append(i);
-  if (!locked) b.title = def.titles[lvl - 1] + ' · Nível ' + lvl + '\n' + def.desc;
+  if (!locked) {   // balão ao passar o mouse (o "title" nativo é lento e some no app do Windows)
+    b.onmouseenter = () => {
+      let t = $('#bdtip'); if (!t) { t = document.createElement('div'); t.id = 'bdtip'; document.body.append(t); }
+      t.replaceChildren();
+      const a = document.createElement('b'); a.textContent = def.emoji + ' ' + def.titles[lvl - 1];
+      const n = document.createElement('small'); n.textContent = def.name + ' · Nível ' + lvl + ' de ' + def.tiers.length;
+      const d = document.createElement('span'); d.textContent = def.desc;
+      t.append(a, n, d); t.hidden = false;
+      const r = b.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
+      t.style.left = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 8)) + 'px';
+      t.style.top = (r.top - h - 8 < 8 ? r.bottom + 8 : r.top - h - 8) + 'px';
+    };
+    b.onmouseleave = () => { const t = $('#bdtip'); if (t) t.hidden = true; };
+  }
   return b;
 }
 function bdRow(list) {   // fileira de emblemas (cartão de perfil)
