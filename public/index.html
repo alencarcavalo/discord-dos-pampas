@@ -47,6 +47,7 @@ small{color:var(--mut)}
 #frGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin:6px 0 8px}
 #frGrid button{display:grid;justify-items:center;gap:14px;padding:16px 6px 8px;border-radius:10px;background:var(--input);border:2px solid transparent;color:var(--mut);font-size:.74rem;font-weight:600;line-height:1.15;text-align:center}
 #frGrid button:hover{background:var(--hover);color:var(--txt)}
+#frGrid button.trv{opacity:.55}#frGrid button.trv .av{filter:grayscale(.9)}
 #frGrid button.on{border-color:var(--blur);color:var(--txt);background:color-mix(in srgb,var(--blur) 18%,transparent)}
 #frGrid .av{width:44px;height:44px}
 .u .av[data-frame]{margin:0 6px 0 4px}
@@ -316,6 +317,12 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .bc .bi .nv{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:.74rem;color:var(--mut);font-weight:700}
 .bpips{display:flex;gap:3px}.bpips i{width:16px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--txt) 20%,transparent)}.bpips i.on{background:#ffd23f}
 .bc .tag{font-size:.66rem;font-weight:700;background:var(--blur);color:var(--onac,#fff);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+#bdRew{margin:0 0 18px}
+#bdRew h3{margin:4px 0 10px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+#bdRewG{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.bc .av.fr{width:56px;height:56px;margin:0 6px 0 4px;flex:none;font-size:1.4rem}
+.bc.trv{opacity:.62}.bc.trv .av{filter:grayscale(.85)}
+.bc .tag.ex{background:#b8860b;color:#fff}
 #bdtw{position:fixed;right:24px;bottom:24px;z-index:30;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
 .bdt{display:flex;gap:14px;align-items:center;background:#111214;color:#fff;border:1px solid #ffffff22;border-radius:14px;padding:12px 20px 12px 14px;box-shadow:0 6px 24px #000a;animation:bdin .45s cubic-bezier(.2,1.2,.4,1);pointer-events:auto;cursor:pointer;max-width:340px}
 .bdt .bd{--s:52px}
@@ -654,6 +661,8 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     <section data-p="conq" hidden><h2>Conquistas</h2>
       <p class="sub">Emblemas que você ganha usando o Discord dos Guri: tempo em chamada, transmissão, conversa e mais. O servidor conta tudo sozinho.</p>
       <div class="cc pad" id="bdTop"></div>
+      <div id="bdRew"></div>
+      <h3 style="margin:4px 0 10px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)">Emblemas</h3>
       <div id="bdGrid"></div>
     </section>
 
@@ -1039,6 +1048,38 @@ const FRAMES = (() => {
       `<polygon points="95.5,5 95.5,20.6 83,12.8" fill="#000"/><polygon points="95.5,5 95.5,20.6 85.6,12.8" fill="#613915"/><polygon points="95.5,5 95.5,20.6 88.2,12.8" fill="#74d7ee"/><polygon points="95.5,5 95.5,20.6 90.8,12.8" fill="#ffafc8"/><polygon points="95.5,5 95.5,20.6 93.2,12.8" fill="#fff"/>` +
       `<rect x="75" y="5" width="20.5" height="15.6" fill="none" stroke="#0007" stroke-width=".7"/>` +
       `<animateTransform attributeName="transform" type="rotate" values="-3 96 34;3 96 34;-3 96 34" dur="3s" repeatCount="indefinite"/></g>`],
+    ['cuia-ouro', 'Cuia de Ouro',
+      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#f5c542"/><stop offset=".75" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient></defs>` +
+      spin(9, ring(39, 5, 'url(#g)')) + ring(36.3, 1, '#fff9') + ring(41.8, 1, '#6b4e0a') +
+      `<g transform="translate(50 90)"><path d="M3 -5L12 -17" stroke="#e8edf2" stroke-width="2" stroke-linecap="round"/><circle cx="12.4" cy="-17.4" r="1.8" fill="#e8edf2"/><path d="M-10 -5Q-10 9 0 9Q10 9 10 -5Z" fill="url(#g)" stroke="#6b4e0a" stroke-width="1.2"/><ellipse cx="0" cy="-5" rx="10" ry="3" fill="#3f7a2e" stroke="#6b4e0a" stroke-width="1.2"/></g>` +
+      spark(16, 28, 4, '#fff', 2, 0) + spark(86, 36, 3.5, '#fff6c8', 2.4, .7) + spark(82, 78, 3, '#fff', 2.2, 1.3) + spark(14, 70, 3, '#fff6c8', 2.6, 1.8)],
+    ['espora', 'Espora de Prata',
+      `<defs><linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#9aa3ad"/><stop offset=".65" stop-color="#eef2f6"/><stop offset="1" stop-color="#6d7782"/></linearGradient></defs>` +
+      ring(39, 4.5, 'url(#s)') + ring(36.6, .9, '#fffc') + ring(41.4, .9, '#2a2f35') +
+      spin(24, N(12, (i, a) => `<polygon transform="rotate(${(a * 180 / Math.PI).toFixed(1)} 50 50)" points="50,1.5 54,9.5 46,9.5" fill="url(#s)" stroke="#3b4148" stroke-width=".7" stroke-linejoin="round"/>`)) +
+      spark(20, 80, 3.4, '#fff', 2, .3) + spark(84, 22, 3.2, '#fff', 2.5, 1.1)],
+    ['brasa-viva', 'Brasa Viva',
+      `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
+      ring(39, 6.5, '#1c0a05') + ring(42.2, .8, '#ff6a13aa') + ring(35.8, .8, '#ff6a13aa') +
+      `<g filter="url(#f)">` + spin(12, ring(39, 3.4, '#ff5a1f', 'stroke-dasharray="5 7" stroke-linecap="round"')) + spin(20, ring(39, 1.4, '#ffd23f', 'stroke-dasharray="2 12" stroke-linecap="round"')) + `</g>` +
+      N(14, (i, a) => { const [x, y] = P(40 + 4 * R(i), a), r = .8 + .8 * R(i + 1); return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="#ffb347"><animate attributeName="cy" values="${f1(y)};${f1(y - 10)}" dur="${(1.3 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="${(1.3 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/></circle>`; })],
+    ['lua-noite', 'Lua da Madrugada',
+      `<defs><mask id="m"><rect width="100" height="100" fill="#fff"/><circle cx="57" cy="8" r="8.5" fill="#000"/></mask><linearGradient id="n" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b1f4b"/><stop offset="1" stop-color="#5b3fa8"/></linearGradient></defs>` +
+      ring(39, 6, 'url(#n)') + ring(36.2, .9, '#c9d4ffaa') + ring(41.8, .9, '#0a0c24') +
+      `<circle cx="50" cy="8" r="9.5" fill="#ffe9a8" mask="url(#m)"/>` +
+      N(10, (i, a) => { const d = (a * 180 / Math.PI + 90) % 360; if (d > 335 || d < 25) return ''; const [x, y] = P(39, a - Math.PI / 2 + .2); return `<g>${star(x, y, 3.2, 1.3, '#fff')}<animate attributeName="opacity" values="1;.2;1" dur="${(1.6 + R(i) * 1.6).toFixed(2)}s" begin="${(R(i + 5) * 2).toFixed(2)}s" repeatCount="indefinite"/></g>`; }) +
+      spark(14, 74, 3, '#c9d4ff', 2.3, .4) + spark(88, 30, 3, '#c9d4ff', 2.7, 1.2)],
+    ['aurora', 'Aurora Pampeana',
+      `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cffcb"/><stop offset=".35" stop-color="#4d9de0"/><stop offset=".7" stop-color="#c77dff"/><stop offset="1" stop-color="#7cffcb"/></linearGradient></defs>` +
+      `<g filter="url(#f)">` + spin(8, ring(39, 5.5, 'url(#a)')) + `</g>` + ring(35.8, .8, '#ffffffaa') +
+      `<g>` + ring(44, 1.3, '#c9ffe9', 'stroke-dasharray="2 7" stroke-linecap="round"') + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="16s" repeatCount="indefinite"/></g>` +
+      spark(16, 24, 4, '#fff', 2.1, 0) + spark(86, 70, 3.6, '#d9fff0', 2.5, .8) + spark(24, 86, 3, '#fff', 2.8, 1.5)],
+    ['lenda-pampa', 'Lenda do Pampa',
+      `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="x" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7bd5"/><stop offset=".35" stop-color="#7b3cff"/><stop offset=".7" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff7bd5"/></linearGradient><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="1" stop-color="#d49a12"/></linearGradient></defs>` +
+      `<g filter="url(#f)">` + spin(6, ring(39, 6.5, 'url(#x)')) + `</g>` + ring(35.7, 1, '#fff9') + ring(42.5, 1, '#2a0f4d') +
+      `<g>` + N(8, (i, a) => { const [x, y] = P(46, a + .4); return star(x, y, 3, 1.3, '#ffe27a'); }) + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="14s" repeatCount="indefinite"/></g>` +
+      `<path d="M29 17L31 3L41 11L50 0L59 11L69 3L71 17Z" fill="url(#c)" stroke="#8a6410" stroke-width="1" stroke-linejoin="round"/><rect x="29" y="13" width="42" height="4.5" fill="#b8860b"/><circle cx="50" cy="9" r="2.2" fill="#7be9ff" stroke="#fff" stroke-width=".6"/>` +
+      spark(12, 34, 4, '#fff', 1.8, 0) + spark(90, 48, 3.6, '#ffd9f5', 2.3, .6) + spark(80, 88, 4, '#fff', 2, 1.1) + spark(18, 82, 3, '#fff6c8', 2.6, 1.6)],
   ];
   return L.map(([id, name, body]) => ({ id, name, url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`) }));
 })();
@@ -1742,8 +1783,9 @@ function handle(m) {
   else if (m.type === 'signal') onSignal(m.from, m.data);
   else if (m.type === 'profiles') m.list.forEach(p => { prof[p.id] = p.prof; bdg[p.id] = p.bd || []; renderMem(); renderChans(); })
   else if (m.type === 'profile') { prof[m.id] = m.prof; bdg[m.id] = m.bd || []; renderMem(); renderChans(); syncStage(); }
-  else if (m.type === 'ach') { ACH = m; bdg[me] = bdShow(ACH); if (!$('#cfg').hidden) { paintAch(); renderPrev(); } }
+  else if (m.type === 'ach') { ACH = m; bdg[me] = bdShow(ACH); if (!$('#cfg').hidden) { paintAch(); renderPrev(); fillFrames(); } }
   else if (m.type === 'unlock') { bdQueue.push([m.id, m.lvl]); bdNext(); }
+  else if (m.type === 'unlock-fr') { bdQueue.push([m.id, 'fr']); bdNext(); }
 }
 
 // quais fluxos são microfone / câmera / tela (o outro lado precisa saber para montar a tela certa)
@@ -2209,8 +2251,10 @@ idb.get('prof-img').then(img => {
 const prof = {};
 // ---------- emblemas e conquistas (o servidor conta tudo; aqui só desenhamos) ----------
 let ACH = null; const bdg = {};   // ACH = minhas conquistas; bdg[id] = emblemas em destaque de cada pessoa
-const fmtV = (v, u) => u === 'min' ? (v < 60 ? v + ' min' : Math.floor(v / 60) + 'h' + (v % 60 ? ' ' + String(v % 60).padStart(2, '0') + 'min' : '')) : u === 'dias' ? v + (v === 1 ? ' dia' : ' dias') : v.toLocaleString('pt-BR');
+const fmtV = (v, u) => u === 'min' ? (v < 60 ? v + ' min' : Math.floor(v / 60) + 'h' + (v % 60 ? ' ' + String(v % 60).padStart(2, '0') + 'min' : '')) : u === 'dias' ? v + (v === 1 ? ' dia' : ' dias') : u === 'niv' ? v + (v === 1 ? ' nível' : ' níveis') : u === 'emb' ? v + (v === 1 ? ' emblema' : ' emblemas') : v.toLocaleString('pt-BR');
 const bdDef = id => ACH && ACH.defs.find(d => d.id === id);
+const frLocked = id => !!(ACH && (ACH.frames || []).some(f => f.id === id && !f.open));   // borda exclusiva ainda trancada?
+const frMission = f => { const d = bdDef(f.b); return d ? 'Missão: chegar em “' + d.titles[f.l - 1] + '” (' + d.name + ', nível ' + f.l + ': ' + fmtV(d.tiers[f.l - 1], d.unit) + ').' : ''; };
 function bdEl(def, lvl, size, locked) {   // a medalha em si: hexágono na cor do nível, com o ícone no meio
   const b = document.createElement('div'); b.className = 'bd' + (locked ? ' lock' : ''); b.dataset.l = Math.max(1, lvl || 1);
   if (size) b.style.setProperty('--s', size + 'px');
@@ -2246,6 +2290,26 @@ function paintAch() {
   cur.append(ch); const row = bdRow(show); if (row) { row.style.marginTop = '8px'; cur.append(row); }
   const hint = document.createElement('small'); hint.style.color = 'var(--mut)'; hint.textContent = 'Clique num emblema conquistado para fixar (ou tirar) do seu cartão. Cabem até 3. Os níveis sobem sozinhos conforme você usa o app.';
   top.append(tt, bar, cur, hint);
+  const rew = $('#bdRew'); rew.replaceChildren();
+  if (ACH.frames && ACH.frames.length) {
+    const h = document.createElement('h3'); h.textContent = '🎁 Bordas exclusivas (cumpra a missão para liberar)';
+    const rg = document.createElement('div'); rg.id = 'bdRewG';
+    ACH.frames.forEach(f => {
+      const fd = FRAMES.find(x => x.id === f.id), d = bdDef(f.b); if (!fd || !d) return;
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'bc' + (f.open ? ' ok' : ' trv');
+      const a = document.createElement('div'); a.className = 'av fr'; paintAv(a, myName, { ...cfg.prof, frame: f.id });
+      const bi = document.createElement('div'); bi.className = 'bi';
+      const nm = document.createElement('b'); nm.textContent = (f.open ? '' : '🔒 ') + fd.name;
+      const ds = document.createElement('small'); ds.textContent = f.open ? 'Liberada! Equipe em Meu perfil > Borda da foto.' : frMission(f);
+      const v = ACH.vals[f.b] || 0, need = d.tiers[f.l - 1];
+      const pg = document.createElement('div'); pg.className = 'bbar'; const pi = document.createElement('i'); pi.style.width = Math.min(100, v / need * 100) + '%'; pg.append(pi);
+      const nv = document.createElement('div'); nv.className = 'nv'; nv.textContent = f.open ? '✅ Conquistada' : fmtV(Math.min(v, need), d.unit) + ' / ' + fmtV(need, d.unit);
+      bi.append(nm, ds, pg, nv); c.append(a, bi);
+      c.onclick = () => { if (f.open) tab('perfil'); else toast(frMission(f)); };
+      rg.append(c);
+    });
+    rew.append(h, rg);
+  }
   grid.replaceChildren();
   const pinned = new Set(show.map(x => x.id));
   ACH.defs.forEach(d => {
@@ -2254,6 +2318,7 @@ function paintAch() {
     const bi = document.createElement('div'); bi.className = 'bi';
     const nm = document.createElement('b'); nm.textContent = lvl ? d.titles[lvl - 1] : d.name;
     if (pinned.has(d.id)) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = '📌 No cartão'; nm.append(t); }
+    if (d.special) { const t = document.createElement('span'); t.className = 'tag ex'; t.textContent = '⭐ Exclusivo'; nm.append(t); }
     const ds = document.createElement('small'); ds.textContent = d.desc;
     const pg = document.createElement('div'); pg.className = 'bbar'; const pi = document.createElement('i'); pi.style.width = (next ? Math.max(0, Math.min(1, (v - prev) / (next - prev))) * 100 : 100) + '%'; pg.append(pi);
     const nv = document.createElement('div'); nv.className = 'nv';
@@ -2284,8 +2349,22 @@ function bdToast(id, lvl) {   // aviso no canto da tela quando destrava um níve
   t.onclick = () => { close(); $('#bCfg').click(); tab('conq'); };
   setTimeout(close, 7000);
 }
+function bdToastFr(id) {   // aviso de borda exclusiva liberada
+  const f = FRAMES.find(x => x.id === id); if (!f) return;
+  let w = $('#bdtw'); if (!w) { w = document.createElement('div'); w.id = 'bdtw'; document.body.append(w); }
+  const t = document.createElement('div'); t.className = 'bdt';
+  const a = document.createElement('div'); a.className = 'av'; a.style.cssText = 'width:52px;height:52px;flex:none;margin:0 6px'; paintAv(a, myName, { ...cfg.prof, frame: id });
+  const x = document.createElement('div');
+  const s = document.createElement('small'); s.textContent = 'Borda exclusiva liberada!';
+  const b = document.createElement('b'); b.textContent = f.name;
+  const p = document.createElement('span'); p.textContent = 'Clique para equipar em Meu perfil';
+  x.append(s, b, p); t.append(a, x); w.append(t);
+  const close = () => { t.classList.add('out'); setTimeout(() => t.remove(), 320); };
+  t.onclick = () => { close(); $('#bCfg').click(); tab('perfil'); };
+  setTimeout(close, 8000);
+}
 const bdQueue = []; let bdBusy = 0;
-function bdNext() { if (bdBusy || !bdQueue.length) return; bdBusy = 1; const [i, l] = bdQueue.shift(); bdToast(i, l); setTimeout(() => { bdBusy = 0; bdNext(); }, 1200); }
+function bdNext() { if (bdBusy || !bdQueue.length) return; bdBusy = 1; const [i, l] = bdQueue.shift(); if (l === 'fr') bdToastFr(i); else bdToast(i, l); setTimeout(() => { bdBusy = 0; bdNext(); }, 1200); }
 const audioC = () => ({ echoCancellation: cfg.ec, noiseSuppression: cfg.ns, autoGainControl: cfg.agc, ...(cfg.mic ? { deviceId: { exact: cfg.mic } } : {}) });
 
 const PRE = {
@@ -2791,10 +2870,11 @@ let ed = {};
 function fillFrames() {   // grade de bordas: cada botão mostra a sua foto (ou letra) com a borda
   const g = $('#frGrid'); g.replaceChildren();
   [{ id: '', name: 'Sem borda' }, ...FRAMES].forEach(f => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = (ed.frame || '') === f.id ? 'on' : ''; b.title = f.name;
+    const lk = frLocked(f.id), fq = lk && ACH.frames.find(x => x.id === f.id);
+    const b = document.createElement('button'); b.type = 'button'; b.className = ((ed.frame || '') === f.id ? 'on' : '') + (lk ? ' trv' : ''); b.title = lk ? frMission(fq) : f.name;
     const a = document.createElement('div'); a.className = 'av'; paintAv(a, $('#pNome').value || myName, { ...ed, frame: f.id });
-    const t = document.createElement('span'); t.textContent = f.name; b.append(a, t);
-    b.onclick = () => { ed.frame = f.id; fillFrames(); renderPrev(); };
+    const t = document.createElement('span'); t.textContent = (lk ? '🔒 ' : '') + f.name; b.append(a, t);
+    b.onclick = () => { if (lk) { toast(frMission(fq)); return; } ed.frame = f.id; fillFrames(); renderPrev(); };
     g.append(b);
   });
 }
@@ -2876,7 +2956,7 @@ $('#pFoto').onchange = e => {
 };
 $('#pBanner').onchange = e => pickImg(e, 'banner', 360, 130, 4 * 1048576);
 $('#pSalvar').onclick = () => {
-  myName = $('#pNome').value.trim() || myName; ed.about = $('#pSobre').value; cfg.prof = { ...ed }; saveCfg();
+  myName = $('#pNome').value.trim() || myName; ed.about = $('#pSobre').value; if (frLocked(ed.frame)) ed.frame = ''; cfg.prof = { ...ed }; saveCfg();
   try { localStorage.setItem('pampas-nome', myName); } catch {}
   prof[me] = cfg.prof; $('#meN').textContent = myName; paintAv($('#meav'), myName, cfg.prof);
   send({ type: 'profile', name: myName, prof: cfg.prof }); toast('Perfil salvo.');
