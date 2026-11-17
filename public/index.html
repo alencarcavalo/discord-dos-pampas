@@ -108,6 +108,7 @@ small{color:var(--mut)}
 #stage{padding:12px;overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column}
 #grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;align-content:safe center;flex:1}
 #grid:empty{display:none}
+#grid.solo:not(.focus){grid-template-columns:minmax(0,min(100%,620px,calc((100vh - 160px)*1.7778)));justify-content:center}   /* sozinho na chamada: quadrado menor (como no Discord), não a tela toda. A classe .solo é posta pelo JS (soloSync) */
 .tile{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:16/9;container-type:size;cursor:pointer;min-height:0}
 .tile.p{background:var(--side)}.tile.p.hascam{background:#000}
 .tile.s{order:1}.tile.pin{order:-1}
@@ -1223,6 +1224,7 @@ function fullscreen(el) {
   if (document.fullscreenElement) return document.exitFullscreen();
   (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => toast('Não consegui abrir em tela cheia.'));
 }
+const soloSync = () => $('#grid').classList.toggle('solo', Object.keys(TL).length === 1);   // só 1 quadrado na tela = você sozinho
 function pinTile(k) { pinKey = pinKey === k ? null : k; applyPin(); }
 function applyPin() {
   if (pinKey && !TL[pinKey]) pinKey = null;
@@ -1239,12 +1241,12 @@ function mkTile(key, uid, kind) {
   ctl.append(btn('pin', 'Focar nesta / voltar para a grade', () => pinTile(key)), btn('expand', 'Tela cheia', () => fullscreen(el)));
   el.onclick = () => pinTile(key); el.ondblclick = () => fullscreen(el);
   el.append(v, nm, ctl);
-  TL[key] = t; $('#grid').append(el); return t;
+  TL[key] = t; $('#grid').append(el); soloSync(); return t;
 }
 function rmTile(key) {
   const t = TL[key]; if (!t) return;
   if (document.fullscreenElement === t.el) document.exitFullscreen().catch(() => {});
-  t.v.srcObject = null; t.el.remove(); delete TL[key]; applyPin();
+  t.v.srcObject = null; t.el.remove(); delete TL[key]; soloSync(); applyPin();
 }
 function mkPerson(uid) {
   const t = mkTile('p:' + uid, uid, 'p');
