@@ -912,28 +912,9 @@ const FRAMES = (() => {
       `<path d="M78 69L92 47" stroke="#e5e8ec" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="92.5" cy="46.5" rx="2.6" ry="1.6" transform="rotate(-55 92.5 46.5)" fill="#cfd3d8"/>` +
       `<path d="M70 62Q67 56 70 51Q73 46 70 41" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"><animate attributeName="opacity" values=".15;.8;.15" dur="2.4s" repeatCount="indefinite"/></path>` +
       `<path d="M78 60Q75 54 78 49Q81 44 78 39" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"><animate attributeName="opacity" values=".8;.15;.8" dur="2.4s" repeatCount="indefinite"/></path>`],
-    ['lenco', 'Lenço Maragato',
-      ring(39, 7.5, '#c8372d') + ring(35.8, 1, '#ffffffcc') + ring(42.4, 1, '#0006') +
-      N(22, (i, a) => { const [x, y] = P(39, a); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.3" fill="#fff"/>`; }) +
-      `<path d="M50 90L40 100L47 100Z M50 90L60 100L53 100Z" fill="#c8372d" stroke="#fff" stroke-width="1" stroke-linejoin="round"/><circle cx="50" cy="89" r="4.6" fill="#c8372d" stroke="#fff" stroke-width="1.2"/>`],
     ['chapeu', 'Chapéu Gaúcho',
       ring(39, 3, '#6b4423') +
       `<g transform="rotate(-9 50 20)"><path d="M34 20Q34 0 50 0Q66 0 66 20Z" fill="#1d1d1f"/><rect x="34" y="14.5" width="32" height="4.5" fill="#c8372d"/><ellipse cx="50" cy="20.5" rx="30" ry="6" fill="#111"/><ellipse cx="50" cy="19.5" rx="30" ry="5.2" fill="none" stroke="#3a3a3d" stroke-width=".8"/></g>`],
-    ['fogo', 'Fogo de Chão',
-      ring(38.5, 3, '#7a1f0f') +
-      N(16, (i, a) => `<g transform="rotate(${(i * 22.5).toFixed(1)} 50 50)"><path d="M45.5 15C43 8 48 6 50 -1C52 6 57 8 54.5 15Z" fill="#ff6a13"><animate attributeName="opacity" values="1;.65;1" dur="${(0.5 + (i % 4) * 0.13).toFixed(2)}s" repeatCount="indefinite"/></path><path d="M48 15C47 10 49.5 9 50 4C50.5 9 53 10 52 15Z" fill="#ffd23f"/></g>`)],
-    ['estrela', 'Estrela Farroupilha',
-      ring(39, 6, '#1f7a3a') + ring(42.4, 1.3, '#d62828') + ring(35.7, 1.3, '#f5c542') +
-      N(8, (i, a) => { const [x, y] = P(39, a - Math.PI / 2); return star(x, y, 6, 2.6, '#ffd33d'); })],
-    ['poente', 'Pôr do Sol no Pampa',
-      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset=".45" stop-color="#ff5e62"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>` +
-      spin(7, ring(39, 7, 'url(#g)')) + ring(35.7, 1, '#fff8') +
-      spark(18, 20, 4, '#fff', 2.2, 0) + spark(84, 76, 3.5, '#fff', 2.6, .8) + spark(80, 17, 3, '#ffe9a8', 3, 1.5)],
-    ['lendario', 'Ouro Lendário',
-      `<defs><linearGradient id="o" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".35" stop-color="#f5c542"/><stop offset=".7" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient></defs>` +
-      spin(10, ring(39, 6.5, 'url(#o)')) + ring(35.8, 1, '#fff9') + ring(42.5, 1, '#6b4e0a') +
-      `<polygon points="50,0 56,7 50,15 44,7" fill="#7be9ff" stroke="#fff" stroke-width="1"/><polygon points="50,0 56,7 44,7" fill="#c8f6ff"/>` +
-      spark(14, 30, 4, '#fff', 1.8, 0) + spark(88, 40, 3.5, '#fff6c8', 2.4, .6) + spark(78, 86, 4, '#fff', 2.1, 1.1) + spark(22, 82, 3, '#fff6c8', 2.7, 1.6)],
     ['neon', 'Neon',
       `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
       `<g filter="url(#f)">` + ring(39, 3.2, '#22e5ff') + spin(5, ring(43.5, 2, '#ff2fd0', 'stroke-dasharray="20 14" stroke-linecap="round"')) + `</g>`],
@@ -973,15 +954,6 @@ const FRAMES = (() => {
       `<circle cx="73.5" cy="67" r="1" fill="#bdeaf7"><animate attributeName="cy" values="69;63;69" dur=".7s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur=".7s" repeatCount="indefinite"/></circle><circle cx="82" cy="67" r=".9" fill="#bdeaf7"><animate attributeName="cy" values="69;64;69" dur=".6s" begin=".2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur=".6s" begin=".2s" repeatCount="indefinite"/></circle>` +
       // vapor
       `<path d="M66 64Q63 59 66 55Q69 51 66 47" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".6"><animate attributeName="opacity" values=".1;.7;.1" dur="2.4s" repeatCount="indefinite"/></path><path d="M83 63Q86 58 83 54" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".6"><animate attributeName="opacity" values=".7;.1;.7" dur="2.4s" repeatCount="indefinite"/></path>`],
-    ['laco', 'Laço Trançado',
-      ring(39, 7, '#2a1a0a') + ring(39, 5.6, '#c9a45c') +
-      N(44, (i, a) => { const [x, y] = P(39, a), d = a * 180 / Math.PI + 38; return `<line x1="${(x - 3.6 * Math.cos(d * Math.PI / 180)).toFixed(1)}" y1="${(y - 3.6 * Math.sin(d * Math.PI / 180)).toFixed(1)}" x2="${(x + 3.6 * Math.cos(d * Math.PI / 180)).toFixed(1)}" y2="${(y + 3.6 * Math.sin(d * Math.PI / 180)).toFixed(1)}" stroke="#6b4a1e" stroke-width="1.5" stroke-linecap="round"/>`; }) +
-      ring(35.8, .8, '#f0dca0aa') +
-      `<circle cx="50" cy="90.5" r="5.2" fill="none" stroke="#c9a45c" stroke-width="3"/><circle cx="50" cy="90.5" r="5.2" fill="none" stroke="#6b4a1e" stroke-width=".8"/>`],
-    ['couro', 'Couro Cru',
-      ring(39, 8, '#5a3a1c') + ring(39, 6.4, '#8a5a30') + ring(42.4, 1.2, '#2e1b0c') + ring(35.6, 1.2, '#2e1b0c') +
-      ring(37.6, .9, '#f1dcae', 'stroke-dasharray="3 2.2"') + ring(40.4, .9, '#f1dcae', 'stroke-dasharray="3 2.2"') +
-      N(8, (i, a) => { const [x, y] = P(39, a + Math.PI / 8); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.1" fill="#c3c8ce" stroke="#4b4f55" stroke-width=".8"/><circle cx="${(x - .6).toFixed(1)}" cy="${(y - .6).toFixed(1)}" r=".7" fill="#fff"/>`; })],
     ['touro', 'Chifres de Touro',
       ring(39, 5, '#33261a') + ring(36.2, 1, '#ffffff44') +
       `<path d="M29 19Q9 20 7 2Q17 13 37 10Z" fill="#efe6d2" stroke="#4a3a22" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 2Q8.5 10 17 14.5Q10 10 7 2Z" fill="#c9b98f"/>` +
@@ -990,9 +962,6 @@ const FRAMES = (() => {
       ring(39, 4.5, '#4b4e55') + ring(36.4, 1, '#ffffff55') + ring(41.7, .8, '#0008') +
       `<path d="M39 81A12 12 0 1 0 61 81" fill="none" stroke="#2a2d31" stroke-width="7.4" stroke-linecap="round"/><path d="M39 81A12 12 0 1 0 61 81" fill="none" stroke="#b9bfc7" stroke-width="5.4" stroke-linecap="round"/>` +
       [[41.2, 90.2], [45, 94.6], [50, 96.2], [55, 94.6], [58.8, 90.2]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#2a2d31"/>`).join('')],
-    ['facoes', 'Facões Cruzados',
-      ring(39, 4, '#3b3f45') + ring(36.4, 1, '#ffffff44') +
-      [-42, 42].map(r => `<g transform="translate(50 89) rotate(${r}) scale(.85)"><path d="M0 -15L3.2 -10L3.2 4L-3.2 4L-3.2 -10Z" fill="#d6dce2" stroke="#3b3f45" stroke-width="1.2" stroke-linejoin="round"/><path d="M-1 -11L-1 3" stroke="#fff" stroke-width="1" opacity=".7"/><rect x="-5.2" y="3.6" width="10.4" height="2.4" rx="1" fill="#b8860b" stroke="#6b4e0a" stroke-width=".8"/><rect x="-2.4" y="6" width="4.8" height="9" rx="1.5" fill="#5a3515" stroke="#2e1b0c" stroke-width=".9"/></g>`).join('')],
     ['corrente', 'Corrente de Aço',
       ring(39, 7, '#23262a') + ring(42.4, .8, '#00000099') +
       N(20, (i, a) => { const [x, y] = P(39, a), d = a * 180 / Math.PI + (i % 2 ? 90 : 0); return i % 2
@@ -1016,23 +985,10 @@ const FRAMES = (() => {
       N(22, (i, a) => { const [x, y] = P(32.4, a), s = .62 + .3 * R(i + 4), d = (1.1 + R(i) * .8).toFixed(2); return `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(deg(a) + 90 + 16)})"><g><path d="M-6 0C-7 -9 -2 -12 -1 -21C3 -13 7 -9 6 0Z" fill="#e8321a"/><path d="M-4 0C-4.4 -6 -1.4 -9 0 -14C2 -9 4.4 -6 4 0Z" fill="#ff8a16"/><path d="M-2.2 0C-2.4 -3.6 -.8 -5.4 0 -8C1 -5.4 2.4 -3.6 2.2 0Z" fill="#ffe27a"/><animateTransform attributeName="transform" type="scale" values="${s} ${s};${s} ${(s * 1.22).toFixed(2)};${(s * 1.06).toFixed(2)} ${(s * .9).toFixed(2)};${s} ${s}" dur="${d}s" repeatCount="indefinite"/></g></g>`; }) +
       skull(50, 11, 1.05, 0) +
       N(9, (i, a) => { const [x, y] = P(44 + 4 * R(i), a * 1.0 + R(i + 7)), r = .7 + .7 * R(i + 1); return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="#ffd23f"><animate attributeName="cy" values="${f1(y)};${f1(y - 9)}" dur="${(1.4 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="${(1.4 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/></circle>`; })],
-    ['asas', 'Asas Negras', (() => {
-      const wing = (sc, col, edge) => Array.from({ length: 9 }, (_, k) => { const t = k / 8, th = -4 - t * 68, L = (46 - t * 24) * sc, w = 7.2 * sc; return `<path transform="rotate(${f1(th)} 24 62)" d="M24 62Q${f1(24 - w)} ${f1(62 - L / 2)} 24 ${f1(62 - L)}Q${f1(24 + w)} ${f1(62 - L / 2)} 24 62Z" fill="${col}" stroke="${edge}" stroke-width=".8" stroke-linejoin="round"/>`; }).join('');
-      const one = `<g>${wing(1, '#2a1b36', '#e9b8f5')}${wing(.7, '#120b19', '#ffd9f5')}<animateTransform attributeName="transform" type="rotate" values="0 24 62;-4 24 62;0 24 62" dur="3.2s" repeatCount="indefinite"/></g>`;
-      return ring(34.6, 1.6, '#e9b8f5aa') + `<g>${one}</g><g transform="translate(100 0) scale(-1 1)">${one}</g>`;
-    })()],
     ['cartola', 'Cartola',
       ring(39, 2.6, '#2a1d40') + ring(36.6, .8, '#ffffff44') +
       `<g transform="rotate(-8 50 19)"><ellipse cx="50" cy="19.5" rx="29" ry="5.8" fill="#101013" stroke="#000" stroke-width="1"/><ellipse cx="50" cy="20.2" rx="27.6" ry="4.8" fill="none" stroke="#45454d" stroke-width=".7"/>` +
       `<path d="M35 19L36.5 3.4Q36.5 1.2 39 1.2L61 1.2Q63.5 1.2 63.5 3.4L65 19Z" fill="#17171b" stroke="#000" stroke-width="1"/><path d="M35.5 14.2L64.5 14.2L65 19L35 19Z" fill="#c8372d"/><rect x="46.8" y="13.6" width="6.4" height="5.8" rx="1" fill="none" stroke="#f5c542" stroke-width="1.3"/><path d="M40.4 4.2L41.2 12.6" stroke="#ffffff40" stroke-width="2.2" stroke-linecap="round"/></g>`],
-    ['bone', 'Boné Brasil',
-      ring(39, 2.6, '#169b45') + ring(36.6, .8, '#ffffff44') +
-      `<g transform="rotate(-6 50 21)"><path d="M62 19.5Q88 12 97 27Q80 25 58 25.5Z" fill="#f2d02b" stroke="#8a6a0a" stroke-width="1.1" stroke-linejoin="round"/><path d="M63 20.2Q86 15.8 94.4 25.6" fill="none" stroke="#fff6b0" stroke-width=".8" opacity=".8"/>` +
-      `<path d="M27 22Q27 .6 51 .6Q75 .6 75 22Z" fill="#169b45" stroke="#0b5a28" stroke-width="1.1"/><path d="M51 .6Q44 11 44.6 22M51 .6Q58 11 57.4 22" fill="none" stroke="#0e7a35" stroke-width=".8"/><path d="M27 21.6L75 21.6" stroke="#0b5a28" stroke-width="2.2"/><circle cx="51" cy="1.2" r="1.8" fill="#f2d02b" stroke="#8a6a0a" stroke-width=".6"/>` +
-      `<polygon points="51,5 61.6,12.8 51,20.4 40.4,12.8" fill="#f2d02b" stroke="#0b5a28" stroke-width=".7"/><circle cx="51" cy="12.8" r="4.4" fill="#1d3f9a"/><path d="M47 12.2Q51 10.8 55 13.6" fill="none" stroke="#fff" stroke-width="1"/></g>`],
-    ['boina', 'Boina Gaúcha',
-      ring(39, 2.6, '#262b2f') + ring(36.6, .8, '#ffffff44') +
-      `<g transform="rotate(-14 50 13)"><ellipse cx="50" cy="12.6" rx="27.5" ry="9.8" fill="#262b2f" stroke="#0f1214" stroke-width="1"/><path d="M28.5 11.6Q50 3.6 71.5 11.6" fill="none" stroke="#3d454c" stroke-width=".9"/><path d="M33 7.6Q50 1.6 67 7.6" fill="none" stroke="#3d454c" stroke-width=".7"/><path d="M47.6 3.8Q48.6 .8 51 .8Q53.2 1.2 52.8 3.8Z" fill="#111" stroke="#000" stroke-width=".6"/><path d="M27.6 15.4Q50 25.4 72.4 15.4" fill="none" stroke="#111418" stroke-width="2.6"/>${star(37, 16.6, 3.6, 1.6, '#d62828')}</g>`],
     ['palha', 'Chapéu de Palha',
       ring(39, 2.6, '#8a6a2c') + ring(36.6, .8, '#ffffff55') +
       `<g transform="rotate(7 50 19)"><ellipse cx="50" cy="19.5" rx="39" ry="9.4" fill="#e6c987" stroke="#8a6a2c" stroke-width="1.2"/><ellipse cx="50" cy="19.8" rx="31" ry="7" fill="none" stroke="#b8975a" stroke-width=".7"/><ellipse cx="50" cy="20" rx="23" ry="4.8" fill="none" stroke="#b8975a" stroke-width=".7"/>` +
