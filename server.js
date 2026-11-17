@@ -7,6 +7,10 @@ const PORT = process.env.PORT || 3000;
 // ---------- senha da turma ----------
 // No Render > Environment crie a variável SENHA_TURMA com a senha. Sem ela, o site continua aberto para todo mundo.
 const SENHA = String(process.env.SENHA_TURMA || process.env.SENHA || '');
+// ADM: no Render > Environment crie a variável ADMIN_SENHA com uma senha SÓ SUA (diferente da da turma). Quem digitar essa senha em
+// Configurações > Administração vira ADM (apaga mensagens de qualquer pessoa e expulsa). Sem a variável, ninguém é ADM.
+const ADMIN_SENHA = String(process.env.ADMIN_SENHA || '');
+const ADMINS = new Set();   // cids (aparelhos) que já entraram como ADM: voltam como ADM sozinhos nas próximas vezes
 const sha = s => crypto.createHash('sha256').update(String(s)).digest();
 const passOk = p => !SENHA || crypto.timingSafeEqual(sha(p), sha(SENHA));
 // quem erra a senha 6 vezes seguidas fica 10 minutos bloqueado (evita tentar todas as senhas)
@@ -266,6 +270,7 @@ async function flush() {
   for (const id of ids) {
     try {
       if (id === '\0ch') { await up(['SET', 'guri:canais', JSON.stringify(CH)]); continue; }
+      if (id === '\0adm') { await up(['SET', 'guri:admins', JSON.stringify([...ADMINS])]); continue; }
       if (id === '\0st') { await up(['SET', 'guri:stats', JSON.stringify([...STATS])]); continue; }
       if (id === '\0sbl') { await up(['SET', 'guri:sbl', JSON.stringify(SB.map(s => s.id))]); continue; }
       if (id.startsWith('\0sb:')) { const sid = id.slice(4), s = SB.find(x => x.id === sid); await up(s ? ['SET', 'guri:sb:' + sid, JSON.stringify(s)] : ['DEL', 'guri:sb:' + sid]); continue; }
@@ -293,6 +298,7 @@ async function loadSaved() {
       const ids = JSON.parse((await up(['GET', 'guri:sbl'])) || '[]');
       for (const id of ids) { const raw = await up(['GET', 'guri:sb:' + id]); if (raw && !SB.some(s => s.id === id)) SB.push(JSON.parse(raw)); }
     } catch (e) { console.error('não consegui carregar os sons do soundboard:', e.message); }
+    try { const r = await up(['GET', 'guri:admins']); if (r) JSON.parse(r).forEach(c => ADMINS.add(c)); } catch (e) { console.error('não consegui carregar os ADMs:', e.message); }
     try {   // emblemas: contadores de cada pessoa
       const raw = await up(['GET', 'guri:stats']);
       if (raw) JSON.parse(raw).forEach(([cid, v]) => { if (!STATS.has(cid)) STATS.set(cid, { ...stOf(cid), ...v }); });
@@ -472,7 +478,7 @@ setInterval(() => {
   clients.forEach(c => c.nick && touchDay(c));
 }, 60000);
 
-const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {}, bd: showcase(c.cid) });
+const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {}, bd: showcase(c.cid), adm: !!c.admin });
 
 function state() {
   const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, room: c.room || null, vs: c.vs || {}, act: c.act || null }));
@@ -517,6 +523,8 @@ wss.on('connection', (ws, req) => {
       sendSb(ws);
       [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
+      ws.admin = !!ADMIN_SENHA && !!ws.cid && ADMINS.has(ws.cid);
+      send(ws, { type: 'admin', on: ws.admin, enabled: !!ADMIN_SENHA });
       send(ws, achPayload(ws)); touchDay(ws);
       state();
     } else if (m.type === 'profile' && ws.nick) {
@@ -561,7 +569,19 @@ wss.on('connection', (ws, req) => {
       // mudo / fone mudo / câmera / tela: aparece ao lado do nome de quem está na chamada
       ws.vs = { mute: !!m.mute, deaf: !!m.deaf, cam: !!m.cam, screen: !!m.screen };
       state();
+    } else if (m.type === 'admin-login') {   // vira ADM digitando a senha (o servidor confere; no máx. 5 tentativas por minuto)
+      if (!ADMIN_SENHA || !ws.cid) return send(ws, { type: 'admin', on: false, enabled: !!ADMIN_SENHA, err: ADMIN_SENHA ? 'sem aparelho' : 'A senha de ADM ainda não foi criada no Render (variável ADMIN_SENHA).' });
+      const now = Date.now(); ws.admT = (ws.admT || []).filter(t => now - t < 60000);
+      if (ws.admT.length >= 5) return send(ws, { type: 'admin', on: false, enabled: true, err: 'Muitas tentativas. Espere 1 minuto.' });
+      ws.admT.push(now);
+      if (!crypto.timingSafeEqual(sha(m.senha || ''), sha(ADMIN_SENHA))) return send(ws, { type: 'admin', on: false, enabled: true, err: 'Senha de ADM errada.' });
+      ws.admin = true; ADMINS.add(ws.cid); markDirty('\0adm');
+      send(ws, { type: 'admin', on: true, enabled: true }); tellProfile(ws);
+    } else if (m.type === 'admin-logout') {
+      ws.admin = false; ADMINS.delete(ws.cid); markDirty('\0adm');
+      send(ws, { type: 'admin', on: false, enabled: !!ADMIN_SENHA }); tellProfile(ws);
     } else if (m.type === 'kick') {
+      if (!ws.admin) return;   // só ADM expulsa
       const t = [...clients].find(c => c.id === String(m.id) && c !== ws);
       if (!t) return;
       send(t, { type: 'kicked', by: ws.nick });
@@ -597,7 +617,7 @@ wss.on('connection', (ws, req) => {
       clients.forEach(c => c.nick && send(c, { type: 'msg-edit', channel: m.channel, mid: x.mid, text, edited: x.edited }));
     } else if (m.type === 'msg-del') {
       const h = hist.get(m.channel) || [], i = h.findIndex(y => y.mid === m.mid);
-      if (i < 0 || !ws.cid || h[i].cid !== ws.cid) return;   // só o dono apaga
+      if (i < 0 || !ws.cid || (h[i].cid !== ws.cid && !ws.admin)) return;   // só o dono apaga (ou um ADM)
       h.splice(i, 1);
       markDirty(m.channel);
       clients.forEach(c => c.nick && send(c, { type: 'msg-del', channel: m.channel, mid: m.mid }));
