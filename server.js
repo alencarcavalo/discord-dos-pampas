@@ -362,7 +362,7 @@ const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '
 // aceita JPEG (imagem reduzida) ou GIF animado (limite maior)
 const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:image/jpeg;base64,') && v.length < max) || (v.startsWith('data:image/gif;base64,') && v.length < maxGif)) ? v : '';
 // bordas de foto liberadas (ids iguais aos do index.html)
-const FRAMES = ['bandeira', 'erva', 'chimarrao', 'lenco', 'chapeu', 'fogo', 'estrela', 'poente', 'lendario', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'termica', 'laco', 'couro', 'touro', 'ferradura', 'facoes', 'corrente', 'caveira', 'tinta', 'chamas', 'asas', 'cartola', 'bone', 'boina', 'palha', 'neitzke', 'cuia-ouro', 'espora', 'brasa-viva', 'lua-noite', 'aurora', 'lenda-pampa'];
+const FRAMES = ['bandeira', 'erva', 'chimarrao', 'chapeu', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'termica', 'touro', 'ferradura', 'corrente', 'caveira', 'tinta', 'chamas', 'cartola', 'palha', 'neitzke', 'cuia-ouro', 'espora', 'brasa-viva', 'lua-noite', 'aurora', 'lenda-pampa'];
 // bordas EXCLUSIVAS: só quem cumpriu a missão (chegar no nível l do emblema b) pode usar. O servidor confere, então não dá para burlar.
 const FRAME_REQ = { 'cuia-ouro': { b: 'gaucho', l: 2 }, 'espora': { b: 'cine', l: 2 }, 'brasa-viva': { b: 'churras', l: 3 }, 'lua-noite': { b: 'coruja', l: 2 }, 'aurora': { b: 'madruga', l: 2 }, 'lenda-pampa': { b: 'lenda', l: 2 } };
 const frameOpen = (cid, f) => { const r = FRAME_REQ[f]; if (!r) return true; const s = cid && STATS.get(cid); return !!s && (s.lv[r.b] || 0) >= r.l; };
