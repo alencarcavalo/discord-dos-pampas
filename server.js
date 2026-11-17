@@ -362,12 +362,15 @@ const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '
 // aceita JPEG (imagem reduzida) ou GIF animado (limite maior)
 const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:image/jpeg;base64,') && v.length < max) || (v.startsWith('data:image/gif;base64,') && v.length < maxGif)) ? v : '';
 // bordas de foto liberadas (ids iguais aos do index.html)
-const FRAMES = ['bandeira', 'erva', 'chimarrao', 'lenco', 'chapeu', 'fogo', 'estrela', 'poente', 'lendario', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'termica', 'laco', 'couro', 'touro', 'ferradura', 'facoes', 'corrente', 'caveira', 'tinta', 'chamas', 'asas', 'cartola', 'bone', 'boina', 'palha', 'neitzke'];
+const FRAMES = ['bandeira', 'erva', 'chimarrao', 'lenco', 'chapeu', 'fogo', 'estrela', 'poente', 'lendario', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'termica', 'laco', 'couro', 'touro', 'ferradura', 'facoes', 'corrente', 'caveira', 'tinta', 'chamas', 'asas', 'cartola', 'bone', 'boina', 'palha', 'neitzke', 'cuia-ouro', 'espora', 'brasa-viva', 'lua-noite', 'aurora', 'lenda-pampa'];
+// bordas EXCLUSIVAS: só quem cumpriu a missão (chegar no nível l do emblema b) pode usar. O servidor confere, então não dá para burlar.
+const FRAME_REQ = { 'cuia-ouro': { b: 'gaucho', l: 2 }, 'espora': { b: 'cine', l: 2 }, 'brasa-viva': { b: 'churras', l: 3 }, 'lua-noite': { b: 'coruja', l: 2 }, 'aurora': { b: 'madruga', l: 2 }, 'lenda-pampa': { b: 'lenda', l: 2 } };
+const frameOpen = (cid, f) => { const r = FRAME_REQ[f]; if (!r) return true; const s = cid && STATS.get(cid); return !!s && (s.lv[r.b] || 0) >= r.l; };
 const numIn = (v, lo, hi, def) => (Number.isFinite(+v) && v !== null && v !== '' ? Math.min(hi, Math.max(lo, +v)) : def);   // número dentro de um intervalo (zoom/posição da foto)
 function setProf(ws, p) {
   p = p || {};
   ws.prof = { about: String(p.about || '').slice(0, 120), avatar: okImg(p.avatar, 60000, 5.8e6), banner: okImg(p.banner, 120000, 5.8e6),
-    color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '', frame: FRAMES.includes(p.frame) ? p.frame : '',
+    color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '', frame: FRAMES.includes(p.frame) && frameOpen(ws.cid, p.frame) ? p.frame : '',
     avZ: numIn(p.avZ, .5, 3, 1), avX: numIn(p.avX, 0, 1, .5), avY: numIn(p.avY, 0, 1, .5), avAr: numIn(p.avAr, .2, 5, 1), avR: numIn(p.avR, -360, 360, 0) };
 }
 // ---------- emblemas e conquistas ----------
@@ -388,6 +391,9 @@ const DEFS = [
   { id: 'churras', emoji: '🥩', name: 'Churrasco', desc: 'Fique em chamada quando tem 4 ou mais pessoas: resenha cheia!', key: 'g', unit: 'min', tiers: [30, 120, 600, 1500, 3000], titles: ['Fogo de Chão', 'Espeto Corrido', 'Assador', 'Churrasqueiro', 'Mestre do Braseiro'] },
   { id: 'coruja', emoji: '🦉', name: 'Coruja', desc: 'Fique em chamada de madrugada (da meia-noite às 5h).', key: 'n', unit: 'min', tiers: [30, 120, 300, 900, 1800], titles: ['Olho Aberto', 'Insone', 'Coruja', 'Coruja Raiz', 'Guardião da Noite'] },
   { id: 'madruga', emoji: '🌅', name: 'Madrugador', desc: 'Fique em chamada cedinho (das 5h às 8h).', key: 'e', unit: 'min', tiers: [15, 60, 180, 600, 1200], titles: ['Cedo Levantado', 'Mateando Cedo', 'Madrugador', 'Galo de Estância', 'Sol Nascente'] },
+  // emblemas EXCLUSIVOS (special): não contam uso, contam o progresso nos outros emblemas
+  { id: 'colecao', emoji: '🏆', name: 'Colecionador', desc: 'Exclusivo: some os níveis de todos os outros emblemas.', key: 'tl', unit: 'niv', special: 1, tiers: [5, 15, 30, 45, 55], titles: ['Primeiras Medalhas', 'Vitrine Cheia', 'Colecionador', 'Grande Colecionador', 'Museu dos Pampas'] },
+  { id: 'lenda', emoji: '👑', name: 'Lenda do Pampa', desc: 'Exclusivo: leve emblemas até o nível máximo (nível 5).', key: 'mx', unit: 'emb', special: 1, tiers: [1, 3, 5, 8, 11], titles: ['Promessa', 'Fenômeno', 'Ídolo', 'Mito', 'Lenda do Pampa'] },
 ];
 const STATS = new Map();   // cid -> { v, s, c, m, r, p, g, n, e, d, sk, bs, ld, lv: { emblema: nível }, pick: [ids] | null }
 const BRT = () => new Date(Date.now() - 3 * 3600e3);   // horário de Brasília (getUTC* dessa data = hora daqui)
@@ -407,18 +413,31 @@ function showcase(cid) {
 }
 const achPayload = ws => {
   const s = stOf(ws.cid || ''), vals = {};
+  derive(s);
   DEFS.forEach(d => vals[d.id] = s[d.key] || 0);
-  return { type: 'ach', defs: DEFS.map(d => ({ id: d.id, emoji: d.emoji, name: d.name, desc: d.desc, unit: d.unit, tiers: d.tiers, titles: d.titles })), vals, lv: s.lv, pick: s.pick, sk: s.sk };
+  return { type: 'ach', defs: DEFS.map(d => ({ id: d.id, emoji: d.emoji, name: d.name, desc: d.desc, unit: d.unit, tiers: d.tiers, titles: d.titles, special: !!d.special })), frames: Object.entries(FRAME_REQ).map(([id, r]) => ({ id, b: r.b, l: r.l, open: frameOpen(ws.cid, id) })), vals, lv: s.lv, pick: s.pick, sk: s.sk };
 };
 const tellProfile = ws => clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
 // confere se algum emblema subiu de nível; se sim, avisa a pessoa e atualiza o cartão dela para a turma
+function derive(s) {   // contadores dos emblemas exclusivos: tl = soma dos níveis, mx = quantos estão no nível máximo
+  const base = DEFS.filter(d => !d.special);
+  s.tl = base.reduce((n, d) => n + (s.lv[d.id] || 0), 0);
+  s.mx = base.filter(d => (s.lv[d.id] || 0) >= d.tiers.length).length;
+}
 function checkLv(ws) {
   if (!ws.cid) return;
   const s = stOf(ws.cid), ups = [];
-  DEFS.forEach(d => { const l = lvlOf(d, s[d.key] || 0); if (l > (s.lv[d.id] || 0)) { s.lv[d.id] = l; ups.push({ id: d.id, lvl: l }); } });
+  for (let k = 0; k < 2; k++) {   // 2 voltas: o exclusivo pode subir por causa de um emblema que acabou de subir
+    derive(s);
+    DEFS.forEach(d => { const l = lvlOf(d, s[d.key] || 0); if (l > (s.lv[d.id] || 0)) { s.lv[d.id] = l; ups.push({ id: d.id, lvl: l }); } });
+  }
+  s.fr = s.fr || {};
+  const fr = Object.keys(FRAME_REQ).filter(f => !s.fr[f] && frameOpen(ws.cid, f));
+  fr.forEach(f => s.fr[f] = 1);
+  if (fr.length) ups.push(...fr.map(f => ({ frame: f })));
   if (!ups.length) return;
   markDirty('\0st');
-  ups.forEach(u => send(ws, { type: 'unlock', ...u }));
+  ups.forEach(u => send(ws, u.frame ? { type: 'unlock-fr', id: u.frame } : { type: 'unlock', ...u }));
   send(ws, achPayload(ws));
   tellProfile(ws);
 }
