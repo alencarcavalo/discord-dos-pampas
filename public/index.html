@@ -285,6 +285,45 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .pc .big{width:80px;height:80px;font-size:2rem;margin:-40px 0 0 16px;border:6px solid var(--side)}
 .pc div.t{padding:6px 16px 16px}
 .pc b{font-size:1.2rem}
+/* ---- emblemas e conquistas ---- */
+.bd{--s:44px;--c1:#e7a46a;--c2:#8c4f1e;width:var(--s);height:calc(var(--s)*1.12);flex:none;position:relative;display:grid;place-items:center;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(145deg,var(--c1),var(--c2));font-size:calc(var(--s)*.5);line-height:1;user-select:none}
+.bd::before{content:"";position:absolute;inset:max(2px,calc(var(--s)*.07));clip-path:inherit;background:radial-gradient(circle at 35% 25%,color-mix(in srgb,var(--c1) 30%,#2b2d31),#141518 78%)}
+.bd>i{position:relative;font-style:normal;filter:drop-shadow(0 1px 2px #000a)}
+.bd[data-l="1"]{--c1:#e7a46a;--c2:#8c4f1e}
+.bd[data-l="2"]{--c1:#f4f6f9;--c2:#7f8896}
+.bd[data-l="3"]{--c1:#ffe27a;--c2:#b8860b}
+.bd[data-l="4"]{--c1:#8ff0ff;--c2:#2a7de1}
+.bd[data-l="5"]{--c1:#ff7bd5;--c2:#7b3cff}
+.bd[data-l="4"]::after,.bd[data-l="5"]::after{content:"";position:absolute;inset:0;clip-path:inherit;background:linear-gradient(110deg,transparent 38%,#fff8 50%,transparent 62%) 150% 0/250% 100% no-repeat;animation:bdshine 2.8s linear infinite}
+.bd[data-l="5"]::after{animation-duration:1.9s}
+.bd.lock{filter:grayscale(1) brightness(.5);opacity:.6}
+@keyframes bdshine{to{background-position:-150% 0}}
+.bds{display:flex;gap:8px;flex-wrap:wrap}
+.bds .bd{--s:34px}
+#bdTop{display:grid;gap:14px}
+#bdTop .tt{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#bdTop .tt b{font-size:1.05rem}
+.bbar{height:7px;border-radius:4px;background:color-mix(in srgb,var(--txt) 16%,transparent);overflow:hidden;margin:7px 0 4px}
+.bbar i{display:block;height:100%;border-radius:4px;background:var(--blur);transition:width .4s}
+#bdGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.bc{display:flex;gap:14px;align-items:center;background:var(--input);border:2px solid transparent;border-radius:12px;padding:12px 14px;text-align:left;color:var(--txt);width:100%;font:inherit}
+.bc.ok:hover{background:var(--hover)}
+.bc.pin{border-color:var(--blur);background:color-mix(in srgb,var(--blur) 14%,transparent)}
+.bc .bd{--s:56px}
+.bc .bi{min-width:0;flex:1}
+.bc .bi b{display:block;font-weight:700}
+.bc .bi small{display:block;color:var(--mut);font-size:.78rem;line-height:1.35;margin-top:2px}
+.bc .bi .nv{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:.74rem;color:var(--mut);font-weight:700}
+.bpips{display:flex;gap:3px}.bpips i{width:16px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--txt) 20%,transparent)}.bpips i.on{background:#ffd23f}
+.bc .tag{font-size:.66rem;font-weight:700;background:var(--blur);color:var(--onac,#fff);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+#bdtw{position:fixed;right:24px;bottom:24px;z-index:30;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
+.bdt{display:flex;gap:14px;align-items:center;background:#111214;color:#fff;border:1px solid #ffffff22;border-radius:14px;padding:12px 20px 12px 14px;box-shadow:0 6px 24px #000a;animation:bdin .45s cubic-bezier(.2,1.2,.4,1);pointer-events:auto;cursor:pointer;max-width:340px}
+.bdt .bd{--s:52px}
+.bdt small{display:block;color:#ffd23f;font-weight:700;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase}
+.bdt b{display:block;font-size:1.02rem}
+.bdt span{display:block;font-size:.78rem;color:#b5bac1}
+.bdt.out{opacity:0;transform:translateX(30px);transition:.3s}
+@keyframes bdin{from{opacity:0;transform:translateX(40px) scale(.9)}to{opacity:1;transform:none}}
 #cardw{position:fixed;inset:0;z-index:9}
 #loginc img.logo{width:150px;height:auto;margin:0 auto;border-radius:0;background:none}
 #rail img{width:48px;height:48px;border-radius:16px;object-fit:cover}
@@ -563,6 +602,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
   <nav id="cfgtabs">
     <h4>Minha conta</h4>
     <button data-t="perfil"><span>👤</span>Meu perfil</button>
+    <button data-t="conq"><span>🏅</span>Conquistas</button>
     <button data-t="ativ"><span>🎮</span>Atividade</button>
     <h4>App</h4>
     <button data-t="voz"><span>🎙️</span>Voz e áudio</button>
@@ -609,6 +649,12 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
           <button class="go" id="pSalvar">Salvar perfil</button>
         </div>
       </div>
+    </section>
+
+    <section data-p="conq" hidden><h2>Conquistas</h2>
+      <p class="sub">Emblemas que você ganha usando o Discord dos Guri: tempo em chamada, transmissão, conversa e mais. O servidor conta tudo sozinho.</p>
+      <div class="cc pad" id="bdTop"></div>
+      <div id="bdGrid"></div>
     </section>
 
     <section data-p="ativ" hidden><h2>Atividade</h2>
@@ -1694,8 +1740,10 @@ function handle(m) {
   } else if (m.type === 'peer-join') { names[m.id] = m.name; sfx('entra'); }
   else if (m.type === 'peer-leave') { st.users = st.users.map(u => u.id === m.id ? { ...u, room: null } : u); dropPeer(m.id); delete names[m.id]; sfx('sai'); }
   else if (m.type === 'signal') onSignal(m.from, m.data);
-  else if (m.type === 'profiles') m.list.forEach(p => { prof[p.id] = p.prof; renderMem(); renderChans(); })
-  else if (m.type === 'profile') { prof[m.id] = m.prof; renderMem(); renderChans(); syncStage(); }
+  else if (m.type === 'profiles') m.list.forEach(p => { prof[p.id] = p.prof; bdg[p.id] = p.bd || []; renderMem(); renderChans(); })
+  else if (m.type === 'profile') { prof[m.id] = m.prof; bdg[m.id] = m.bd || []; renderMem(); renderChans(); syncStage(); }
+  else if (m.type === 'ach') { ACH = m; bdg[me] = bdShow(ACH); if (!$('#cfg').hidden) { paintAch(); renderPrev(); } }
+  else if (m.type === 'unlock') { bdQueue.push([m.id, m.lvl]); bdNext(); }
 }
 
 // quais fluxos são microfone / câmera / tela (o outro lado precisa saber para montar a tela certa)
@@ -2159,6 +2207,85 @@ idb.get('prof-img').then(img => {
   } else if (cfg.prof.avatar || cfg.prof.banner) saveCfg(); // passa a foto antiga para o lugar novo
 });
 const prof = {};
+// ---------- emblemas e conquistas (o servidor conta tudo; aqui só desenhamos) ----------
+let ACH = null; const bdg = {};   // ACH = minhas conquistas; bdg[id] = emblemas em destaque de cada pessoa
+const fmtV = (v, u) => u === 'min' ? (v < 60 ? v + ' min' : Math.floor(v / 60) + 'h' + (v % 60 ? ' ' + String(v % 60).padStart(2, '0') + 'min' : '')) : u === 'dias' ? v + (v === 1 ? ' dia' : ' dias') : v.toLocaleString('pt-BR');
+const bdDef = id => ACH && ACH.defs.find(d => d.id === id);
+function bdEl(def, lvl, size, locked) {   // a medalha em si: hexágono na cor do nível, com o ícone no meio
+  const b = document.createElement('div'); b.className = 'bd' + (locked ? ' lock' : ''); b.dataset.l = Math.max(1, lvl || 1);
+  if (size) b.style.setProperty('--s', size + 'px');
+  const i = document.createElement('i'); i.textContent = def.emoji; b.append(i);
+  if (!locked) b.title = def.titles[lvl - 1] + ' · Nível ' + lvl + '\n' + def.desc;
+  return b;
+}
+function bdRow(list) {   // fileira de emblemas (cartão de perfil)
+  const items = (list || []).map(x => ({ d: bdDef(x.id), l: x.lvl })).filter(x => x.d);
+  if (!items.length) return null;
+  const r = document.createElement('div'); r.className = 'bds';
+  items.forEach(x => r.append(bdEl(x.d, x.l)));
+  return r;
+}
+function bdShow(a) {   // mesmos emblemas que o servidor mostraria para a turma
+  const have = a.defs.filter(d => (a.lv[d.id] || 0) > 0);
+  const ids = Array.isArray(a.pick) ? a.pick.filter(id => have.some(d => d.id === id)) : have.map((d, i) => ({ d, i })).sort((x, y) => a.lv[y.d.id] - a.lv[x.d.id] || x.i - y.i).map(x => x.d.id);
+  return ids.slice(0, 3).map(id => ({ id, lvl: a.lv[id] }));
+}
+function paintAch() {
+  const top = $('#bdTop'), grid = $('#bdGrid'); if (!top || !grid) return;
+  if (!ACH) { top.textContent = 'Carregando suas conquistas…'; grid.replaceChildren(); return; }
+  const show = bdShow(ACH), tot = ACH.defs.length * 5, got = ACH.defs.reduce((n, d) => n + (ACH.lv[d.id] || 0), 0);
+  top.replaceChildren();
+  const tt = document.createElement('div'); tt.className = 'tt';
+  const tb = document.createElement('b'); tb.textContent = '🏅 ' + got + ' de ' + tot + ' níveis conquistados';
+  const au = document.createElement('button'); au.type = 'button'; au.className = 'sec mini'; au.textContent = 'Escolher automático'; au.hidden = !Array.isArray(ACH.pick);
+  au.onclick = () => { ACH.pick = null; bdg[me] = bdShow(ACH); send({ type: 'badge-pick', ids: null }); paintAch(); };
+  tt.append(tb, au);
+  const bar = document.createElement('div'); bar.className = 'bbar'; const bi = document.createElement('i'); bi.style.width = (got / tot * 100) + '%'; bar.append(bi);
+  const cur = document.createElement('div'); const ch = document.createElement('small'); ch.style.color = 'var(--mut)';
+  ch.textContent = show.length ? 'No seu cartão de perfil (a turma vê):' : 'Seu cartão ainda não tem emblemas. Ganhe o primeiro!';
+  cur.append(ch); const row = bdRow(show); if (row) { row.style.marginTop = '8px'; cur.append(row); }
+  const hint = document.createElement('small'); hint.style.color = 'var(--mut)'; hint.textContent = 'Clique num emblema conquistado para fixar (ou tirar) do seu cartão. Cabem até 3. Os níveis sobem sozinhos conforme você usa o app.';
+  top.append(tt, bar, cur, hint);
+  grid.replaceChildren();
+  const pinned = new Set(show.map(x => x.id));
+  ACH.defs.forEach(d => {
+    const lvl = ACH.lv[d.id] || 0, v = ACH.vals[d.id] || 0, next = d.tiers[lvl], prev = lvl ? d.tiers[lvl - 1] : 0;
+    const c = document.createElement('button'); c.type = 'button'; c.className = 'bc' + (lvl ? ' ok' : '') + (pinned.has(d.id) ? ' pin' : '');
+    const bi = document.createElement('div'); bi.className = 'bi';
+    const nm = document.createElement('b'); nm.textContent = lvl ? d.titles[lvl - 1] : d.name;
+    if (pinned.has(d.id)) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = '📌 No cartão'; nm.append(t); }
+    const ds = document.createElement('small'); ds.textContent = d.desc;
+    const pg = document.createElement('div'); pg.className = 'bbar'; const pi = document.createElement('i'); pi.style.width = (next ? Math.max(0, Math.min(1, (v - prev) / (next - prev))) * 100 : 100) + '%'; pg.append(pi);
+    const nv = document.createElement('div'); nv.className = 'nv';
+    const pips = document.createElement('span'); pips.className = 'bpips'; for (let i = 1; i <= 5; i++) { const p = document.createElement('i'); if (i <= lvl) p.className = 'on'; pips.append(p); }
+    const tx = document.createElement('span'); tx.textContent = next ? fmtV(v, d.unit) + ' / ' + fmtV(next, d.unit) + '  →  ' + d.titles[lvl] : 'Nível máximo! 🏆 (' + fmtV(v, d.unit) + ')';
+    nv.append(pips, tx);
+    bi.append(nm, ds, pg, nv);
+    c.append(bdEl(d, lvl, 56, !lvl), bi);
+    c.onclick = () => {
+      if (!lvl) { toast('Ainda bloqueado: ' + d.desc + ' Primeiro nível em ' + fmtV(d.tiers[0], d.unit) + '.'); return; }
+      let ids = show.map(x => x.id);
+      ids = ids.includes(d.id) ? ids.filter(x => x !== d.id) : [...ids, d.id].slice(-3);
+      ACH.pick = ids; bdg[me] = bdShow(ACH); send({ type: 'badge-pick', ids }); paintAch(); renderPrev();
+    };
+    grid.append(c);
+  });
+}
+function bdToast(id, lvl) {   // aviso no canto da tela quando destrava um nível
+  const d = bdDef(id); if (!d) return;
+  let w = $('#bdtw'); if (!w) { w = document.createElement('div'); w.id = 'bdtw'; document.body.append(w); }
+  const t = document.createElement('div'); t.className = 'bdt';
+  const x = document.createElement('div');
+  const s = document.createElement('small'); s.textContent = lvl === 1 ? 'Emblema desbloqueado!' : 'Subiu de nível!';
+  const b = document.createElement('b'); b.textContent = d.titles[lvl - 1];
+  const p = document.createElement('span'); p.textContent = d.name + ' · Nível ' + lvl + (lvl === 5 ? ' (máximo!)' : '');
+  x.append(s, b, p); t.append(bdEl(d, lvl, 52), x); w.append(t);
+  const close = () => { t.classList.add('out'); setTimeout(() => t.remove(), 320); };
+  t.onclick = () => { close(); $('#bCfg').click(); tab('conq'); };
+  setTimeout(close, 7000);
+}
+const bdQueue = []; let bdBusy = 0;
+function bdNext() { if (bdBusy || !bdQueue.length) return; bdBusy = 1; const [i, l] = bdQueue.shift(); bdToast(i, l); setTimeout(() => { bdBusy = 0; bdNext(); }, 1200); }
 const audioC = () => ({ echoCancellation: cfg.ec, noiseSuppression: cfg.ns, autoGainControl: cfg.agc, ...(cfg.mic ? { deviceId: { exact: cfg.mic } } : {}) });
 
 const PRE = {
@@ -2621,14 +2748,15 @@ function resize(file, w, h, cb) {
   };
   img.src = URL.createObjectURL(file);
 }
-function cardEl(name, p) {
+function cardEl(name, p, bd) {
   p = p || {};
   const c = document.createElement('div'); c.className = 'pc';
   const b = document.createElement('div'); b.className = 'pb'; b.style.background = p.banner ? 'url("' + p.banner + '") center/cover' : (p.color || colorOf(name));
   const a = document.createElement('div'); a.className = 'av big'; paintAv(a, name, p);
   const t = document.createElement('div'); t.className = 't';
   const n = document.createElement('b'); n.textContent = name; const s = document.createElement('p'); s.textContent = p.about || ''; s.style.margin = '4px 0 0';
-  t.append(n, s); c.append(b, a, t); return c;
+  t.append(n, s); const br = bdRow(bd); if (br) { br.style.marginTop = '10px'; t.append(br); }
+  c.append(b, a, t); return c;
 }
 function card(id, anchor) {
   const u = st.users.find(u => u.id === id); if (!u) return;
@@ -2642,6 +2770,7 @@ function card(id, anchor) {
   const nm = document.createElement('b'); nm.className = 'nm'; nm.textContent = u.name + (id === me ? ' (você)' : ''); bx.append(nm);
   const sec = (title, ...els) => { const d = document.createElement('div'); const h = document.createElement('h4'); h.textContent = title; d.append(h, ...els); bx.append(document.createElement('hr'), d); };
   if (pr.about) { const t = document.createElement('p'); t.textContent = pr.about; sec('Sobre mim', t); }
+  const bdr = bdRow(bdg[id]); if (bdr) sec('Emblemas', bdr);
   const al = actLines(u, true); if (al.length) sec('Atividade', ...al);
   if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
   if (id === me) { const b = document.createElement('button'); b.className = 'go'; b.textContent = 'Editar perfil'; b.onclick = () => { w.remove(); $('#bCfg').click(); }; bx.append(b); }
@@ -2675,7 +2804,7 @@ function fillAvEd(slider) {   // círculo de ajuste da foto (só aparece se tem 
   paintAv($('#avEd'), $('#pNome').value || myName, { ...ed, frame: '' });
   if (slider) { $('#avZ').value = Math.round((ed.avZ || 1) * 100); $('#avR').value = Math.round(ed.avR || 0); }
 }
-const renderPrev = () => { $('#pPrev').replaceChildren(cardEl($('#pNome').value || myName, ed)); fillAvEd(); };
+const renderPrev = () => { $('#pPrev').replaceChildren(cardEl($('#pNome').value || myName, ed, bdg[me])); fillAvEd(); };
 { let dg = null; const e1 = $('#avEd');
   e1.onpointerdown = e => { dg = { x: e.clientX, y: e.clientY, px: ed.avX ?? .5, py: ed.avY ?? .5 }; e1.setPointerCapture(e.pointerId); };
   e1.onpointermove = e => {
@@ -2702,6 +2831,7 @@ function tab(t) {
   if (t === 'voz') { fillVoz(); fillDevs(); }
   if (t === 'cam') fillCam();
   if (t === 'sobre') showAbout();
+  if (t === 'conq') { send({ type: 'ach-get' }); paintAch(); }
   if (t === 'ativ') { $('#actGame').checked = !!cfg.actGame; $('#actMusic').checked = !!cfg.actMusic; $('#actManual').value = cfg.actManual || ''; actStatus(); }
 }
 document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => tab(b.dataset.t));
