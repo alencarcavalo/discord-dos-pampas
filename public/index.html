@@ -623,6 +623,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     <button data-t="atalho"><span>⌨️</span>Atalhos</button>
     <button data-t="visual"><span>🎨</span>Aparência</button>
     <h4>Sistema</h4>
+    <button data-t="adm"><span>🛡️</span>Administração</button>
     <button data-t="sobre"><span>🔄</span>Atualizações</button>
   </nav>
   <button id="cfgx" type="button" title="Fechar (Esc)"><b>✕</b><small>ESC</small></button>
@@ -807,6 +808,11 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       </div>
       <p class="nt" id="kOld" hidden>Seu app de computador é uma versão antiga: nele só o atalho de mutar funciona em qualquer lugar. Os outros dois funcionam com a janela em foco. Atualize o app para liberar todos.</p>
       <p class="nt">No app de computador o atalho funciona em qualquer lugar, até com o jogo aberto. No navegador só funciona com a janela em foco. Você precisa já estar em um canal de voz.</p>
+    </section>
+
+    <section data-p="adm" hidden><h2>Administração</h2>
+      <p class="sub">Área só para o dono do servidor. Quem digita a senha de ADM vira ADM neste aparelho.</p>
+      <div class="cc pad" id="admBox"></div>
     </section>
 
     <section data-p="sobre" hidden><h2>Atualizações</h2>
@@ -1513,7 +1519,7 @@ function mkMsg(m, ch) {
     ab('smile', 'Reagir', e => rxMenu(e.currentTarget, m, ch));
     ab('reply', 'Responder', () => startReply(m, ch));
     if (m.own && (m.text || (m.att || []).length)) ab('edit', 'Editar', () => startEdit(m, ch));
-    if (m.own) ab('trash', 'Apagar (segure Shift para apagar sem perguntar)', e => delMsg(m, ch, e.shiftKey), 'del');
+    if (m.own || isAdm) ab('trash', m.own ? 'Apagar (segure Shift para apagar sem perguntar)' : '🛡️ ADM: apagar a mensagem de ' + m.from, e => delMsg(m, ch, e.shiftKey), 'del');
     p.append(t);   // ao lado do nome e da hora, bem perto da mensagem
   }
   return d;
@@ -1544,7 +1550,7 @@ function rxMenu(btn, m, ch) {
   setTimeout(() => document.addEventListener('mousedown', off, true), 0);
 }
 async function delMsg(m, ch, quick) {
-  if (!quick && !(await askYes('Apagar essa mensagem? Isso não tem volta.', 'Apagar'))) return;
+  if (!quick && !(await askYes(m.own ? 'Apagar essa mensagem? Isso não tem volta.' : 'Apagar a mensagem de ' + m.from + ' (como ADM)? Isso não tem volta.', 'Apagar'))) return;
   send({ type: 'msg-del', channel: ch, mid: m.mid });
 }
 function addMsg(m, ch) {
@@ -1744,8 +1750,9 @@ function handle(m) {
   } else if (m.type === 'peer-join') { names[m.id] = m.name; sfx('entra'); }
   else if (m.type === 'peer-leave') { st.users = st.users.map(u => u.id === m.id ? { ...u, room: null } : u); dropPeer(m.id); delete names[m.id]; sfx('sai'); }
   else if (m.type === 'signal') onSignal(m.from, m.data);
-  else if (m.type === 'profiles') m.list.forEach(p => { prof[p.id] = p.prof; bdg[p.id] = p.bd || []; renderMem(); renderChans(); })
-  else if (m.type === 'profile') { prof[m.id] = m.prof; bdg[m.id] = m.bd || []; renderMem(); renderChans(); syncStage(); }
+  else if (m.type === 'profiles') m.list.forEach(p => { prof[p.id] = p.prof; bdg[p.id] = p.bd || []; admOf[p.id] = !!p.adm; renderMem(); renderChans(); })
+  else if (m.type === 'profile') { prof[m.id] = m.prof; bdg[m.id] = m.bd || []; admOf[m.id] = !!m.adm; renderMem(); renderChans(); syncStage(); }
+  else if (m.type === 'admin') { isAdm = !!m.on; admEnabled = m.enabled !== false; admErr = m.err || ''; admOf[me] = isAdm; paintAdm(); if (view?.k === 't') renderMsgs(); if (isAdm && admWant) toast('🛡️ Você é ADM agora.'); admWant = false; }
   else if (m.type === 'ach') { ACH = m; bdg[me] = bdShow(ACH); if (!$('#cfg').hidden) { paintAch(); renderPrev(); fillFrames(); } }
   else if (m.type === 'unlock') { bdQueue.push([m.id, m.lvl]); bdNext(); }
   else if (m.type === 'unlock-fr') { bdQueue.push([m.id, 'fr']); bdNext(); }
@@ -2213,9 +2220,26 @@ idb.get('prof-img').then(img => {
 });
 const prof = {};
 // ---------- emblemas e conquistas (o servidor conta tudo; aqui só desenhamos) ----------
+let admWant = false, isAdm = false, admEnabled = true, admErr = ''; const admOf = {};   // isAdm = eu sou ADM; admOf[id] = essa pessoa é ADM
 let ACH = null; const bdg = {};   // ACH = minhas conquistas; bdg[id] = emblemas em destaque de cada pessoa
 const fmtV = (v, u) => u === 'min' ? (v < 60 ? v + ' min' : Math.floor(v / 60) + 'h' + (v % 60 ? ' ' + String(v % 60).padStart(2, '0') + 'min' : '')) : u === 'dias' ? v + (v === 1 ? ' dia' : ' dias') : u === 'niv' ? v + (v === 1 ? ' nível' : ' níveis') : u === 'emb' ? v + (v === 1 ? ' emblema' : ' emblemas') : v.toLocaleString('pt-BR');
 const bdDef = id => ACH && ACH.defs.find(d => d.id === id);
+function paintAdm() {
+  const b = $('#admBox'); if (!b) return; b.replaceChildren();
+  const p = t => { const e = document.createElement('p'); e.style.margin = '0 0 10px'; e.textContent = t; return e; };
+  if (isAdm) {
+    b.append(p('🛡️ Você é ADM. Poderes:'), p('• Apagar a mensagem de qualquer pessoa (lixeira aparece ao passar o mouse).'), p('• Expulsar alguém do servidor (botão no cartão de perfil da pessoa).'), p('• Aparece uma etiqueta 🛡️ ADM no seu cartão de perfil.'));
+    const o = document.createElement('button'); o.type = 'button'; o.className = 'sec'; o.textContent = 'Sair do modo ADM';
+    o.onclick = () => send({ type: 'admin-logout' }); b.append(o); return;
+  }
+  if (!admEnabled) { b.append(p('A senha de ADM ainda não foi criada. No Render, em Environment, crie a variável ADMIN_SENHA com uma senha só sua e espere o site reiniciar.')); return; }
+  const i = document.createElement('input'); i.type = 'password'; i.placeholder = 'Senha de ADM'; i.autocomplete = 'off'; i.style.cssText = 'max-width:280px;margin-right:8px';
+  const g = document.createElement('button'); g.type = 'button'; g.className = 'go'; g.textContent = 'Entrar como ADM';
+  const go = () => { if (i.value) { admWant = true; send({ type: 'admin-login', senha: i.value }); i.value = ''; } };
+  g.onclick = go; i.onkeydown = e => { if (e.key === 'Enter') go(); };
+  b.append(i, g);
+  if (admErr) { const e = p(admErr); e.style.color = '#ff6b6e'; e.style.marginTop = '10px'; b.append(e); }
+}
 const frLocked = id => !!(ACH && (ACH.frames || []).some(f => f.id === id && !f.open));   // borda exclusiva ainda trancada?
 const frMission = f => { const d = bdDef(f.b); return d ? 'Missão: chegar em “' + d.titles[f.l - 1] + '” (' + d.name + ', nível ' + f.l + ': ' + fmtV(d.tiers[f.l - 1], d.unit) + ').' : ''; };
 function bdEl(def, lvl, size, locked) {   // a medalha em si: hexágono na cor do nível, com o ícone no meio
@@ -2823,11 +2847,13 @@ function card(id, anchor) {
   const av = document.createElement('div'); av.className = 'av big'; paintAv(av, u.name, pr);
   const bx = document.createElement('div'); bx.className = 'bx';
   const nm = document.createElement('b'); nm.className = 'nm'; nm.textContent = u.name + (id === me ? ' (você)' : ''); bx.append(nm);
+  if (admOf[id]) { const t = document.createElement('span'); t.textContent = '🛡️ ADM'; t.style.cssText = 'background:#b8860b;color:#fff;margin-left:8px;font-size:.66rem;font-weight:700;border-radius:99px;padding:1px 8px;vertical-align:3px'; nm.append(t); }
   const sec = (title, ...els) => { const d = document.createElement('div'); const h = document.createElement('h4'); h.textContent = title; d.append(h, ...els); bx.append(document.createElement('hr'), d); };
   if (pr.about) { const t = document.createElement('p'); t.textContent = pr.about; sec('Sobre mim', t); }
   const bdr = bdRow(bdg[id]); if (bdr) sec('Emblemas', bdr);
   const al = actLines(u, true); if (al.length) sec('Atividade', ...al);
   if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
+  if (isAdm && id !== me) { const b = document.createElement('button'); b.className = 'go'; b.style.background = '#da373c'; b.textContent = '🛡️ Expulsar do servidor'; b.onclick = async () => { if (await askYes('Expulsar ' + u.name + ' do servidor? A pessoa pode entrar de novo.', 'Expulsar')) { send({ type: 'kick', id }); w.remove(); } }; bx.append(b); }
   if (id === me) { const b = document.createElement('button'); b.className = 'go'; b.textContent = 'Editar perfil'; b.onclick = () => { w.remove(); $('#bCfg').click(); }; bx.append(b); }
   c.append(bn, av, bx); w.append(c); document.body.append(w);
   const close = () => { w.remove(); document.removeEventListener('keydown', esc, true); };
