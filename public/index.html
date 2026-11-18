@@ -2837,13 +2837,13 @@ function bdRow(list) {   // fileira de emblemas (cartão de perfil)
 }
 function bdShow(a) {   // mesmos emblemas que o servidor mostraria para a turma
   const have = a.defs.filter(d => (a.lv[d.id] || 0) > 0);
-  const ids = Array.isArray(a.pick) ? a.pick.filter(id => have.some(d => d.id === id)) : have.map((d, i) => ({ d, i })).sort((x, y) => a.lv[y.d.id] - a.lv[x.d.id] || x.i - y.i).map(x => x.d.id);
-  return ids.slice(0, 3).map(id => ({ id, lvl: a.lv[id] }));
+  const ids = Array.isArray(a.pick) ? a.pick.filter(id => have.some(d => d.id === id)) : have.map((d, i) => ({ d, i })).sort((x, y) => (y.d.adm ? 1 : 0) - (x.d.adm ? 1 : 0) || a.lv[y.d.id] - a.lv[x.d.id] || x.i - y.i).map(x => x.d.id);
+  return ids.slice(0, 5).map(id => ({ id, lvl: a.lv[id] }));
 }
 function paintAch() {
   const top = $('#bdTop'), grid = $('#bdGrid'); if (!top || !grid) return;
   if (!ACH) { top.textContent = 'Carregando suas conquistas…'; grid.replaceChildren(); return; }
-  const show = bdShow(ACH), tot = ACH.defs.length * 5, got = ACH.defs.reduce((n, d) => n + (ACH.lv[d.id] || 0), 0);
+  const show = bdShow(ACH), vis = ACH.defs.filter(d => !d.adm || ACH.adm), tot = vis.length * 5, got = vis.reduce((n, d) => n + (ACH.lv[d.id] || 0), 0);
   top.replaceChildren();
   const tt = document.createElement('div'); tt.className = 'tt';
   const tb = document.createElement('b'); tb.textContent = '🏅 ' + got + ' de ' + tot + ' níveis conquistados' + (ACH.adm ? '  ·  🛡️ ADM: tudo liberado' : '');
@@ -2854,7 +2854,7 @@ function paintAch() {
   const cur = document.createElement('div'); const ch = document.createElement('small'); ch.style.color = 'var(--mut)';
   ch.textContent = show.length ? 'No seu cartão de perfil (a turma vê):' : 'Seu cartão ainda não tem emblemas. Ganhe o primeiro!';
   cur.append(ch); const row = bdRow(show); if (row) { row.style.marginTop = '8px'; cur.append(row); }
-  const hint = document.createElement('small'); hint.style.color = 'var(--mut)'; hint.textContent = 'Clique num emblema conquistado para fixar (ou tirar) do seu cartão. Cabem até 3. Os níveis sobem sozinhos conforme você usa o app.';
+  const hint = document.createElement('small'); hint.style.color = 'var(--mut)'; hint.textContent = 'Clique num emblema conquistado para fixar (ou tirar) do seu cartão. Cabem até 5. Os níveis sobem sozinhos conforme você usa o app.';
   top.append(tt, bar, cur, hint);
   const rew = $('#bdRew'); rew.replaceChildren();
   if (ACH.frames && ACH.frames.length) {
@@ -2878,13 +2878,13 @@ function paintAch() {
   }
   grid.replaceChildren();
   const pinned = new Set(show.map(x => x.id));
-  ACH.defs.forEach(d => {
+  vis.forEach(d => {
     const lvl = ACH.lv[d.id] || 0, v = ACH.vals[d.id] || 0, next = d.tiers[lvl], prev = lvl ? d.tiers[lvl - 1] : 0;
     const c = document.createElement('button'); c.type = 'button'; c.className = 'bc' + (lvl ? ' ok' : '') + (pinned.has(d.id) ? ' pin' : '');
     const bi = document.createElement('div'); bi.className = 'bi';
     const nm = document.createElement('b'); nm.textContent = lvl ? d.titles[lvl - 1] : d.name;
     if (pinned.has(d.id)) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = '📌 No cartão'; nm.append(t); }
-    if (d.special) { const t = document.createElement('span'); t.className = 'tag ex'; t.textContent = '⭐ Exclusivo'; nm.append(t); }
+    if (d.special) { const t = document.createElement('span'); t.className = 'tag ex'; t.textContent = d.adm ? '🛡️ Só ADM' : '⭐ Exclusivo'; nm.append(t); }
     const ds = document.createElement('small'); ds.textContent = d.desc;
     const pg = document.createElement('div'); pg.className = 'bbar'; const pi = document.createElement('i'); pi.style.width = (next ? Math.max(0, Math.min(1, (v - prev) / (next - prev))) * 100 : 100) + '%'; pg.append(pi);
     const nv = document.createElement('div'); nv.className = 'nv';
@@ -2896,7 +2896,7 @@ function paintAch() {
     c.onclick = () => {
       if (!lvl) { toast('Ainda bloqueado: ' + d.desc + ' Primeiro nível em ' + fmtV(d.tiers[0], d.unit) + '.'); return; }
       let ids = show.map(x => x.id);
-      ids = ids.includes(d.id) ? ids.filter(x => x !== d.id) : [...ids, d.id].slice(-3);
+      ids = ids.includes(d.id) ? ids.filter(x => x !== d.id) : [...ids, d.id].slice(-5);
       ACH.pick = ids; bdg[me] = bdShow(ACH); send({ type: 'badge-pick', ids }); paintAch(); renderPrev();
     };
     grid.append(c);
