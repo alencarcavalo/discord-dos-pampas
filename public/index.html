@@ -1647,15 +1647,26 @@ function linkExtra(u) {
   return box;
 }
 
+let rcTry = 0, rcTimer = 0, rcSince = 0;   // reconexão automática: queda rápida (ex.: servidor reiniciando) não mostra aviso
+function connectWS() {
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+  const mine = ws;
+  ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof, cid: CID, pass: PASS });
+  ws.onmessage = ev => handle(JSON.parse(ev.data));
+  ws.onclose = () => {
+    if (mine !== ws || badPass) return;
+    if (kickedBy) return showReload(kickedBy === '\0' ? 'Você entrou em outro lugar (outra aba ou aparelho). Esta conexão foi encerrada.' : 'Você foi removido por ' + kickedBy + '.');
+    if (!rcSince) { rcSince = Date.now(); try { dropAll(); } catch {} }
+    if (Date.now() - rcSince > 20000) showReload('Conexão perdida ou o app foi atualizado.');   // só avisa se não voltar em 20 s
+    clearTimeout(rcTimer); rcTimer = setTimeout(connectWS, Math.min(1000 * ++rcTry, 5000));
+  };
+}
 $('#login').onsubmit = e => {
   e.preventDefault();
   myName = $('#nome').value.trim() || 'Guri';
   try { localStorage.setItem('pampas-nome', myName); } catch {}
   PASS = $('#senha').value; badPass = false; $('#erro').textContent = '';
-  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-  ws.onopen = () => send({ type: 'hello', name: myName, prof: cfg.prof, cid: CID, pass: PASS });
-  ws.onmessage = ev => handle(JSON.parse(ev.data));
-  ws.onclose = () => { if (badPass) return; showReload(kickedBy === '\0' ? 'Você entrou em outro lugar (outra aba ou aparelho). Esta conexão foi encerrada.' : kickedBy ? 'Você foi removido por ' + kickedBy + '.' : 'Conexão perdida ou o app foi atualizado.'); };
+  connectWS();
 };
 // senha da turma: se o servidor pedir, aparece o campo (e a senha fica lembrada neste aparelho)
 let PASS = '', badPass = false;
@@ -1701,6 +1712,7 @@ function dropAll() {
 function handle(m) {
   if (m.type === 'hello-ok') {
     me = m.id; $('#login').hidden = true; $('#app').hidden = false;
+    if (rcSince) { rcSince = 0; rcTry = 0; const bar = $('#rlbar'); if (bar) bar.remove(); if (view && view.k === 't') send({ type: 'history', channel: view.id }); }
     try { if (PASS) localStorage.setItem('pampas-senha', PASS); } catch {}
     loadIce();
     lastAct = ''; setTimeout(() => pushAct(true), 500); paintMic();
