@@ -571,7 +571,8 @@ const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:
 const FRAMES = ['bandeira', 'erva', 'chimarrao', 'chapeu', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'termica', 'touro', 'ferradura', 'corrente', 'caveira', 'tinta', 'chamas', 'cartola', 'palha', 'neitzke', 'cuia-ouro', 'espora', 'brasa-viva', 'lua-noite', 'aurora', 'lenda-pampa'];
 // bordas EXCLUSIVAS: só quem cumpriu a missão (chegar no nível l do emblema b) pode usar. O servidor confere, então não dá para burlar.
 const FRAME_REQ = { 'cuia-ouro': { b: 'gaucho', l: 2 }, 'espora': { b: 'cine', l: 2 }, 'brasa-viva': { b: 'churras', l: 3 }, 'lua-noite': { b: 'coruja', l: 2 }, 'aurora': { b: 'madruga', l: 2 }, 'lenda-pampa': { b: 'lenda', l: 2 } };
-const frameOpen = (cid, f) => { const r = FRAME_REQ[f]; if (!r) return true; const s = cid && STATS.get(cid); return !!s && (s.lv[r.b] || 0) >= r.l; };
+const isAdmCid = cid => !!ADMIN_SENHA && !!cid && ADMINS.has(cid);   // ADM tem tudo liberado (emblemas no nível máximo e todas as bordas)
+const frameOpen = (cid, f) => { const r = FRAME_REQ[f]; if (!r || isAdmCid(cid)) return true; const s = cid && STATS.get(cid); return !!s && (s.lv[r.b] || 0) >= r.l; };
 const numIn = (v, lo, hi, def) => (Number.isFinite(+v) && v !== null && v !== '' ? Math.min(hi, Math.max(lo, +v)) : def);   // número dentro de um intervalo (zoom/posição da foto)
 function setProf(ws, p) {
   p = p || {};
@@ -611,8 +612,10 @@ function stOf(cid) {
 }
 const lvlOf = (def, v) => def.tiers.filter(t => v >= t).length;
 // os até 3 emblemas que aparecem no cartão: os que a pessoa escolheu, ou (sem escolha) os de maior nível
+const lvOf = (cid, s) => isAdmCid(cid) ? Object.fromEntries(DEFS.map(d => [d.id, d.tiers.length])) : s.lv;   // níveis (ADM: tudo no máximo)
 function showcase(cid) {
-  const s = cid && STATS.get(cid); if (!s) return [];
+  const s0 = cid && STATS.get(cid); if (!s0) return [];
+  const s = { ...s0, lv: lvOf(cid, s0) };
   const have = DEFS.filter(d => (s.lv[d.id] || 0) > 0);
   let ids = Array.isArray(s.pick) ? s.pick.filter(id => have.some(d => d.id === id)) : have.map((d, i) => ({ d, i })).sort((a, b) => s.lv[b.d.id] - s.lv[a.d.id] || a.i - b.i).map(x => x.d.id);
   return ids.slice(0, 3).map(id => ({ id, lvl: s.lv[id] }));
@@ -620,8 +623,8 @@ function showcase(cid) {
 const achPayload = ws => {
   const s = stOf(ws.cid || ''), vals = {};
   derive(s);
-  DEFS.forEach(d => vals[d.id] = s[d.key] || 0);
-  return { type: 'ach', defs: DEFS.map(d => ({ id: d.id, emoji: d.emoji, name: d.name, desc: d.desc, unit: d.unit, tiers: d.tiers, titles: d.titles, special: !!d.special })), frames: Object.entries(FRAME_REQ).map(([id, r]) => ({ id, b: r.b, l: r.l, open: frameOpen(ws.cid, id) })), vals, lv: s.lv, pick: s.pick, sk: s.sk };
+  DEFS.forEach(d => vals[d.id] = isAdmCid(ws.cid) ? Math.max(s[d.key] || 0, d.tiers[d.tiers.length - 1]) : s[d.key] || 0);
+  return { type: 'ach', defs: DEFS.map(d => ({ id: d.id, emoji: d.emoji, name: d.name, desc: d.desc, unit: d.unit, tiers: d.tiers, titles: d.titles, special: !!d.special })), frames: Object.entries(FRAME_REQ).map(([id, r]) => ({ id, b: r.b, l: r.l, open: frameOpen(ws.cid, id) })), vals, lv: lvOf(ws.cid, s), pick: s.pick, sk: s.sk, adm: isAdmCid(ws.cid) };
 };
 const tellProfile = ws => clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
 // confere se algum emblema subiu de nível; se sim, avisa a pessoa e atualiza o cartão dela para a turma
@@ -743,7 +746,7 @@ wss.on('connection', (ws, req) => {
     } else if (m.type === 'badge-pick') {   // escolher (até 3) emblemas para o cartão; ids = null volta para o automático
       if (!ws.cid) return;
       const s = stOf(ws.cid);
-      s.pick = Array.isArray(m.ids) ? [...new Set(m.ids.map(String))].filter(id => (s.lv[id] || 0) > 0).slice(0, 3) : null;
+      s.pick = Array.isArray(m.ids) ? [...new Set(m.ids.map(String))].filter(id => (lvOf(ws.cid, s)[id] || 0) > 0).slice(0, 3) : null;
       markDirty('\0st'); tellProfile(ws); send(ws, achPayload(ws));
     } else if (m.type === 'chan-add') {
       const name = String(m.name || '').trim().slice(0, 24);
@@ -780,10 +783,11 @@ wss.on('connection', (ws, req) => {
       ws.admT.push(now);
       if (!crypto.timingSafeEqual(sha(m.senha || ''), sha(ADMIN_SENHA))) return send(ws, { type: 'admin', on: false, enabled: true, err: 'Senha de ADM errada.' });
       ws.admin = true; ADMINS.add(ws.cid); markDirty('\0adm');
-      send(ws, { type: 'admin', on: true, enabled: true }); tellProfile(ws);
+      send(ws, { type: 'admin', on: true, enabled: true }); tellProfile(ws); send(ws, achPayload(ws));
     } else if (m.type === 'admin-logout') {
       ws.admin = false; ADMINS.delete(ws.cid); markDirty('\0adm');
-      send(ws, { type: 'admin', on: false, enabled: !!ADMIN_SENHA }); tellProfile(ws);
+      if (ws.prof && !frameOpen(ws.cid, ws.prof.frame)) { ws.prof.frame = ''; clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) })); }   // saiu do ADM: perde a borda trancada
+      send(ws, { type: 'admin', on: false, enabled: !!ADMIN_SENHA }); tellProfile(ws); send(ws, achPayload(ws));
     } else if (m.type === 'kick') {
       if (!ws.admin) return;   // só ADM expulsa
       const t = [...clients].find(c => c.id === String(m.id) && c !== ws);
