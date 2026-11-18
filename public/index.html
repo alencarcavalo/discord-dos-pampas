@@ -617,6 +617,81 @@ body.mod #toast,body.mod #sbn{border-radius:999px}
 body.mod #updbar{margin:10px auto 0;left:50%;right:auto;transform:translateX(-50%);border-radius:999px;padding:8px 18px}
 body.mod ::-webkit-scrollbar-thumb{border-radius:999px}
 @media (max-width:760px){body.mod #app{gap:8px;padding:8px}body.mod #cfg{padding:8px}body.mod #cfgbody{padding:24px 18px 90px}}
+/* ===== Sala de música ===== */
+#musicw{display:flex;flex-direction:column;min-height:0;min-width:0;flex:1;padding:12px;gap:12px;position:relative}
+.mgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);gap:12px}
+.mcard{container-type:inline-size;display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--side);border-radius:12px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--txt) 7%,transparent)}
+.mh{display:flex;align-items:center;gap:8px;margin-bottom:10px;min-height:34px}
+.mh h2{margin:0;font-size:1.2rem;font-weight:600;flex:1}
+.mh .mt{color:var(--txt);font-size:.82rem;padding:4px 8px;border-radius:6px}
+.mh .mt:hover{background:color-mix(in srgb,var(--txt) 12%,transparent)}
+.ml{flex:1;overflow:auto;min-height:0;display:flex;flex-direction:column;gap:2px;margin:0 -6px;padding:0 6px}
+.ml .mvz{color:var(--mut);padding:18px 8px;text-align:center;font-size:.9rem}
+.ml .msub{color:var(--mut);font-size:.8rem;font-weight:600;padding:10px 8px 4px}
+.mi{position:relative;display:flex;align-items:center;gap:12px;padding:6px 8px;border-radius:8px}
+.mi:hover{background:var(--hover)}
+.mi.cur{background:color-mix(in srgb,var(--verde) 55%,var(--side))}
+.mi.cur:hover{background:color-mix(in srgb,var(--verde) 62%,var(--side))}
+.mi img,.mi .mcv{width:48px;height:48px;border-radius:6px;object-fit:cover;flex:none;background:var(--input);display:grid;place-items:center;color:var(--mut)}
+.mi .mcv .ico svg{width:26px;height:26px}
+.mi.q{cursor:pointer}
+.mx{flex:1;min-width:0}
+.mx b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi.cur .mx small{color:color-mix(in srgb,#fff 75%,transparent)}
+.ma{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none;gap:0;background:color-mix(in srgb,var(--main) 94%,transparent);border-radius:999px;padding:0 3px;box-shadow:0 2px 10px #0006}
+.mi:hover .ma,.mi:focus-within .ma{display:flex}
+.ma.al,.mpl .ma{position:static;transform:none;display:flex;background:none;box-shadow:none;padding:0;flex:none}
+@container (min-width:420px){.ma{position:static;transform:none;display:flex;background:none;box-shadow:none;padding:0;flex:none}}
+@media(hover:none){.ma{position:static;transform:none;display:flex;background:none;box-shadow:none;padding:0;flex:none}}
+.mb{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;color:var(--txt);flex:none}
+.mb:hover{background:color-mix(in srgb,var(--txt) 14%,transparent)}
+.mb .ico svg{width:20px;height:20px}
+.mb.big{width:44px;height:44px;background:var(--txt);color:var(--main)}
+.mb.big:hover{background:var(--txt);filter:brightness(.88)}
+.mb.big .ico svg{width:26px;height:26px}
+.mb.on{color:var(--blur)}
+#mSearch{display:flex;align-items:center;border:1.5px solid color-mix(in srgb,var(--txt) 80%,transparent);border-radius:999px;padding:0 4px 0 16px;margin-bottom:8px;flex:none}
+#mSearch:focus-within{border-color:var(--blur)}
+#mSearch input{background:transparent;padding:.55rem 0;border-radius:0;min-width:0;flex:1;outline:none}
+.mrh{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:.85rem;padding:2px 4px 6px}
+.mrh b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.mbar{flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr);align-items:center;gap:16px;background:var(--side);border-radius:12px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--txt) 7%,transparent)}
+.mnow{display:flex;align-items:center;gap:12px;min-width:0}
+.mnow img,.mnow .mcv{width:54px;height:54px;border-radius:6px;object-fit:cover;flex:none;background:var(--input);display:grid;place-items:center;color:var(--mut)}
+.mnow .mx b{font-size:1.02rem}
+.mctr{display:grid;gap:2px;min-width:0}
+.mbtns{display:flex;justify-content:center;align-items:center;gap:14px}
+.mseek{display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--txt);font-variant-numeric:tabular-nums}
+.mseek input{flex:1;min-width:0}
+.mvol{display:flex;flex-wrap:wrap;align-items:center;gap:6px;justify-content:flex-end;min-width:0}
+.mvol input{flex:1 1 80px;min-width:80px;max-width:170px}
+.mvol .mt{font-size:.8rem;color:var(--txt);padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--txt) 10%,transparent);white-space:nowrap}
+.mvol .mt.on{background:color-mix(in srgb,var(--verde) 30%,transparent)}
+#musplayer{position:fixed;left:-500px;top:0;width:320px;height:200px;overflow:hidden;pointer-events:none;opacity:0}
+#mBlock{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:3;background:var(--verm);color:#fff;padding:10px 16px;border-radius:999px;font-weight:600;box-shadow:0 4px 18px #0007}
+.mmenu{position:fixed;z-index:12;min-width:210px;max-width:300px;max-height:60vh;overflow:auto;background:#111214;border-radius:8px;padding:6px;box-shadow:0 6px 22px #000b;display:grid;gap:1px}
+.mmenu button{display:block;text-align:left;padding:7px 10px;border-radius:4px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mmenu button:hover{background:var(--blur);color:var(--onac,#fff)}
+.mmenu button.bad{color:var(--verm)}.mmenu button.bad:hover{background:var(--verm);color:#fff}
+.mmenu .mhd{color:var(--mut);font-size:.72rem;font-weight:700;text-transform:uppercase;padding:6px 10px 2px}
+.mmini{padding:2px 8px 4px 32px!important;font-size:.82rem;cursor:pointer;display:flex;gap:6px;align-items:center}
+.mmini span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mmini:hover{color:var(--txt)}
+.ch .mct{margin-left:auto;font-size:.78rem;color:var(--verde);font-weight:600}
+.eq{display:inline-flex;align-items:flex-end;gap:2px;height:12px;flex:none}
+.eq i{width:3px;background:var(--verde);border-radius:1px;height:30%;animation:eq 0.9s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.25s}.eq i:nth-child(3){animation-delay:.5s}
+.eq.pz i{animation-play-state:paused}
+@keyframes eq{0%,100%{height:25%}50%{height:100%}}
+#ask.mpe{width:440px}
+#ask.mpe .mpl{max-height:46vh;overflow:auto;display:grid;gap:2px}
+body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in srgb,var(--side) 60%,transparent)}
+@media(max-width:900px){
+ .mgrid{grid-template-columns:1fr;overflow:auto;grid-auto-rows:minmax(300px,auto)}
+ .mbar{grid-template-columns:1fr}
+ .mvol{justify-content:flex-start}
+}
 </style>
 </head>
 <body>
@@ -669,9 +744,11 @@ body.mod ::-webkit-scrollbar-thumb{border-radius:999px}
       </form>
       <input type="file" id="arq" multiple hidden>
     </div>
+    <div id="musicw" hidden></div>
   </section>
   <aside id="mem"></aside>
   <div id="audios" hidden></div>
+  <div id="musplayer"><div id="musyt"></div></div>
 </div>
 
 <div id="updbar" hidden><span id="updbarT"></span><button id="updbarGo">Reiniciar e atualizar</button><button id="updbarX">Depois</button></div>
@@ -1179,7 +1256,17 @@ const P = {
   reply: '<path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>',
   edit: '<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>',
   trash: '<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>',
-  music: '<path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>'
+  music: '<path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>',
+  play: '<path d="M8 5v14l11-7z"/>',
+  pause: '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>',
+  prev: '<path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>',
+  next: '<path d="m6 18 8.5-6L6 6v12zM16 6v12h2V6h-2z"/>',
+  shuffle: '<path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>',
+  queue: '<path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/>',
+  search: '<path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>',
+  more: '<path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>',
+  disc: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/>',
+  menu: '<path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>'
 };
 const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[n] + '</svg>';
 function ico(n) { const s = document.createElement('span'); s.className = 'ico'; s.innerHTML = svg(n); return s; }
@@ -1413,13 +1500,330 @@ function syncStage() {
 }
 function emptyCheck() { syncStage(); }
 
+// ---------- sala de música ----------
+// Todo mundo que está "ouvindo" toca o mesmo vídeo do YouTube (player embutido) no mesmo ponto. O servidor guarda fila, biblioteca e playlists.
+const MV = '\0musica';   // id da tela (não pode bater com o id de nenhum canal)
+const mus = { lib: [], pls: [], q: [], cur: null, playing: false, pos: 0, at: 0, n: 0, off: 0, on: false, vol: 60, results: null, rq: '', busy: false, seeking: false, blocked: false, yt: null, ready: false, loaded: '', wait: [], mk: 0 };
+try { const v = localStorage.getItem('pampas-mus-vol'); if (v !== null && v !== '' && !isNaN(+v)) mus.vol = Math.min(100, Math.max(0, +v)); } catch {}
+const mel = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const mThumb = v => 'https://i.ytimg.com/vi/' + v + '/mqdefault.jpg';
+const mFmt = s => { s = Math.max(0, Math.floor(s || 0)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
+const mExp = () => mus.playing ? mus.pos + (Date.now() + mus.off - mus.at) / 1000 : mus.pos;   // ponto em que a música deve estar agora
+const mBtn = (icon, title, fn, cls) => { const b = mel('button', 'mb' + (cls ? ' ' + cls : '')); b.type = 'button'; b.title = title; b.setAttribute('aria-label', title); b.append(ico(icon)); b.onclick = e => { e.stopPropagation(); fn(e); }; return b; };
+const mCover = (v, big) => { if (!v) { const d = mel('div', 'mcv'); d.append(ico('music')); return d; } const i = mel('img'); i.src = mThumb(v); i.alt = ''; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; i.onerror = () => { const d = mel('div', 'mcv'); d.append(ico('music')); i.replaceWith(d); }; return i; };
+const mSub = s => (s.artist || '') + (s.artist && s.dur ? ' - ' : '') + (s.dur ? mFmt(s.dur) : '');
+const mById = v => mus.lib.find(s => s.v === v);
+
+// ----- player do YouTube (escondido: só o som interessa) -----
+function musLoadYT(cb) {
+  if (window.YT && YT.Player) return cb();
+  (musLoadYT.q ||= []).push(cb);
+  if (musLoadYT.l) return; musLoadYT.l = 1;
+  window.onYouTubeIframeAPIReady = () => { const q = musLoadYT.q; musLoadYT.q = []; q.forEach(f => f()); };
+  const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api';
+  s.onerror = () => { musLoadYT.l = 0; musLoadYT.q = []; mus.making = false; mus.wait = []; toast('Não consegui carregar o player do YouTube. Confira a internet.'); };
+  document.head.append(s);
+}
+function musEnsure(cb) {
+  if (mus.ready) return cb();
+  mus.wait.push(cb);
+  if (mus.making) return; mus.making = true;
+  musLoadYT(() => {
+    mus.yt = new YT.Player('musyt', { width: 320, height: 200, playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0, origin: location.origin },
+      events: { onReady: () => { mus.ready = true; try { mus.yt.setVolume(mus.vol); } catch {} const w = mus.wait; mus.wait = []; w.forEach(f => f()); }, onStateChange: musState, onError: musYtErr } });
+  });
+}
+function musApply() {   // faz o player acompanhar o estado do servidor
+  if (!mus.on) return;
+  musEnsure(() => {
+    if (!mus.on) return;
+    const yt = mus.yt, c = mus.cur;
+    try {
+      if (!c) { yt.stopVideo(); mus.loaded = ''; return; }
+      const want = Math.max(0, mExp());
+      if (mus.loaded !== c.uid) {
+        mus.loaded = c.uid;
+        const o = { videoId: c.v, startSeconds: mus.playing ? want : mus.pos };
+        if (mus.playing) yt.loadVideoById(o); else yt.cueVideoById(o);
+        return musWatch();
+      }
+      const s = yt.getPlayerState();
+      if (mus.playing) {
+        if (s !== 1 && s !== 3 && s !== 0) { yt.playVideo(); musWatch(); }
+        if (s !== 0 && Math.abs(yt.getCurrentTime() - want) > 1.5) yt.seekTo(want, true);
+      } else {
+        if (s === 1 || s === 3) yt.pauseVideo();
+        if (Math.abs(yt.getCurrentTime() - mus.pos) > .8) yt.seekTo(mus.pos, true);
+      }
+    } catch (e) { console.error('player de música:', e); }
+  });
+}
+function musWatch() {   // o navegador pode bloquear o som sem clique: se nada tocar em 3 s, pede um clique
+  clearTimeout(musWatch.t);
+  musWatch.t = setTimeout(() => {
+    if (!mus.on || !mus.playing || !mus.ready) return;
+    let s = -1; try { s = mus.yt.getPlayerState(); } catch {}
+    if (s !== 1 && s !== 3 && s !== 0) { mus.blocked = true; musPaintBlock(); if (view?.k !== 'm') toast('A música está esperando um clique: abra a Sala de música.'); }
+  }, 3000);
+}
+function musState(e) {
+  const c = mus.cur;
+  if (e.data === 1) {
+    if (mus.blocked) { mus.blocked = false; musPaintBlock(); }
+    if (c && !c.dur) { const d = Math.round(mus.yt.getDuration()); if (d > 0) send({ type: 'mus-dur', v: c.v, dur: d }); }
+  } else if (e.data === 0 && c && mus.loaded === c.uid) send({ type: 'mus-ended', uid: c.uid });   // acabou: qualquer ouvinte avisa, o servidor passa para a próxima
+}
+function musYtErr() { const c = mus.cur; if (c && mus.loaded === c.uid) send({ type: 'mus-ended', uid: c.uid, err: 1 }); }   // vídeo bloqueado para tocar fora do YouTube
+setInterval(() => {   // corrige a diferença se o som foi atrasando
+  if (!mus.on || !mus.playing || !mus.ready) return;
+  try { if (mus.yt.getPlayerState() === 1 && Math.abs(mus.yt.getCurrentTime() - mExp()) > 2.5) mus.yt.seekTo(mExp(), true); } catch {}
+}, 5000);
+function musListen(on) {
+  mus.on = !!on; send({ type: 'mus-listen', on: mus.on });
+  if (mus.on) musApply(); else { clearTimeout(musWatch.t); mus.blocked = false; mus.loaded = ''; try { mus.ready && mus.yt.stopVideo(); } catch {} }
+  musPaintBar(); musPaintBlock(); renderChans();
+}
+
+// ----- mensagens do servidor -----
+function musHandle(m) {
+  if (m.type === 'mus-lib') { mus.lib = m.lib || []; mus.pls = m.pls || []; musPaintPl(); musPaintLib(); if (mus.edPaint) mus.edPaint(); }
+  else if (m.type === 'mus-st') {
+    mus.cur = m.cur; mus.q = m.q || []; mus.playing = !!m.playing; mus.pos = +m.pos || 0; mus.at = m.at; mus.n = m.n || 0; mus.off = (m.now || Date.now()) - Date.now();
+    musPaintQ(); musPaintBar(); renderChans(); musApply();
+  } else if (m.type === 'mus-err') toast(m.msg);
+}
+function musReconnect() { if (mus.on) send({ type: 'mus-listen', on: true }); }
+
+// ----- menus pequenos (clique nos três pontinhos) -----
+function musMenu(ev, items) {
+  document.querySelectorAll('.mmenu').forEach(x => x.remove());
+  const d = mel('div', 'mmenu');
+  const fill = list => {
+    d.replaceChildren();
+    list.forEach(it => {
+      if (it.h) return d.append(mel('div', 'mhd', it.h));
+      const b = mel('button', it.bad ? 'bad' : '', it.t); b.type = 'button';
+      b.onclick = e => { e.stopPropagation(); if (it.sub) fill([{ h: it.t }, ...it.sub, { t: '← voltar', f: null, back: 1 }]); else { d.remove(); off(); if (it.f) it.f(); } };
+      if (it.back) b.onclick = e => { e.stopPropagation(); fill(items); };
+      d.append(b);
+    });
+  };
+  fill(items); document.body.append(d);
+  const r = ev.currentTarget ? ev.currentTarget.getBoundingClientRect() : { left: ev.clientX, bottom: ev.clientY, right: ev.clientX };
+  d.style.left = Math.max(8, Math.min(innerWidth - d.offsetWidth - 8, (r.right || r.left) - d.offsetWidth)) + 'px';
+  d.style.top = Math.max(8, Math.min(innerHeight - d.offsetHeight - 8, r.bottom + 4)) + 'px';
+  const out = e => { if (!d.contains(e.target)) { d.remove(); off(); } }, esc = e => { if (e.key === 'Escape') { d.remove(); off(); } };
+  const off = () => { document.removeEventListener('mousedown', out, true); document.removeEventListener('keydown', esc, true); };
+  setTimeout(() => { document.addEventListener('mousedown', out, true); document.addEventListener('keydown', esc, true); });
+}
+const musPlItems = v => mus.pls.length ? mus.pls.map(p => ({ t: p.name + (p.vs.includes(v) ? '  ✓' : ''), f: () => send({ type: 'mus-pl-add', id: p.id, v }) })) : [{ t: 'Você ainda não tem playlists', f: null }];
+
+// ----- tela -----
+function musBuild() {
+  const w = $('#musicw'); if (w.dataset.built) return; w.dataset.built = 1;
+  const card = (id, title) => { const c = mel('section', 'mcard'); c.id = id; const h = mel('div', 'mh'); h.append(mel('h2', '', title)); c.append(h); return c; };
+  const g = mel('div', 'mgrid');
+  const pl = card('mPl', 'Playlists'), lib = card('mLib', 'Biblioteca'), qu = card('mQu', 'Fila');
+  pl.firstChild.append(mBtn('plus', 'Nova playlist', () => askBox('Nome da nova playlist', true, 'Criar').then(n => { if (n) send({ type: 'mus-pl-new', name: n }); })));
+  pl.append(Object.assign(mel('div', 'ml'), { id: 'mPlL' }));
+  const cn = mel('small', '', ''); cn.id = 'mLibN'; lib.firstChild.append(cn);
+  const f = mel('form'); f.id = 'mSearch';
+  const inp = mel('input'); inp.id = 'mQ'; inp.maxLength = 200; inp.autocomplete = 'off'; inp.placeholder = 'Procure uma música ou cole um link do YouTube…';
+  const sb = mBtn('search', 'Buscar', () => {}); sb.type = 'submit'; sb.onclick = null;
+  f.append(inp, sb); f.onsubmit = e => { e.preventDefault(); musSearch(inp.value); };
+  inp.oninput = () => { if (!inp.value.trim() && mus.results) { mus.results = null; musPaintLib(); } };
+  lib.append(f, Object.assign(mel('div', 'ml'), { id: 'mLibL' }));
+  const clr = mel('button', 'mt', 'limpar fila'); clr.type = 'button'; clr.onclick = () => { if (mus.q.length) send({ type: 'mus-q-clear' }); };
+  qu.firstChild.append(clr); qu.append(Object.assign(mel('div', 'ml'), { id: 'mQL' }));
+  g.append(pl, lib, qu);
+
+  const bar = mel('div', 'mbar');
+  const now = mel('div', 'mnow'); now.id = 'mNow';
+  const ctr = mel('div', 'mctr'), bt = mel('div', 'mbtns');
+  const menu = mBtn('menu', 'Mais opções da fila', e => musMenu(e, [
+    { t: 'Salvar a fila como playlist', f: () => { if (!mus.cur && !mus.q.length) return toast('A fila está vazia.'); askBox('Nome da playlist', true, 'Salvar').then(n => { if (n) send({ type: 'mus-pl-new', name: n, from: 'queue' }); }); } },
+    { t: 'Embaralhar a fila', f: () => send({ type: 'mus-shuffle' }) },
+    { t: 'Limpar a fila', bad: 1, f: () => send({ type: 'mus-q-clear' }) }]));
+  const pp = mBtn('play', 'Tocar / pausar', () => send({ type: 'mus-toggle' }), 'big'); pp.id = 'mPP';
+  bt.append(menu, mBtn('prev', 'Anterior', () => send({ type: 'mus-prev' })), pp, mBtn('next', 'Próxima', () => send({ type: 'mus-next' })), mBtn('shuffle', 'Embaralhar a fila', () => send({ type: 'mus-shuffle' })));
+  const sk = mel('div', 'mseek'), t0 = mel('span', '', '0:00'), t1 = mel('span', '', '0:00'), r = mel('input'); t0.id = 'mT0'; t1.id = 'mT1'; r.id = 'mSeek'; r.type = 'range'; r.min = 0; r.max = 100; r.value = 0; r.step = 1; r.disabled = true;
+  r.oninput = () => { mus.seeking = true; t0.textContent = mFmt(+r.value); };
+  r.onchange = () => { mus.seeking = false; send({ type: 'mus-seek', pos: +r.value }); };
+  sk.append(t0, r, t1); ctr.append(bt, sk);
+  const vol = mel('div', 'mvol'), lis = mel('button', 'mt'); lis.id = 'mLis'; lis.type = 'button'; lis.onclick = () => musListen(!mus.on);
+  const vb = mBtn('speaker', 'Volume (só para você)', () => { vr.value = +vr.value ? 0 : 60; vr.oninput(); }); vb.id = 'mVolB';
+  const vr = mel('input'); vr.id = 'mVol'; vr.type = 'range'; vr.min = 0; vr.max = 100; vr.value = mus.vol; vr.title = 'Volume (só para você)';
+  vr.oninput = () => { mus.vol = +vr.value; try { localStorage.setItem('pampas-mus-vol', String(mus.vol)); } catch {} try { mus.ready && mus.yt.setVolume(mus.vol); } catch {} vb.replaceChildren(ico(mus.vol ? 'speaker' : 'volx')); };
+  vb.replaceChildren(ico(mus.vol ? 'speaker' : 'volx'));
+  vol.append(lis, vb, vr);
+  bar.append(now, ctr, vol);
+  const blk = mel('button', '', '🔊 O navegador bloqueou o som. Clique aqui para ouvir'); blk.id = 'mBlock'; blk.type = 'button'; blk.hidden = true;
+  blk.onclick = () => { try { mus.yt.playVideo(); mus.yt.seekTo(Math.max(0, mExp()), true); mus.yt.setVolume(mus.vol); } catch {} mus.blocked = false; musPaintBlock(); };
+  w.append(g, bar, blk);
+  paintRange(vr); paintRange(r);
+  musPaintAll();
+}
+const musPaintAll = () => { musPaintPl(); musPaintLib(); musPaintQ(); musPaintBar(); musPaintBlock(); };
+function musPaintBlock() { const b = $('#mBlock'); if (b) b.hidden = !(mus.blocked && mus.on); }
+
+function songRow(s, opts) {   // linha de música (biblioteca e resultados da busca)
+  const d = mel('div', 'mi'); d.title = s.title;
+  const x = mel('div', 'mx'); x.append(mel('b', '', s.title), mel('small', '', mSub(s)));
+  const a = mel('div', 'ma');
+  d.append(mCover(s.v), x, a); d.ondblclick = () => opts.now();
+  return { d, a };
+}
+function musPaintPl() {
+  const box = $('#mPlL'); if (!box) return; box.replaceChildren();
+  if (!mus.pls.length) box.append(mel('div', 'mvz', 'Nenhuma playlist ainda. Clique no + para criar uma, ou salve a fila pelo menu ≡ do player.'));
+  mus.pls.forEach(p => {
+    const d = mel('div', 'mi'), first = p.vs.map(mById).find(Boolean);
+    const x = mel('div', 'mx'); x.append(mel('b', '', p.name), mel('small', '', p.vs.length + (p.vs.length === 1 ? ' música' : ' músicas') + (p.by ? ' · ' + p.by : '')));
+    const a = mel('div', 'ma');
+    a.append(mBtn('play', 'Tocar a playlist (troca a fila)', () => send({ type: 'mus-pl-play', id: p.id, mode: 'replace' })),
+      mBtn('queue', 'Adicionar a playlist na fila', () => send({ type: 'mus-pl-play', id: p.id, mode: 'add' })),
+      mBtn('gear', 'Editar playlist', () => musPlEdit(p.id)));
+    d.append(mCover(first && first.v), x, a); d.ondblclick = () => send({ type: 'mus-pl-play', id: p.id, mode: 'replace' });
+    box.append(d);
+  });
+}
+function musPaintLib() {
+  const box = $('#mLibL'); if (!box) return; box.replaceChildren();
+  $('#mLibN').textContent = mus.lib.length ? mus.lib.length + ' músicas' : '';
+  if (mus.results || mus.busy) {   // resultados da busca
+    const h = mel('div', 'mrh'); h.append(mel('b', '', mus.busy ? 'Buscando…' : 'Resultados para “' + mus.rq + '”'));
+    const bk = mel('button', 'mt', '← biblioteca'); bk.type = 'button'; bk.onclick = () => { mus.results = null; $('#mQ').value = ''; musPaintLib(); }; h.append(bk); box.append(h);
+    if (!mus.busy && !mus.results.length) box.append(mel('div', 'mvz', 'Nada encontrado. Tente outro nome ou cole o link do vídeo.'));
+    (mus.results || []).forEach(r => {
+      const add = then => send({ type: 'mus-add', v: r.v, title: r.title, artist: r.artist, dur: r.dur, then });
+      const { d, a } = songRow(r, { now: () => add('now') });
+      a.append(mBtn('play', 'Tocar agora', () => add('now')), mBtn('queue', 'Adicionar à fila', () => add('queue')),
+        mBtn('plus', mById(r.v) ? 'Já está na biblioteca' : 'Salvar na biblioteca', () => { if (!mById(r.v)) { add(''); toast('Salva na biblioteca.'); } else toast('Essa já está na biblioteca.'); }));
+      box.append(d);
+    });
+    return;
+  }
+  if (!mus.lib.length) return box.append(mel('div', 'mvz', 'A biblioteca está vazia. Busque uma música acima ou cole um link do YouTube.'));
+  mus.lib.slice().reverse().forEach(s => {
+    const { d, a } = songRow(s, { now: () => send({ type: 'mus-add', v: s.v, then: 'now' }) });
+    a.append(mBtn('play', 'Tocar agora', () => send({ type: 'mus-add', v: s.v, then: 'now' })),
+      mBtn('disc', 'Tocar em seguida', () => send({ type: 'mus-add', v: s.v, then: 'next' })),
+      mBtn('queue', 'Adicionar ao fim da fila', () => send({ type: 'mus-add', v: s.v, then: 'queue' })),
+      mBtn('more', 'Mais opções', e => musMenu(e, [
+        { t: 'Adicionar à playlist ▸', sub: musPlItems(s.v) },
+        { t: 'Remover da biblioteca', bad: 1, f: () => askYes('Tirar "' + s.title + '" da biblioteca (e das playlists)?', 'Remover').then(y => { if (y) send({ type: 'mus-lib-del', v: s.v }); }) }])));
+    box.append(d);
+  });
+}
+function musPaintQ() {
+  const box = $('#mQL'); if (!box) return; box.replaceChildren();
+  if (!mus.cur && !mus.q.length) return box.append(mel('div', 'mvz', 'A fila está vazia. Toque uma música da biblioteca.'));
+  const row = (s, cur) => {
+    const d = mel('div', 'mi q' + (cur ? ' cur' : '')); d.title = s.title + (s.by ? ' (adicionada por ' + s.by + ')' : '');
+    const x = mel('div', 'mx'); x.append(mel('b', '', s.title), mel('small', '', s.artist || ''));
+    d.append(mCover(s.v), x);
+    const qa = mel('div', 'ma'); d.append(qa);
+    if (cur) qa.append(mBtn('x', 'Pular esta música', () => send({ type: 'mus-next' })));
+    else { qa.append(mBtn('x', 'Tirar da fila', () => send({ type: 'mus-q-del', uid: s.uid }))); d.onclick = () => send({ type: 'mus-q-go', uid: s.uid }); }
+    return d;
+  };
+  if (mus.cur) box.append(row(mus.cur, true));
+  if (mus.q.length) { box.append(mel('div', 'msub', 'A seguir')); mus.q.forEach(s => box.append(row(s, false))); }
+}
+function musPaintBar() {
+  const now = $('#mNow'); if (!now) return;
+  const c = mus.cur;
+  now.replaceChildren(mCover(c && c.v));
+  const x = mel('div', 'mx'); x.append(mel('b', '', c ? c.title : 'Nada tocando'), mel('small', '', c ? (c.artist || '') : 'Escolha uma música na biblioteca')); now.append(x);
+  const pp = $('#mPP'); pp.replaceChildren(ico(mus.playing ? 'pause' : 'play')); pp.title = mus.playing ? 'Pausar' : 'Tocar';
+  const lis = $('#mLis'); lis.textContent = mus.on ? '🎧 Ouvindo' + (mus.n > 1 ? ' · ' + mus.n : '') : '🎧 Ouvir' + (mus.n ? ' · ' + mus.n + ' ouvindo' : '');
+  lis.classList.toggle('on', mus.on); lis.title = mus.on ? 'Clique para parar de ouvir (a música continua para os outros)' : 'Clique para ouvir junto com a turma';
+  musPaintProg();
+}
+function musPaintProg() {
+  const r = $('#mSeek'); if (!r) return;
+  const c = mus.cur, dur = c && c.dur ? c.dur : 0;
+  r.disabled = !c || !dur;
+  if (mus.seeking) return;
+  const p = c ? Math.min(Math.max(0, mExp()), dur || Infinity) : 0;
+  r.max = dur || 1; r.value = c && dur ? p : 0;
+  $('#mT0').textContent = mFmt(p); $('#mT1').textContent = dur ? mFmt(dur) : '--:--';
+}
+setInterval(() => { if (view?.k === 'm') musPaintProg(); }, 500);
+
+// ----- busca -----
+async function musSearch(q) {
+  q = q.trim();
+  if (!q) { mus.results = null; return musPaintLib(); }
+  if (/^(https?:\/\/|www\.|youtu\.be|(m\.|music\.)?youtube\.com)/i.test(q)) {   // link: vai direto para a biblioteca
+    send({ type: 'mus-add', url: /^https?:/i.test(q) ? q : 'https://' + q, then: '' }); $('#mQ').value = ''; mus.results = null; musPaintLib();
+    return toast('Adicionando à biblioteca…');
+  }
+  mus.busy = true; mus.results = []; mus.rq = q; musPaintLib();
+  try {
+    const r = await fetch('/mus-search?q=' + encodeURIComponent(q), { headers: authH() });
+    if (!r.ok) throw new Error('status ' + r.status);
+    mus.results = await r.json();
+  } catch { mus.results = null; toast('A busca não respondeu agora. Cole o link do YouTube da música: funciona do mesmo jeito.'); }
+  mus.busy = false; musPaintLib();
+}
+
+// ----- editar playlist -----
+function musPlEdit(id) {
+  const pl0 = mus.pls.find(p => p.id === id); if (!pl0) return;
+  const w = mel('div'); w.id = 'askw'; const f = mel('form'); f.id = 'ask'; f.classList.add('mpe');
+  const name = mel('input'); name.maxLength = 40; name.value = pl0.name; name.autocomplete = 'off';
+  const list = mel('div', 'mpl');
+  const done = () => { document.removeEventListener('keydown', esc, true); mus.edPaint = null; w.remove(); };
+  const esc = e => { if (e.key === 'Escape') { e.preventDefault(); done(); } };
+  const paint = () => {
+    const p = mus.pls.find(p => p.id === id); if (!p) return done();
+    list.replaceChildren();
+    if (!p.vs.length) list.append(mel('div', 'mvz', 'Playlist vazia. Use o menu ⋯ de uma música da biblioteca para adicionar.'));
+    p.vs.map(mById).filter(Boolean).forEach(s => {
+      const d = mel('div', 'mi'), x = mel('div', 'mx'); x.append(mel('b', '', s.title), mel('small', '', mSub(s)));
+      const ea = mel('div', 'ma al'); ea.append(mBtn('x', 'Tirar da playlist', () => send({ type: 'mus-pl-rm', id, v: s.v }))); d.append(mCover(s.v), x, ea); list.append(d);
+    });
+  };
+  mus.edPaint = paint; paint();
+  const row = mel('div', 'row');
+  const del = mel('button', 'sec', 'Apagar'); del.type = 'button'; del.style.color = 'var(--verm)';
+  del.onclick = () => askYes('Apagar a playlist "' + pl0.name + '"?', 'Apagar').then(y => { if (y) { send({ type: 'mus-pl-del', id }); done(); } });
+  const shuf = mel('button', 'sec', '🔀 Tocar embaralhado'); shuf.type = 'button'; shuf.onclick = () => { send({ type: 'mus-pl-play', id, mode: 'shuffle' }); done(); };
+  const ok = mel('button', 'go', 'Salvar'); ok.type = 'submit';
+  row.append(del, shuf, ok);
+  f.onsubmit = e => { e.preventDefault(); const n = name.value.trim(); if (n && n !== pl0.name) send({ type: 'mus-pl-ren', id, name: n }); done(); };
+  w.onmousedown = e => { if (e.target === w) done(); };
+  document.addEventListener('keydown', esc, true);
+  const h = mel('b', '', 'Editar playlist'); f.append(h, name, list, row); w.append(f); document.body.append(w); name.focus();
+}
+
+// ----- entrada na barra lateral e abrir a tela -----
+function openMusic() {
+  view = { k: 'm', id: MV }; musBuild();
+  if (!mus.on) musListen(true);
+  renderChans(); renderTop(); musPaintAll();
+}
+function musSide(box) {
+  const h = mel('div', 'cat'); h.append(mel('span', '', 'Música')); box.append(h);
+  const b = mel('button', 'ch' + (view?.k === 'm' ? ' on' : '')); b.append(ico('music'), document.createTextNode('Sala de música'));
+  if (mus.on && mus.playing) { const e = mel('span', 'eq'); e.append(mel('i'), mel('i'), mel('i')); e.style.marginLeft = 'auto'; b.append(e); }
+  else if (mus.n) { const n = mel('span', 'mct', '🎧 ' + mus.n); n.title = mus.n + ' ouvindo'; b.append(n); }
+  b.onclick = openMusic; box.append(b);
+  if (mus.cur && (mus.on || mus.n)) {   // mini "tocando agora" embaixo do botão
+    const m = mel('div', 'mem mmini'); m.title = mus.cur.title + (mus.cur.artist ? ' — ' + mus.cur.artist : '');
+    m.append(mel('span', '', (mus.playing ? '▶ ' : '⏸ ') + mus.cur.title)); m.onclick = openMusic; box.append(m);
+  }
+}
+
 function renderTop() {
   const v = view;
   const tp = $('#top'); tp.replaceChildren();
   if (!v) tp.append('Discord dos Guri');
   else if (v.k === 't') tp.append('# ' + label(v.id));
+  else if (v.k === 'm') tp.append(ico('music'), 'Sala de música');
   else tp.append(ico('speaker'), label(v.id));
-  $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't');
+  $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't'); $('#musicw').hidden = !(v && v.k === 'm');
   $('#vc').hidden = !cur; $('#vcn').textContent = cur ? label(cur) : '';
   $('#txt').placeholder = v && v.k === 't' ? 'Conversar em #' + label(v.id) : ''; emptyCheck();
 }
@@ -1505,6 +1909,7 @@ function renderChans() {
       });
     });
   });
+  musSide(box);
   tickCalls();
 }
 const covers = new Map();   // "título — artista" -> endereço da capa ('' se não achou)
@@ -1799,7 +2204,9 @@ function dropAll() {
 }
 
 function handle(m) {
+  if (typeof m.type === 'string' && m.type.startsWith('mus-')) return musHandle(m);
   if (m.type === 'hello-ok') {
+    musReconnect();
     me = m.id; $('#login').hidden = true; $('#app').hidden = false;
     if (m.v) {   // o site foi atualizado enquanto o servidor reiniciava: recarrega sozinho para pegar a tela nova (e volta para a chamada)
       if (appVer && appVer !== m.v) { try { sessionStorage.setItem('pampas-rejoin', rcRoom || ''); } catch {} return location.reload(); }
@@ -1822,7 +2229,7 @@ function handle(m) {
   } else if (m.type === 'state') {
     st = m; if (m.now) clkOff = m.now - Date.now();
     if (cur && !chan(cur)) { dropAll(); }
-    if (!view || !chan(view.id)) { firstText(); } else { renderChans(); renderTop(); }
+    if (!view || (view.k !== 'm' && !chan(view.id))) { firstText(); } else { renderChans(); renderTop(); }
     renderMem();
   } else if (m.type === 'pong') {
     myPing = Math.max(0, Math.round(performance.now() - m.t)); pings[me] = myPing; send({ type: 'ping-rep', ms: myPing }); paintPing();
