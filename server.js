@@ -202,6 +202,13 @@ const srv = http.createServer((req, res) => {
     if (!/^https?:\/\//i.test(q) || q.length > 600 || !previewRate(ipOf(req))) return res.end('null');
     return linkPreview(q).then(v => res.end(JSON.stringify(v || null)));
   }
+  if (url === '/mus-search') {   // busca de música (sala de música)
+    if (!httpAuth(req, res)) return;
+    let q = ''; try { q = new URL(req.url, 'http://x').searchParams.get('q') || ''; } catch {}
+    res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store');
+    if (!q.trim() || q.length > 100 || !previewRate(ipOf(req))) return res.end('[]');
+    return ytSearch(q).then(v => res.end(JSON.stringify(v))).catch(e => { console.error('busca de música falhou:', e.message); res.writeHead(502); res.end('[]'); });
+  }
   if (url === '/need-pass') { res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); return res.end(JSON.stringify({ pass: !!SENHA })); }
   const sbm = url.match(/^\/sb\/([a-z0-9]+)$/);   // arquivo de um som do soundboard
   if (sbm) {
@@ -229,6 +236,188 @@ const srv = http.createServer((req, res) => {
     res.end(data);
   });
 });
+
+// ---------- sala de música ----------
+// Uma sala só, para todo mundo. O servidor guarda a fila e "em que ponto a música está"; cada pessoa que está ouvindo toca o mesmo
+// vídeo do YouTube (player embutido) e se ajusta ao ponto do servidor. A biblioteca e as playlists ficam salvas no Upstash.
+const MUS = { lib: [], pls: [], q: [], cur: null, playing: false, pos: 0, at: 0, prev: [] };
+const MUS_MAX = { lib: 300, pls: 30, pl: 200, q: 200 };
+const musNow = () => Date.now();
+const musPos = () => MUS.playing ? MUS.pos + (musNow() - MUS.at) / 1000 : MUS.pos;
+const ytId = s => {   // aceita o id puro (11 letras) ou um link do YouTube
+  s = String(s || '').trim();
+  if (/^[\w-]{11}$/.test(s)) return s;
+  try {
+    const u = new URL(s), h = u.hostname.toLowerCase().replace(/^(www|m|music)\./, '');
+    if (h === 'youtu.be') { const v = u.pathname.slice(1, 12); return /^[\w-]{11}$/.test(v) ? v : ''; }
+    if (h === 'youtube.com') {
+      const v = u.searchParams.get('v'); if (v && /^[\w-]{11}$/.test(v)) return v;
+      const m = u.pathname.match(/^\/(?:shorts|embed|live|v)\/([\w-]{11})/); if (m) return m[1];
+    }
+  } catch {}
+  return '';
+};
+const durOk = d => { d = Math.round(+d); return Number.isFinite(d) && d >= 1 && d <= 36000 ? d : 0; };
+const mkSong = (o, by) => ({ v: o.v, title: clean(o.title, 120) || 'Sem título', artist: clean(o.artist, 80), dur: durOk(o.dur), by: String(by || '').slice(0, 24) });
+const musListeners = () => [...clients].filter(c => c.nick && c.musOn);
+function musSt() {
+  const p = { type: 'mus-st', cur: MUS.cur, q: MUS.q, playing: MUS.playing, pos: MUS.pos, at: MUS.at, now: musNow(), n: musListeners().length };
+  clients.forEach(c => c.nick && send(c, p));
+}
+const musLibPub = () => ({ type: 'mus-lib', lib: MUS.lib, pls: MUS.pls });
+function musLib() { const p = musLibPub(); clients.forEach(c => c.nick && send(c, p)); markDirty('\0mus'); }
+function musHello(ws) { send(ws, musLibPub()); send(ws, { type: 'mus-st', cur: MUS.cur, q: MUS.q, playing: MUS.playing, pos: MUS.pos, at: MUS.at, now: musNow(), n: musListeners().length }); }
+const musErr = (ws, msg) => send(ws, { type: 'mus-err', msg });
+function musStart(item) { MUS.cur = item; MUS.pos = 0; MUS.at = musNow(); MUS.playing = !!item; }
+function musAdvance() {
+  if (MUS.cur) { MUS.prev.push(MUS.cur); if (MUS.prev.length > 20) MUS.prev.shift(); }
+  musStart(MUS.q.shift() || null);
+}
+function musIdle() {   // ninguém ouvindo: pausa onde está (para a fila não ir passando sozinha)
+  if (MUS.playing && !musListeners().length) { MUS.pos = musPos(); MUS.playing = false; musSt(); }
+}
+const qItem = (s, by) => ({ uid: mkMid(), v: s.v, title: s.title, artist: s.artist, dur: s.dur || 0, by: String(by || '').slice(0, 24) });
+function shuffled(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const musRate = ws => { const n = Date.now(); ws.mr = (ws.mr || []).filter(t => n - t < 5000); if (ws.mr.length >= 30) return false; ws.mr.push(n); return true; };
+
+// busca no YouTube (sem chave de API): usa a mesma busca que o próprio site do YouTube usa
+const YS = new Map();
+async function ytSearch(q) {
+  q = String(q).trim().slice(0, 100);
+  const hit = YS.get(q.toLowerCase()); if (hit && hit.exp > Date.now()) return hit.v;
+  const r = await fetch('https://www.youtube.com/youtubei/v1/search?prettyPrint=false', {
+    method: 'POST', signal: AbortSignal.timeout(8000),
+    headers: { 'content-type': 'application/json', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36', 'accept-language': 'pt-BR,pt;q=0.9,en;q=0.5' },
+    body: JSON.stringify({ context: { client: { clientName: 'WEB', clientVersion: '2.20250101.00.00', hl: 'pt-BR', gl: 'BR' } }, query: q }),
+  });
+  if (!r.ok) throw new Error('status ' + r.status);
+  const v = parseYtSearch(await r.json());
+  YS.set(q.toLowerCase(), { v, exp: Date.now() + 10 * 60e3 });
+  if (YS.size > 200) YS.delete(YS.keys().next().value);
+  return v;
+}
+function parseYtSearch(j) {
+  const out = [];
+  (function walk(o, d) {
+    if (!o || typeof o !== 'object' || out.length >= 12 || d > 14) return;
+    if (Array.isArray(o)) return o.forEach(x => walk(x, d + 1));
+    if (o.videoRenderer && o.videoRenderer.videoId) {
+      const x = o.videoRenderer, txt = t => t && (t.simpleText || (t.runs || []).map(r => r.text).join('')) || '';
+      const len = txt(x.lengthText);   // "4:39" ou "1:02:03"; vídeo ao vivo não tem
+      if (len && /^[\w-]{11}$/.test(x.videoId)) {
+        const p = len.split(':').map(Number);
+        const dur = p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : 0;
+        if (dur > 0 && dur <= 36000) out.push({ v: x.videoId, title: clean(txt(x.title), 120), artist: clean(txt(x.ownerText || x.longBylineText), 80), dur });
+      }
+      return;
+    }
+    for (const k in o) walk(o[k], d + 1);
+  })(j, 0);
+  return out.slice(0, 10);
+}
+async function ytInfo(v) {   // título e canal de um vídeo (oEmbed oficial)
+  const r = await fetchSafe('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + v), 'json');
+  const j = JSON.parse(r.body.toString('utf8'));
+  if (!j.title) throw new Error('sem título');
+  return { v, title: j.title, artist: String(j.author_name || '').replace(/ - Topic$/, ''), dur: 0 };
+}
+
+function musMsg(ws, m) {
+  const t = m.type, byV = v => MUS.lib.find(s => s.v === v);
+  if (t === 'mus-listen') { ws.musOn = !!m.on; if (!ws.musOn) musIdle(); musSt(); return; }
+  if (t === 'mus-ended') {   // o player de alguém chegou ao fim (ou deu erro): passa para a próxima
+    if (!MUS.cur || MUS.cur.uid !== m.uid) return;
+    if (m.err) { const bad = MUS.cur; musListeners().forEach(c => musErr(c, 'Não deu para tocar "' + bad.title + '" (o dono do vídeo bloqueou). Pulei.')); }
+    musAdvance(); return musSt();
+  }
+  if (t === 'mus-dur') {   // a duração só é conhecida quando o player carrega o vídeo
+    const d = durOk(m.dur), v = String(m.v || ''); if (!d) return;
+    let ch = false;
+    [byV(v), ...(MUS.cur && MUS.cur.v === v ? [MUS.cur] : []), ...MUS.q.filter(x => x.v === v)].forEach(s => { if (s && !s.dur) { s.dur = d; ch = true; } });
+    if (ch) { musLib(); musSt(); }
+    return;
+  }
+  if (!musRate(ws)) return;
+  if (t === 'mus-add') {
+    (async () => {
+      const v = ytId(m.v || m.url);
+      if (!v) return musErr(ws, 'Esse link não parece ser de um vídeo do YouTube.');
+      let s = byV(v);
+      if (!s) {
+        if (MUS.lib.length >= MUS_MAX.lib) return musErr(ws, 'A biblioteca já tem ' + MUS_MAX.lib + ' músicas (o máximo). Tire alguma.');
+        let info = m.title ? { v, title: m.title, artist: m.artist, dur: m.dur } : null;
+        if (!info) { try { info = await ytInfo(v); } catch { return musErr(ws, 'Não achei esse vídeo. Confira o link.'); } }
+        s = byV(v) || (MUS.lib.push(mkSong(info, ws.nick)), MUS.lib[MUS.lib.length - 1]);
+        musLib();
+      }
+      const then = m.then;
+      if (then === 'now') { if (MUS.cur) { MUS.prev.push(MUS.cur); } musStart(qItem(s, ws.nick)); musSt(); }
+      else if (then === 'next' || then === 'queue') {
+        if (MUS.q.length >= MUS_MAX.q) return musErr(ws, 'A fila está cheia.');
+        const it = qItem(s, ws.nick);
+        if (!MUS.cur) musStart(it); else if (then === 'next') MUS.q.unshift(it); else MUS.q.push(it);
+        musSt();
+      }
+    })().catch(e => console.error('mus-add:', e.message));
+  } else if (t === 'mus-lib-del') {
+    const i = MUS.lib.findIndex(s => s.v === m.v); if (i < 0) return;
+    MUS.lib.splice(i, 1); MUS.pls.forEach(p => { p.vs = p.vs.filter(x => x !== m.v); });
+    musLib();
+  } else if (t === 'mus-q-del') {
+    const i = MUS.q.findIndex(x => x.uid === m.uid); if (i < 0) return;
+    MUS.q.splice(i, 1); musSt();
+  } else if (t === 'mus-q-clear') { MUS.q.length = 0; musSt();
+  } else if (t === 'mus-q-go') {   // clicou numa música da fila: toca ela agora
+    const i = MUS.q.findIndex(x => x.uid === m.uid); if (i < 0) return;
+    if (MUS.cur) MUS.prev.push(MUS.cur);
+    musStart(MUS.q.splice(i, 1)[0]); musSt();
+  } else if (t === 'mus-shuffle') { MUS.q = shuffled(MUS.q); musSt();
+  } else if (t === 'mus-toggle') {
+    if (!MUS.cur) return;
+    const want = m.play === undefined ? !MUS.playing : !!m.play;
+    if (want && !MUS.playing) { MUS.playing = true; MUS.at = musNow(); }
+    else if (!want && MUS.playing) { MUS.pos = musPos(); MUS.playing = false; }
+    musSt();
+  } else if (t === 'mus-seek') {
+    if (!MUS.cur) return;
+    const p = Number(m.pos); if (!Number.isFinite(p)) return;
+    MUS.pos = Math.max(0, Math.min(p, MUS.cur.dur ? MUS.cur.dur - 1 : 36000)); MUS.at = musNow(); musSt();
+  } else if (t === 'mus-next') { if (MUS.cur) { musAdvance(); musSt(); }
+  } else if (t === 'mus-prev') {
+    if (!MUS.cur && !MUS.prev.length) return;
+    if (!MUS.prev.length || musPos() > 4) { MUS.pos = 0; MUS.at = musNow(); }
+    else { const back = MUS.prev.pop(); if (MUS.cur) MUS.q.unshift(MUS.cur); musStart(back); }
+    musSt();
+  } else if (t === 'mus-pl-new') {
+    if (MUS.pls.length >= MUS_MAX.pls) return musErr(ws, 'Já existem ' + MUS_MAX.pls + ' playlists (o máximo).');
+    const name = String(m.name || '').trim().slice(0, 40); if (!name) return;
+    let vs = [];
+    if (m.from === 'queue') vs = [...new Set([MUS.cur, ...MUS.q].filter(Boolean).map(x => x.v))].filter(byV);
+    else if (m.v && byV(m.v)) vs = [m.v];
+    MUS.pls.push({ id: mkMid(), name, by: ws.nick, vs: vs.slice(0, MUS_MAX.pl) }); musLib();
+  } else if (t === 'mus-pl-del') {
+    const i = MUS.pls.findIndex(p => p.id === m.id); if (i < 0) return;
+    MUS.pls.splice(i, 1); musLib();
+  } else if (t === 'mus-pl-ren') {
+    const p = MUS.pls.find(p => p.id === m.id), name = String(m.name || '').trim().slice(0, 40); if (!p || !name) return;
+    p.name = name; musLib();
+  } else if (t === 'mus-pl-add') {
+    const p = MUS.pls.find(p => p.id === m.id); if (!p || !byV(m.v) || p.vs.includes(m.v)) return;
+    if (p.vs.length >= MUS_MAX.pl) return musErr(ws, 'Essa playlist está cheia.');
+    p.vs.push(m.v); musLib();
+  } else if (t === 'mus-pl-rm') {
+    const p = MUS.pls.find(p => p.id === m.id); if (!p) return;
+    p.vs = p.vs.filter(x => x !== m.v); musLib();
+  } else if (t === 'mus-pl-play') {
+    const p = MUS.pls.find(p => p.id === m.id); if (!p) return;
+    let songs = p.vs.map(byV).filter(Boolean); if (!songs.length) return musErr(ws, 'Essa playlist está vazia.');
+    if (m.mode === 'shuffle') songs = shuffled(songs);
+    const items = songs.map(s => qItem(s, ws.nick));
+    if (m.mode === 'add') { MUS.q.push(...items.slice(0, Math.max(0, MUS_MAX.q - MUS.q.length))); if (!MUS.cur) musAdvance(); }
+    else { MUS.q = items.slice(0, MUS_MAX.q); musAdvance(); }   // toca a playlist do começo, trocando a fila
+    musSt();
+  }
+}
 
 const wss = new WebSocketServer({ server: srv, maxPayload: 18 * 1024 * 1024 });
 const rooms = new Map();
@@ -275,6 +464,7 @@ async function flush() {
     try {
       if (id === '\0ch') { await up(['SET', 'guri:canais', JSON.stringify(CH)]); continue; }
       if (id === '\0adm') { await up(['SET', 'guri:admins', JSON.stringify([...ADMINS])]); continue; }
+      if (id === '\0mus') { await up(['SET', 'guri:mus', JSON.stringify({ lib: MUS.lib, pls: MUS.pls })]); continue; }
       if (id === '\0st') { await up(['SET', 'guri:stats', JSON.stringify([...STATS])]); continue; }
       if (id === '\0sbl') { await up(['SET', 'guri:sbl', JSON.stringify(SB.map(s => s.id))]); continue; }
       if (id.startsWith('\0sb:')) { const sid = id.slice(4), s = SB.find(x => x.id === sid); await up(s ? ['SET', 'guri:sb:' + sid, JSON.stringify(s)] : ['DEL', 'guri:sb:' + sid]); continue; }
@@ -298,6 +488,10 @@ async function loadSaved() {
       const h = await up(['GET', 'guri:h:' + c.id]);
       if (h && !hist.has(c.id)) hist.set(c.id, JSON.parse(h).slice(-40));
     }
+    try {   // sala de música: biblioteca e playlists
+      const raw = await up(['GET', 'guri:mus']);
+      if (raw) { const j = JSON.parse(raw); if (!MUS.lib.length) MUS.lib.push(...(j.lib || [])); if (!MUS.pls.length) MUS.pls.push(...(j.pls || [])); }
+    } catch (e) { console.error('não consegui carregar a sala de música:', e.message); }
     try {   // sons do soundboard
       const ids = JSON.parse((await up(['GET', 'guri:sbl'])) || '[]');
       for (const id of ids) { const raw = await up(['GET', 'guri:sb:' + id]); if (raw && !SB.some(s => s.id === id)) SB.push(JSON.parse(raw)); }
@@ -530,6 +724,7 @@ wss.on('connection', (ws, req) => {
       setProf(ws, m.prof);
       send(ws, { type: 'hello-ok', id: ws.id, v: VER });
       sendSb(ws);
+      musHello(ws);
       [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
       ws.admin = !!ADMIN_SENHA && !!ws.cid && ADMINS.has(ws.cid);
@@ -663,6 +858,8 @@ wss.on('connection', (ws, req) => {
       const now = Date.now(); if (now - (ws.sbAt || 0) < 1000) return; ws.sbAt = now;        // 1 som por segundo, por pessoa
       (rooms.get(ws.room) || new Map()).forEach(p => send(p, { type: 'sb-play', id, from: ws.id, name: ws.nick }));
       bump(ws, 'p');
+    } else if (typeof m.type === 'string' && m.type.startsWith('mus-')) {
+      musMsg(ws, m);
     } else if (m.type === 'join') {
       const c = CH.find(c => c.id === m.room && c.kind === 'voice');
       if (!c || ws.room === c.id) return;
@@ -682,7 +879,7 @@ wss.on('connection', (ws, req) => {
       if (t) send(t, { type: 'signal', from: ws.id, data: m.data });
     }
   });
-  ws.on('close', (code) => { if (ws.nick) console.log('Saiu: ' + ws.nick + ' (código ' + code + ')'); leave(ws); clients.delete(ws); state(); });
+  ws.on('close', (code) => { if (ws.nick) console.log('Saiu: ' + ws.nick + ' (código ' + code + ')'); leave(ws); clients.delete(ws); musIdle(); state(); });
 });
 
 // a cada 4 s manda para todo mundo o ping de cada pessoa (medido por ela mesma até o servidor)
