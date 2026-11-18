@@ -601,6 +601,8 @@ const DEFS = [
   // emblemas EXCLUSIVOS (special): não contam uso, contam o progresso nos outros emblemas
   { id: 'colecao', emoji: '🏆', name: 'Colecionador', desc: 'Exclusivo: some os níveis de todos os outros emblemas.', key: 'tl', unit: 'niv', special: 1, tiers: [5, 15, 30, 45, 55], titles: ['Primeiras Medalhas', 'Vitrine Cheia', 'Colecionador', 'Grande Colecionador', 'Museu dos Pampas'] },
   { id: 'lenda', emoji: '👑', name: 'Lenda do Pampa', desc: 'Exclusivo: leve emblemas até o nível máximo (nível 5).', key: 'mx', unit: 'emb', special: 1, tiers: [1, 3, 5, 8, 11], titles: ['Promessa', 'Fenômeno', 'Ídolo', 'Mito', 'Lenda do Pampa'] },
+  // emblema SÓ DE ADM: ninguém ganha por uso (a chave 'admx' nunca sobe); o ADM recebe no máximo automaticamente (ver lvOf)
+  { id: 'adm', emoji: '🛡️', name: 'Administrador', desc: 'Exclusivo de ADM: só quem é administrador do servidor tem.', key: 'admx', unit: 'n', special: 1, adm: 1, tiers: [1, 1, 1, 1, 1], titles: ['Administrador', 'Administrador', 'Administrador', 'Administrador', 'Administrador'] },
 ];
 const STATS = new Map();   // cid -> { v, s, c, m, r, p, g, n, e, d, sk, bs, ld, lv: { emblema: nível }, pick: [ids] | null }
 const BRT = () => new Date(Date.now() - 3 * 3600e3);   // horário de Brasília (getUTC* dessa data = hora daqui)
@@ -611,20 +613,20 @@ function stOf(cid) {
   return s;
 }
 const lvlOf = (def, v) => def.tiers.filter(t => v >= t).length;
-// os até 3 emblemas que aparecem no cartão: os que a pessoa escolheu, ou (sem escolha) os de maior nível
+// os até 5 emblemas que aparecem no cartão: os que a pessoa escolheu, ou (sem escolha) os de maior nível
 const lvOf = (cid, s) => isAdmCid(cid) ? Object.fromEntries(DEFS.map(d => [d.id, d.tiers.length])) : s.lv;   // níveis (ADM: tudo no máximo)
 function showcase(cid) {
   const s0 = cid && STATS.get(cid); if (!s0) return [];
   const s = { ...s0, lv: lvOf(cid, s0) };
   const have = DEFS.filter(d => (s.lv[d.id] || 0) > 0);
-  let ids = Array.isArray(s.pick) ? s.pick.filter(id => have.some(d => d.id === id)) : have.map((d, i) => ({ d, i })).sort((a, b) => s.lv[b.d.id] - s.lv[a.d.id] || a.i - b.i).map(x => x.d.id);
-  return ids.slice(0, 3).map(id => ({ id, lvl: s.lv[id] }));
+  let ids = Array.isArray(s.pick) ? s.pick.filter(id => have.some(d => d.id === id)) : have.map((d, i) => ({ d, i })).sort((a, b) => (b.d.adm ? 1 : 0) - (a.d.adm ? 1 : 0) || s.lv[b.d.id] - s.lv[a.d.id] || a.i - b.i).map(x => x.d.id);
+  return ids.slice(0, 5).map(id => ({ id, lvl: s.lv[id] }));
 }
 const achPayload = ws => {
   const s = stOf(ws.cid || ''), vals = {};
   derive(s);
   DEFS.forEach(d => vals[d.id] = isAdmCid(ws.cid) ? Math.max(s[d.key] || 0, d.tiers[d.tiers.length - 1]) : s[d.key] || 0);
-  return { type: 'ach', defs: DEFS.map(d => ({ id: d.id, emoji: d.emoji, name: d.name, desc: d.desc, unit: d.unit, tiers: d.tiers, titles: d.titles, special: !!d.special })), frames: Object.entries(FRAME_REQ).map(([id, r]) => ({ id, b: r.b, l: r.l, open: frameOpen(ws.cid, id) })), vals, lv: lvOf(ws.cid, s), pick: s.pick, sk: s.sk, adm: isAdmCid(ws.cid) };
+  return { type: 'ach', defs: DEFS.map(d => ({ id: d.id, emoji: d.emoji, name: d.name, desc: d.desc, unit: d.unit, tiers: d.tiers, titles: d.titles, special: !!d.special, adm: !!d.adm })), frames: Object.entries(FRAME_REQ).map(([id, r]) => ({ id, b: r.b, l: r.l, open: frameOpen(ws.cid, id) })), vals, lv: lvOf(ws.cid, s), pick: s.pick, sk: s.sk, adm: isAdmCid(ws.cid) };
 };
 const tellProfile = ws => clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
 // confere se algum emblema subiu de nível; se sim, avisa a pessoa e atualiza o cartão dela para a turma
@@ -743,10 +745,10 @@ wss.on('connection', (ws, req) => {
       return;
     } else if (m.type === 'ach-get') {
       send(ws, achPayload(ws));
-    } else if (m.type === 'badge-pick') {   // escolher (até 3) emblemas para o cartão; ids = null volta para o automático
+    } else if (m.type === 'badge-pick') {   // escolher (até 5) emblemas para o cartão; ids = null volta para o automático
       if (!ws.cid) return;
       const s = stOf(ws.cid);
-      s.pick = Array.isArray(m.ids) ? [...new Set(m.ids.map(String))].filter(id => (lvOf(ws.cid, s)[id] || 0) > 0).slice(0, 3) : null;
+      s.pick = Array.isArray(m.ids) ? [...new Set(m.ids.map(String))].filter(id => (lvOf(ws.cid, s)[id] || 0) > 0).slice(0, 5) : null;
       markDirty('\0st'); tellProfile(ws); send(ws, achPayload(ws));
     } else if (m.type === 'chan-add') {
       const name = String(m.name || '').trim().slice(0, 24);
