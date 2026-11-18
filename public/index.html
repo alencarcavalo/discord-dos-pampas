@@ -3470,6 +3470,13 @@ function volRow(label, val, oninput) {
   const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = 100; r.value = Math.round(val * 100); t.textContent = r.value + '%';
   r.oninput = () => { t.textContent = r.value + '%'; oninput(r.value / 100); }; l.append(t, r); return l;
 }
+function vfxRow() {   // escolher o efeito de voz direto no menu do microfone
+  const l = document.createElement('label'); l.append('Efeito de voz ');
+  const sel = document.createElement('select');
+  Object.entries(VFX).forEach(([k, t]) => { const o = document.createElement('option'); o.value = k; o.textContent = t; sel.append(o); });
+  sel.value = VFX[cfg.vfx] ? cfg.vfx : 'none'; sel.onchange = () => setVfx(sel.value);
+  l.append(sel); return l;
+}
 function cfgBtn(m) {
   const b = document.createElement('button'); b.className = 'sec'; b.textContent = 'Configurações de voz';
   b.onclick = () => { m.remove(); $('#bCfg').click(); tab('voz'); }; return b;
@@ -3477,7 +3484,7 @@ function cfgBtn(m) {
 $('#aMic').onclick = () => popMenu($('#aMic'), m => {
   const t = document.createElement('b'); t.textContent = 'Microfone';
   m.append(t, devSel('audioinput', cfg.mic, v => { cfg.mic = v; saveCfg(); applyMic(); }),
-    volRow('Volume do microfone', cfg.micv, v => { cfg.micv = v; saveCfg(); if (mic) mic.gain.gain.value = v; }), cfgBtn(m));
+    volRow('Volume do microfone', cfg.micv, v => { cfg.micv = v; saveCfg(); if (mic) mic.gain.gain.value = v; }), vfxRow(), cfgBtn(m));
 });
 $('#aDeaf').onclick = () => popMenu($('#aDeaf'), m => {
   const t = document.createElement('b'); t.textContent = 'Áudio';
@@ -3777,7 +3784,8 @@ function drawMeter() {
   b.style.width = pc(micLvl.l || 0) + '%'; b.classList.toggle('open', !!micLvl.o);
   $('#meterThr').style.left = pc(micLvl.t || 0) + '%';
 }
-$('#vfxSel').onchange = e => { cfg.vfx = e.target.value; saveCfg(); if (mic) wireMic(); if (cfg.vfx !== 'none' && !tm.on) toast('Efeito ligado! Use "Testar microfone" para se ouvir.'); };
+function setVfx(k) { cfg.vfx = VFX[k] ? k : 'none'; saveCfg(); if (mic) wireMic(); const vs = $('#vfxSel'); if (vs) vs.value = cfg.vfx; }
+$('#vfxSel').onchange = e => { setVfx(e.target.value); if (cfg.vfx !== 'none' && !tm.on) toast('Efeito ligado! Use "Testar microfone" para se ouvir.'); };
 $('#tmGo').onclick = () => tm.on ? tmStop() : tmStart();
 $('#tmRec').onclick = tmRecord;
 $('#tmLive').onchange = e => { if (mic && mic.mon) mic.mon.gain.value = e.target.checked ? 1 : 0; };
