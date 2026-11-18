@@ -785,6 +785,7 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
   <div class="row" id="pkTabs"><button type="button" class="sec" data-k="screen">Telas inteiras</button><button type="button" class="sec" data-k="window">Janelas</button></div>
   <div id="pkGrid"></div>
   <label class="ck" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="pkAud" checked style="width:auto"> Compartilhar o som do computador</label>
+  <label style="display:flex;gap:10px;align-items:center;justify-content:space-between">Qualidade da transmissão<select id="pkQ" style="max-width:60%"><option value="720p30">720p · 30 fps (leve)</option><option value="720p60">720p · 60 fps</option><option value="1080p30">1080p · 30 fps</option><option value="1080p60">1080p · 60 fps (pesada)</option></select></label>
   <div class="row"><button type="button" class="go" id="pkOk" disabled>Compartilhar</button><button type="button" class="sec" id="pkNo">Cancelar</button></div>
 </div></div>
 
@@ -2533,7 +2534,7 @@ async function startShare() {
     Object.keys(peers).forEach(addShareAudio);
   }
   v.onended = stopShare;
-  addScreen(me, S.screen, true); syncStage(); press($('#bTela'), true); $('#bTrocar').hidden = false; $('#bQual').hidden = false; sendVs();
+  addScreen(me, S.screen, true); syncStage(); press($('#bTela'), true); $('#bTrocar').hidden = false; $('#bQual').hidden = !!window.__pickerReady; sendVs();
   applyShareQ(); clearInterval(sqTimer); sqTimer = setInterval(applyShareQ, 4000);   // pega também quem entra depois
 }
 // trocar a tela/janela sem parar a transmissão (quem assiste continua assistindo)
@@ -2604,8 +2605,7 @@ $('#bCam').onclick = async e => {
 };
 $('#bTela').onclick = async () => {
   if (S.screen.getTracks().length) return stopShare();
-  const q = await askQuality(); if (!q) return;
-  cfg.sq = q; saveCfg(); if (!$('#cfg').hidden) fillVoz();
+  if (!window.__pickerReady) { const q = await askQuality(); if (!q) return; cfg.sq = q; saveCfg(); if (!$('#cfg').hidden) fillVoz(); }   // no app, a qualidade já é escolhida na janela de escolher a tela
   try { await startShare(); } catch (e) { console.error(e); note('Compartilhamento de tela cancelado.'); }
 };
 $('#bTrocar').onclick = swapShare;
@@ -4044,14 +4044,14 @@ function renderPicker() {
 }
 function closePicker(r) { $('#picker').hidden = true; window.pampas.pickResult(r); }
 document.querySelectorAll('#pkTabs [data-k]').forEach(b => b.onclick = () => { pkKind = b.dataset.k; renderPicker(); });
-$('#pkOk').onclick = () => closePicker({ id: pkSel, audio: $('#pkAud').checked });
+$('#pkOk').onclick = () => { cfg.sq = $('#pkQ').value; saveCfg(); if (!$('#cfg').hidden) fillVoz(); closePicker({ id: pkSel, audio: $('#pkAud').checked }); };   // a qualidade escolhida aqui vale para a transmissão (applyShareQ roda logo depois)
 $('#pkNo').onclick = () => closePicker(null);
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#picker').hidden) closePicker(null); });
 if (window.pampas && pampas.onPick) {
   pampas.onPick(list => {
     pkList = list; pkKind = 'screen'; const f = list.find(s => s.screen) || list[0]; pkSel = f ? f.id : null;
     if (f && !f.screen) pkKind = 'window';
-    renderPicker(); $('#picker').hidden = false;
+    $('#pkQ').value = cfg.sq || '720p30'; renderPicker(); $('#picker').hidden = false;
   });
   window.__pickerReady = true;
 }
