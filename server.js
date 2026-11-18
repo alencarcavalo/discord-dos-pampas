@@ -189,6 +189,9 @@ function previewRate(ip) {   // no máximo 120 prévias por minuto por pessoa
 }
 setInterval(() => { const now = Date.now(); PV_RATE.forEach((r, ip) => { if (now - r.t > 120e3) PV_RATE.delete(ip); }); }, 600e3);
 
+// "versão" do site: muda sempre que o public/index.html muda. O app compara ao reconectar e se recarrega sozinho quando for outra.
+let VER = '';
+try { VER = crypto.createHash('md5').update(fs.readFileSync(path.join(PUB, 'index.html'))).digest('hex').slice(0, 10); } catch {}
 const srv = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/ok') { res.setHeader('cache-control', 'no-store'); return res.end('ok'); }   // só para saber se o servidor já acordou
@@ -222,6 +225,7 @@ const srv = http.createServer((req, res) => {
   fs.readFile(full, (err, data) => {
     if (err) { res.writeHead(500); return res.end('erro'); }
     res.setHeader('content-type', MIME[path.extname(full)] || 'application/octet-stream');
+    if (full.endsWith('.html')) res.setHeader('cache-control', 'no-cache');   // sempre confere se tem versão nova
     res.end(data);
   });
 });
@@ -481,8 +485,9 @@ setInterval(() => {
 const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {}, bd: showcase(c.cid), adm: !!c.admin });
 
 function state() {
-  const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, room: c.room || null, vs: c.vs || {}, act: c.act || null }));
-  clients.forEach(c => c.nick && send(c, { type: 'state', channels: CH, users }));
+  const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, room: c.room || null, vs: c.vs || {}, act: c.act || null, jt: c.room ? (c.jt || null) : null }));
+  const now = Date.now();   // hora do servidor: o app usa para contar o tempo de chamada sem depender do relógio do PC
+  clients.forEach(c => c.nick && send(c, { type: 'state', channels: CH, users, now }));
 }
 function leave(ws) {
   const set = rooms.get(ws.room);
@@ -490,7 +495,7 @@ function leave(ws) {
   set.delete(ws.id);
   set.forEach(p => send(p, { type: 'peer-leave', id: ws.id }));
   if (!set.size) rooms.delete(ws.room);
-  ws.room = null;
+  ws.room = null; ws.jt = null;
   if (ws.vs) ws.vs = { ...ws.vs, cam: false, screen: false };
   state();
 }
@@ -521,7 +526,7 @@ wss.on('connection', (ws, req) => {
         setTimeout(() => { try { old.terminate(); } catch {} }, 200);
       });
       setProf(ws, m.prof);
-      send(ws, { type: 'hello-ok', id: ws.id });
+      send(ws, { type: 'hello-ok', id: ws.id, v: VER });
       sendSb(ws);
       [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
@@ -662,7 +667,7 @@ wss.on('connection', (ws, req) => {
       const set = rooms.get(c.id) || new Map();
       if (set.size >= MAX) return send(ws, { type: 'full' });
       if (ws.room) leave(ws);
-      ws.room = c.id;
+      ws.room = c.id; ws.jt = Date.now();
       rooms.set(c.id, set);
       send(ws, { type: 'joined', room: c.id, peers: [...set.values()].map(p => ({ id: p.id, name: p.nick })) });
       set.forEach(p => send(p, { type: 'peer-join', id: ws.id, name: ws.nick }));
