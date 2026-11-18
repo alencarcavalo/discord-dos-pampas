@@ -326,7 +326,9 @@ const rxPub = (rx, viewer) => {
   return o;
 };
 const okEmoji = e => typeof e === 'string' && e.length > 0 && [...e].length <= 10 && /^[\p{Extended_Pictographic}\p{Emoji_Modifier}‍️]+$/u.test(e) && /\p{Extended_Pictographic}/u.test(e);
-const pub = (m, viewer) => { const { cid, rx, ...rest } = m; return { ...rest, rx: rxPub(rx, viewer), own: !!cid && cid === viewer.cid }; };
+const pidOf = cid => cid ? crypto.createHash('sha256').update('pid:' + cid).digest('hex').slice(0, 12) : null;   // id público e FIXO da pessoa (o cid em si nunca é enviado)
+// uid = id público de quem mandou (antes era o número da conexão, que recomeça do 1 a cada reinício e fazia a mensagem pegar a foto de outra pessoa)
+const pub = (m, viewer) => { const { cid, rx, uid, ...rest } = m; return { ...rest, uid: pidOf(cid), rx: rxPub(rx, viewer), own: !!cid && cid === viewer.cid }; };
 const sbPub = viewer => SB.map(s => ({ id: s.id, name: s.name, emoji: s.emoji, by: s.by, own: !!viewer.cid && s.cid === viewer.cid }));
 const sendSb = ws => send(ws, { type: 'sb', list: sbPub(ws) });
 const sbAll = () => clients.forEach(c => c.nick && sendSb(c));
@@ -485,7 +487,7 @@ setInterval(() => {
 const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {}, bd: showcase(c.cid), adm: !!c.admin });
 
 function state() {
-  const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, room: c.room || null, vs: c.vs || {}, act: c.act || null, jt: c.room ? (c.jt || null) : null }));
+  const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, pid: pidOf(c.cid), room: c.room || null, vs: c.vs || {}, act: c.act || null, jt: c.room ? (c.jt || null) : null }));
   const now = Date.now();   // hora do servidor: o app usa para contar o tempo de chamada sem depender do relógio do PC
   clients.forEach(c => c.nick && send(c, { type: 'state', channels: CH, users, now }));
 }
