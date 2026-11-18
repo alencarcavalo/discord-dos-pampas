@@ -358,6 +358,9 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .cat button{color:var(--mut);font-size:1.2rem;line-height:1}
 .cat button:hover{color:#fff}
 .ch .x{margin-left:auto;display:none}
+.ch .ct{margin-left:auto;font:600 .78rem ui-monospace,Consolas,monospace;color:#3ba55d;font-variant-numeric:tabular-nums}
+.ch:hover .ct{display:none}
+.mem .mt{margin-left:auto;font:.72rem ui-monospace,Consolas,monospace;color:var(--mut);font-variant-numeric:tabular-nums}
 .ch:hover .x{display:block}
 .ch.un{color:#fff;font-weight:700}
 .msg{display:flex;gap:12px}
@@ -1389,6 +1392,15 @@ function askQuality() {
 }
 const askYes = (msg, okLabel) => askBox(msg, false, okLabel || 'Confirmar');
 function mk(kind) { askBox(kind === 'text' ? 'Nome do novo canal de texto' : 'Nome do novo canal de voz', true, 'Criar').then(n => { if (n) send({ type: 'chan-add', kind, name: n }); }); }
+let clkOff = 0;   // hora do servidor menos hora deste PC
+const fmtDur = ms => { const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), mi = Math.floor(t % 3600 / 60), sc = t % 60; return h + ':' + String(mi).padStart(2, '0') + ':' + String(sc).padStart(2, '0'); };
+const fmtDurShort = ms => { const mi = Math.floor(Math.max(0, ms) / 60000); return mi >= 60 ? Math.floor(mi / 60) + 'h' + String(mi % 60).padStart(2, '0') : mi + ' min'; };
+function tickCalls() {
+  const now = Date.now() + clkOff;
+  document.querySelectorAll('.ct[data-since]').forEach(e => { e.textContent = fmtDur(now - +e.dataset.since); });
+  document.querySelectorAll('.mt[data-since]').forEach(e => { e.textContent = fmtDurShort(now - +e.dataset.since); });
+}
+setInterval(tickCalls, 1000);
 function renderChans() {
   const box = $('#chans'); box.replaceChildren();
   [['text', 'Canais de texto'], ['voice', 'Canais de voz']].forEach(([k, t]) => {
@@ -1407,17 +1419,23 @@ function renderChans() {
         if (st.users.some(u => u.room === c.id)) return toast('Tem gente nesse canal de voz. Espere sair para apagar.');
         askYes('Apagar o canal ' + c.name + '?', 'Apagar').then(y => { if (y) send({ type: 'chan-del', id: c.id }); });
       };
+      const inRoom = k === 'voice' ? st.users.filter(u => u.room === c.id) : [];
+      const t0 = Math.min(...inRoom.map(u => u.jt || Infinity));   // desde quando a chamada está rolando (quem entrou primeiro)
+      if (isFinite(t0)) { const ct = document.createElement('span'); ct.className = 'ct'; ct.dataset.since = t0; ct.title = 'Tempo de chamada'; b.append(ct); }
       b.append(x);
       box.append(b);
-      if (k === 'voice') st.users.filter(u => u.room === c.id).forEach(u => {
+      if (k === 'voice') inRoom.forEach(u => {
         const m = document.createElement('div'); m.className = 'mem'; m.dataset.pid = u.id;
         const t2 = document.createElement('span'); t2.textContent = u.name + (u.id === me ? ' (você)' : '');
         m.onclick = () => card(u.id, m); m.style.cursor = 'pointer';
         if (u.id !== me) m.oncontextmenu = e => volMenu(e, u.name);
-        m.append(avatar(u.name, 1, u.id, true), t2, badges(u)); box.append(m);
+        m.append(avatar(u.name, 1, u.id, true), t2, badges(u));
+        if (u.jt) { const mt = document.createElement('span'); mt.className = 'mt'; mt.dataset.since = u.jt; mt.title = 'Tempo desta pessoa na chamada'; m.append(mt); }
+        box.append(m);
       });
     });
   });
+  tickCalls();
 }
 const covers = new Map();   // "título — artista" -> endereço da capa ('' se não achou)
 function coverFor(music, cb) {
@@ -1647,7 +1665,7 @@ function linkExtra(u) {
   return box;
 }
 
-let rcTry = 0, rcTimer = 0, rcSince = 0;   // reconexão automática: queda rápida (ex.: servidor reiniciando) não mostra aviso
+let rcTry = 0, rcTimer = 0, rcSince = 0, rcRoom = null, appVer = '';   // reconexão automática: queda rápida (ex.: servidor reiniciando) não mostra aviso
 function connectWS() {
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
   const mine = ws;
@@ -1656,7 +1674,7 @@ function connectWS() {
   ws.onclose = () => {
     if (mine !== ws || badPass) return;
     if (kickedBy) return showReload(kickedBy === '\0' ? 'Você entrou em outro lugar (outra aba ou aparelho). Esta conexão foi encerrada.' : 'Você foi removido por ' + kickedBy + '.');
-    if (!rcSince) { rcSince = Date.now(); try { dropAll(); } catch {} }
+    if (!rcSince) { rcSince = Date.now(); rcRoom = cur || rcRoom; try { dropAll(); } catch {} }
     if (Date.now() - rcSince > 20000) showReload('Conexão perdida ou o app foi atualizado.');   // só avisa se não voltar em 20 s
     clearTimeout(rcTimer); rcTimer = setTimeout(connectWS, Math.min(1000 * ++rcTry, 5000));
   };
@@ -1712,13 +1730,26 @@ function dropAll() {
 function handle(m) {
   if (m.type === 'hello-ok') {
     me = m.id; $('#login').hidden = true; $('#app').hidden = false;
-    if (rcSince) { rcSince = 0; rcTry = 0; const bar = $('#rlbar'); if (bar) bar.remove(); if (view && view.k === 't') send({ type: 'history', channel: view.id }); }
+    if (m.v) {   // o site foi atualizado enquanto o servidor reiniciava: recarrega sozinho para pegar a tela nova (e volta para a chamada)
+      if (appVer && appVer !== m.v) { try { sessionStorage.setItem('pampas-rejoin', rcRoom || ''); } catch {} return location.reload(); }
+      appVer = m.v;
+    }
+    if (rcSince) {
+      rcSince = 0; rcTry = 0; const bar = $('#rlbar'); if (bar) bar.remove();
+      const room = rcRoom; rcRoom = null;
+      if (view && view.k === 'v') view = null;   // a queda tirou da chamada: não deixa a tela presa em "Conectando…"
+      if (room) setTimeout(() => joinCh(room), 800);   // volta sozinho para a chamada em que estava
+      else if (view && view.k === 't') send({ type: 'history', channel: view.id });
+    } else {
+      let rj = ''; try { rj = sessionStorage.getItem('pampas-rejoin') || ''; sessionStorage.removeItem('pampas-rejoin'); } catch {}
+      if (rj) setTimeout(() => joinCh(rj), 1500);   // acabou de recarregar por causa de atualização: volta para a chamada
+    }
     try { if (PASS) localStorage.setItem('pampas-senha', PASS); } catch {}
     loadIce();
     lastAct = ''; setTimeout(() => pushAct(true), 500); paintMic();
     $('#meN').textContent = myName; prof[me] = cfg.prof; paintAv($('#meav'), myName, cfg.prof); loadCustom();
   } else if (m.type === 'state') {
-    st = m;
+    st = m; if (m.now) clkOff = m.now - Date.now();
     if (cur && !chan(cur)) { dropAll(); }
     if (!view || !chan(view.id)) { firstText(); } else { renderChans(); renderTop(); }
     renderMem();
