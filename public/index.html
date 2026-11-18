@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>Discord dos Guri</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icon-192.png">
@@ -692,6 +692,31 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
  .mbar{grid-template-columns:1fr}
  .mvol{justify-content:flex-start}
 }
+
+/* ===== CELULAR (telas até 900px): a barra lateral e a lista de membros viram menus que abrem por cima, e o chat ocupa a tela toda ===== */
+.mnav{display:none;flex:none;place-items:center;min-width:40px;height:40px;padding:0 8px;border-radius:10px;background:transparent;color:var(--txt);font-size:1.2rem;line-height:1}
+.mnav:active{background:var(--hover)}
+.mnav.mq.off{opacity:.55}
+.mnav.mq.sair{background:var(--verm);color:#fff}
+.mright{margin-left:auto;display:flex;gap:4px;align-items:center}
+#navbd{position:fixed;inset:0;background:#000a;z-index:6}
+@media(max-width:900px){
+  html,body{height:100dvh}
+  #app{height:100dvh;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+  #side,body.mod #side,#mem,body.mod #mem{position:fixed;top:0;bottom:0;z-index:7;width:min(86vw,320px);max-height:none;transition:transform .22s ease;box-shadow:0 0 32px #000b}
+  #side,body.mod #side{left:0;transform:translateX(-104%)}
+  #mem,body.mod #mem{display:block;right:0;left:auto;transform:translateX(104%)}
+  body.navo #side,body.navo.mod #side,body.memo #mem,body.memo.mod #mem{transform:none}
+  .mnav{display:grid}
+  #top,body.mod #top{min-height:52px;padding:6px 8px;gap:4px}
+  body.mod #top{margin:8px 8px 0}
+  .ch{padding:10px 10px}
+  .mem{padding-top:8px;padding-bottom:8px}
+  #stage{padding:6px}
+  #msgs{padding:8px 10px}
+  #chat{padding:0 8px 8px}
+  #ask,#ask.mpe{max-width:calc(100vw - 24px)}
+}
 </style>
 </head>
 <body>
@@ -750,6 +775,8 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
   <div id="audios" hidden></div>
   <div id="musplayer"><div id="musyt"></div></div>
 </div>
+
+<div id="navbd" hidden></div>
 
 <div id="updbar" hidden><span id="updbarT"></span><button id="updbarGo">Reiniciar e atualizar</button><button id="updbarX">Depois</button></div>
 <div id="picker" hidden><div class="pk">
@@ -1816,6 +1843,14 @@ function musSide(box) {
   }
 }
 
+// celular: a barra lateral (canais + controles de voz) e a lista de membros abrem por cima da tela
+function closeNav() { document.body.classList.remove('navo', 'memo'); $('#navbd').hidden = true; }
+function openNav(cls) { closeNav(); document.body.classList.add(cls); $('#navbd').hidden = false; }
+$('#navbd').onclick = closeNav;
+$('#chans').addEventListener('click', e => { if (e.target.closest('.ch')) closeNav(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+matchMedia('(min-width:901px)').addEventListener('change', closeNav);
+
 function renderTop() {
   const v = view;
   const tp = $('#top'); tp.replaceChildren();
@@ -1823,6 +1858,16 @@ function renderTop() {
   else if (v.k === 't') tp.append('# ' + label(v.id));
   else if (v.k === 'm') tp.append(ico('music'), 'Sala de música');
   else tp.append(ico('speaker'), label(v.id));
+  // botões que só aparecem no celular (no computador ficam escondidos pelo CSS)
+  const mb = mel('button', 'mnav', '☰'); mb.type = 'button'; mb.title = 'Canais'; mb.onclick = () => openNav('navo'); tp.prepend(mb);
+  const rt = mel('div', 'mright');
+  if (cur) {
+    const qm = mel('button', 'mnav mq' + ($('#bMic').classList.contains('off') ? ' off' : ''), '🎤'); qm.type = 'button'; qm.title = 'Mutar / desmutar';
+    qm.onclick = () => { $('#bMic').click(); setTimeout(() => qm.classList.toggle('off', $('#bMic').classList.contains('off')), 60); };
+    const qs = mel('button', 'mnav mq sair', '📞'); qs.type = 'button'; qs.title = 'Desconectar'; qs.onclick = () => $('#bSair').click();
+    rt.append(qm, qs);
+  }
+  const mm = mel('button', 'mnav', '👥'); mm.type = 'button'; mm.title = 'Membros'; mm.onclick = () => openNav('memo'); rt.append(mm); tp.append(rt);
   $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't'); $('#musicw').hidden = !(v && v.k === 'm');
   $('#vc').hidden = !cur; $('#vcn').textContent = cur ? label(cur) : '';
   $('#txt').placeholder = v && v.k === 't' ? 'Conversar em #' + label(v.id) : ''; emptyCheck();
