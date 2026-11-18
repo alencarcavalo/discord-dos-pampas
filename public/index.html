@@ -748,6 +748,7 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
         <button id="bCam" title="Câmera">📷</button>
         <button id="bTela" title="Compartilhar tela">🖥️</button>
         <button id="bTrocar" title="Trocar a tela / janela que você está transmitindo" hidden>🔄</button>
+        <button id="bQual" title="Mudar a qualidade da transmissão (720p/1080p, 30/60 fps)" hidden>⚙️</button>
         <button id="bSom" title="Soundboard: tocar um som para todo mundo na chamada">🎵</button>
       </div>
     </div>
@@ -1278,6 +1279,7 @@ const P = {
   head: '<path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>',
   headoff: '<path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/><path d="M2.4 3.8 3.8 2.4 21.6 20.2 20.2 21.6z" stroke="var(--rail)" stroke-width="1.5"/>',
   expand: '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>',
+  tune: '<path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>',
   swap: '<path d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>',
   pin: '<path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/>',
   reply: '<path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>',
@@ -1297,7 +1299,7 @@ const P = {
 };
 const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[n] + '</svg>';
 function ico(n) { const s = document.createElement('span'); s.className = 'ico'; s.innerHTML = svg(n); return s; }
-[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bTrocar', 'swap'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bDeaf', 'head'], ['#bCfg', 'gear'], ['#aMic', 'down'], ['#aDeaf', 'down'], ['#sig', 'sig'], ['#bAnexo', 'plus'], ['#bFig', 'smile'], ['#bSom', 'music']]
+[['#bCam', 'cam'], ['#bTela', 'screen'], ['#bTrocar', 'swap'], ['#bQual', 'tune'], ['#bSair', 'phone'], ['#bMic', 'mic'], ['#bDeaf', 'head'], ['#bCfg', 'gear'], ['#aMic', 'down'], ['#aDeaf', 'down'], ['#sig', 'sig'], ['#bAnexo', 'plus'], ['#bFig', 'smile'], ['#bSom', 'music']]
   .forEach(([s, n]) => { const b = $(s); b.classList.add('ico'); b.innerHTML = svg(n); });
 
 // ---------- áudio: saída, volume do app e sons ----------
@@ -1892,7 +1894,7 @@ function askBox(title, withInput, okLabel) {
     row.append(no, ok); f.append(row); w.append(f); document.body.append(w); (i || ok).focus();
   });
 }
-function askQuality() {
+function askQuality(okTxt) {
   return new Promise(res => {
     const w = document.createElement('div'); w.id = 'askw';
     const f = document.createElement('form'); f.id = 'ask';
@@ -1901,7 +1903,7 @@ function askQuality() {
     [['720p30', '720p · 30 fps (leve)'], ['720p60', '720p · 60 fps'], ['1080p30', '1080p · 30 fps'], ['1080p60', '1080p · 60 fps (pesada)']].forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.append(o); });
     sel.value = cfg.sq || '720p30'; f.append(sel);
     const row = document.createElement('div'); row.className = 'row';
-    const ok = document.createElement('button'); ok.className = 'go'; ok.textContent = 'Escolher tela';
+    const ok = document.createElement('button'); ok.className = 'go'; ok.textContent = okTxt || 'Escolher tela';
     const no = document.createElement('button'); no.type = 'button'; no.className = 'sec'; no.textContent = 'Cancelar';
     const done = v => { document.removeEventListener('keydown', esc, true); w.remove(); res(v); };
     const esc = e => { if (e.key === 'Escape') { e.preventDefault(); done(null); } };
@@ -2531,7 +2533,7 @@ async function startShare() {
     Object.keys(peers).forEach(addShareAudio);
   }
   v.onended = stopShare;
-  addScreen(me, S.screen, true); syncStage(); press($('#bTela'), true); $('#bTrocar').hidden = false; sendVs();
+  addScreen(me, S.screen, true); syncStage(); press($('#bTela'), true); $('#bTrocar').hidden = false; $('#bQual').hidden = false; sendVs();
   applyShareQ(); clearInterval(sqTimer); sqTimer = setInterval(applyShareQ, 4000);   // pega também quem entra depois
 }
 // trocar a tela/janela sem parar a transmissão (quem assiste continua assistindo)
@@ -2581,7 +2583,7 @@ function stopShare() {
     shareAud.track.stop(); shareAud = null;
   }
   aecOn = false; aecInfo = null; paintAec();
-  dropLocal('screen'); press($('#bTela'), false); $('#bTrocar').hidden = true; sendVs();
+  dropLocal('screen'); press($('#bTela'), false); $('#bTrocar').hidden = true; $('#bQual').hidden = true; sendVs();
 }
 
 $('#bCam').onclick = async e => {
@@ -2607,6 +2609,12 @@ $('#bTela').onclick = async () => {
   try { await startShare(); } catch (e) { console.error(e); note('Compartilhamento de tela cancelado.'); }
 };
 $('#bTrocar').onclick = swapShare;
+$('#bQual').onclick = async () => {   // muda a qualidade com a transmissão já aberta (sem parar nem escolher a tela de novo)
+  if (!S.screen.getTracks().length) return;
+  const q = await askQuality('Aplicar'); if (!q) return;
+  cfg.sq = q; saveCfg(); if (!$('#cfg').hidden) fillVoz();
+  await applyShareQ(); toast('Qualidade da transmissão: ' + q.replace('p', 'p · ') + ' fps');
+};
 $('#bSair').onclick = () => { dropAll(); send({ type: 'leave' }); sfx('eu_sai'); sendVs(); if (view?.k === 'v') firstText(); else { renderChans(); renderTop(); } };
 
 $('#chat').onsubmit = e => {
