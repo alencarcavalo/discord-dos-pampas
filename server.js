@@ -500,6 +500,8 @@ wss.on('connection', (ws, req) => {
   ws.seen = Date.now();   // última vez que esta conexão deu sinal de vida (o app manda um ping a cada 4 s)
   ws.ip = ipOf(req);
   clients.add(ws);
+  ws.on('pong', () => { ws.seen = Date.now(); });   // o navegador responde ao ping do protocolo sozinho, mesmo com o app minimizado/na bandeja (timers do JS congelados)
+  ws.on('error', e => console.log('Erro de conexão (' + (ws.nick || ws.id) + '): ' + e.message));
   ws.on('message', raw => {
     ws.seen = Date.now();
     let m; try { m = JSON.parse(raw); } catch { return; }
@@ -673,7 +675,7 @@ wss.on('connection', (ws, req) => {
       if (t) send(t, { type: 'signal', from: ws.id, data: m.data });
     }
   });
-  ws.on('close', () => { leave(ws); clients.delete(ws); state(); });
+  ws.on('close', (code) => { if (ws.nick) console.log('Saiu: ' + ws.nick + ' (código ' + code + ')'); leave(ws); clients.delete(ws); state(); });
 });
 
 // a cada 4 s manda para todo mundo o ping de cada pessoa (medido por ela mesma até o servidor)
@@ -683,17 +685,21 @@ setInterval(() => {
   clients.forEach(c => c.nick && send(c, { type: 'pings', p, mem }));
 }, 4000);
 
-// a cada 20 s derruba conexões que ficaram mais de 2 minutos sem dar sinal (queda de internet, celular dormindo); o 'close' tira da lista
+// a cada 20 s manda um ping do protocolo WebSocket (o navegador responde sozinho). Só derruba a conexão que não deu NENHUM sinal
+// (nem mensagem nem pong) por 90 s: aí é queda de verdade (internet caiu, celular dormiu). O 'close' tira da lista.
 setInterval(() => {
   const now = Date.now();
   clients.forEach(c => {
-    if (now - c.seen > 120000) { console.log('Sem sinal há 2 min: derrubando ' + (c.nick || c.id)); c.terminate(); }
+    if (now - c.seen > 90000) { console.log('Sem sinal há 90 s: derrubando ' + (c.nick || c.id)); c.terminate(); return; }
+    try { c.ping(); } catch {}
   });
 }, 20000);
 
 setInterval(prune, 3600e3);   // limpeza das mensagens/anexos antigos, de hora em hora
 
 // o Render avisa (SIGTERM) antes de desligar: grava o que faltar
+process.on('uncaughtException', e => console.error('ERRO NÃO TRATADO (servidor continua):', e));
+process.on('unhandledRejection', e => console.error('PROMESSA REJEITADA (servidor continua):', e));
 process.on('SIGTERM', async () => { clearTimeout(flushTimer); await flush().catch(() => {}); process.exit(0); });
 
 Promise.race([loadSaved(), new Promise(r => setTimeout(r, 10000))]).finally(() => srv.listen(PORT, () => console.log('Discord dos Guri em http://localhost:' + PORT)));
