@@ -547,6 +547,76 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 }
 #rail{display:none}
 #sname::before{content:"";flex:none;width:26px;height:26px;margin-right:10px;border-radius:8px;background:url(/icon-192.png) center/cover}
+/* ===== Layout MODERNO (Configurações > Aparência > Layout). Só CSS, ligado pela classe body.mod: sem ela, o app fica igual ao Clássico ===== */
+body.mod{--rd:22px;--rs:14px;background:radial-gradient(1200px 700px at 6% -10%,color-mix(in srgb,var(--blur) 55%,transparent),transparent 64%),radial-gradient(1000px 640px at 106% 108%,color-mix(in srgb,var(--fala,var(--blur)) 42%,transparent),transparent 62%),color-mix(in srgb,var(--main) 50%,#000)}
+body.mod #app{gap:14px;padding:14px;background:transparent}
+body.mod #rail{display:none}
+body.mod #side,body.mod #mem,body.mod #main{border-radius:var(--rd);overflow:hidden;border:1px solid color-mix(in srgb,#fff 8%,transparent);box-shadow:0 10px 34px #0006}
+body.mod #side,body.mod #mem{background:color-mix(in srgb,var(--blur) 7%,color-mix(in srgb,var(--side) 74%,transparent));-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+body.mod #main{background:color-mix(in srgb,var(--blur) 4%,color-mix(in srgb,var(--main) 86%,transparent))}
+body.mod #mem{padding:14px 10px;border-left:0}
+body.mod #sname{height:60px;padding:0 20px;border:0;box-shadow:none;font-size:1.08rem;font-weight:800;letter-spacing:.01em}
+body.mod #chans{padding:4px 12px 8px}
+body.mod .cat{margin:16px 8px 6px;letter-spacing:.06em}
+body.mod .cat button{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--txt) 8%,transparent)}
+body.mod .cat button:hover{background:var(--blur);color:var(--onac,#fff)}
+body.mod .ch{padding:9px 12px;border-radius:var(--rs);transition:background .15s,transform .15s}
+body.mod .ch:hover{background:color-mix(in srgb,var(--blur) 14%,transparent)}
+body.mod .ch.on{background:linear-gradient(135deg,color-mix(in srgb,var(--blur) 46%,transparent),color-mix(in srgb,var(--blur) 20%,transparent));color:#fff;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--blur) 50%,transparent)}
+body.mod .ch .ct{background:color-mix(in srgb,var(--verde) 20%,transparent);padding:1px 8px;border-radius:999px}
+body.mod .mem{border-radius:12px;margin-left:6px}
+body.mod .mem:hover{background:color-mix(in srgb,var(--txt) 6%,transparent)}
+body.mod #vc,body.mod #me{background:color-mix(in srgb,var(--rail) 72%,transparent);border:0}
+body.mod #vc{margin:0 12px;border-radius:20px 20px 0 0;padding:12px 12px 6px}
+body.mod #me{margin:0 12px 12px;border-radius:20px}
+body.mod #vc[hidden]+#me{border-radius:20px}
+body.mod #vc:not([hidden])+#me{border-top:1px solid color-mix(in srgb,#fff 8%,transparent);border-radius:0 0 20px 20px}
+body.mod .vb button,body.mod #bMic,body.mod #bCfg,body.mod #me .sp>button:first-child{border-radius:14px;background:color-mix(in srgb,var(--txt) 9%,transparent)}
+body.mod .vb button:hover,body.mod #bMic:hover,body.mod #bCfg:hover{background:color-mix(in srgb,var(--blur) 35%,transparent)}
+body.mod .vb button.on{background:var(--verde);box-shadow:0 0 14px color-mix(in srgb,var(--verde) 55%,transparent)}
+body.mod #vch button{border-radius:12px}
+body.mod #top{margin:14px 14px 0;padding:12px 18px;border:0;border-radius:var(--rs);box-shadow:none;background:color-mix(in srgb,var(--side) 55%,transparent)}
+body.mod #stage{padding:14px}
+body.mod #grid{gap:14px}
+body.mod .tile{border-radius:22px;box-shadow:0 8px 26px #0007;border:1px solid color-mix(in srgb,#fff 8%,transparent)}
+body.mod .tile .nm{border-radius:999px;padding:3px 12px;background:#0009;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.mod .tile::after{border-radius:inherit}
+body.mod .ctl button,body.mod .ctl .vol{border-radius:12px}
+body.mod #msgs{padding:14px 20px;gap:4px}
+body.mod .m{padding:8px 12px;border-radius:18px;transition:background .12s}
+body.mod .m:hover{background:color-mix(in srgb,var(--txt) 6%,transparent)}
+body.mod .mact button{border-radius:10px}
+body.mod .rx{border-radius:999px}
+body.mod .stk{border-radius:20px}
+body.mod #chat{margin:0 18px 18px;padding:4px 8px;border-radius:999px;background:color-mix(in srgb,var(--input) 85%,transparent);border:1px solid color-mix(in srgb,#fff 8%,transparent);box-shadow:0 6px 20px #0004}
+body.mod #chat:focus-within{border-color:color-mix(in srgb,var(--blur) 70%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--blur) 25%,transparent),0 6px 20px #0004}
+body.mod #chat input,body.mod #chat input:focus,body.mod #chat input:focus-visible{padding:.75rem .6rem;background:transparent;border-radius:999px;outline:none;box-shadow:none}
+body.mod #chat button{border-radius:50%}
+body.mod #chat #bEnviar{background:var(--blur);color:var(--onac,#fff);border-radius:50%}
+body.mod #chat #bEnviar:hover{filter:brightness(1.12);background:var(--blur);color:var(--onac,#fff)}
+body.mod #rbar{margin:0 22px;border-radius:14px 14px 0 0}
+body.mod #figs{margin:0 18px 10px;border-radius:18px}
+body.mod #figs button{border-radius:14px}
+body.mod .u{border-radius:16px;margin-bottom:8px;box-shadow:0 4px 14px #0004}
+body.mod .go{border-radius:999px;padding:.75rem 1.2rem;box-shadow:0 6px 18px color-mix(in srgb,var(--blur) 40%,transparent)}
+body.mod .sec{border-radius:999px;padding:10px 16px}
+body.mod input{border-radius:14px}
+body.mod #login{background:radial-gradient(900px 560px at 15% 0%,color-mix(in srgb,var(--blur) 32%,transparent),transparent 62%),radial-gradient(800px 520px at 100% 100%,color-mix(in srgb,var(--fala,var(--blur)) 26%,transparent),transparent 60%),color-mix(in srgb,var(--main) 55%,#000)}
+body.mod #loginc{border-radius:28px;padding:2.2rem;background:color-mix(in srgb,var(--main) 80%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid color-mix(in srgb,#fff 10%,transparent);box-shadow:0 20px 60px #000a}
+body.mod #cfg{background:radial-gradient(1000px 600px at 0% 0%,color-mix(in srgb,var(--blur) 26%,transparent),transparent 60%),color-mix(in srgb,var(--main) 60%,#000);padding:14px;gap:14px}
+body.mod #cfgtabs{border-radius:var(--rd);padding:30px 14px 20px;background:color-mix(in srgb,var(--side) 80%,transparent);border:1px solid color-mix(in srgb,#fff 8%,transparent)}
+body.mod #cfgtabs button{border-radius:14px}
+body.mod #cfgtabs button.on::before{display:none}
+body.mod #cfgbody{border-radius:var(--rd);background:color-mix(in srgb,var(--main) 85%,transparent);border:1px solid color-mix(in srgb,#fff 8%,transparent);padding:36px 56px 90px 44px}
+body.mod .cc{border-radius:22px;background:color-mix(in srgb,var(--side) 70%,transparent)}
+body.mod .seg{border-radius:999px}body.mod .seg button{border-radius:999px}
+body.mod #cfgbody select{border-radius:14px}
+body.mod .pk,body.mod #ask,body.mod #vmenu,body.mod #sbp,body.mod .pop{border-radius:22px}
+body.mod .pkc,body.mod #sbp .sbb{border-radius:16px}
+body.mod #toast,body.mod #sbn{border-radius:999px}
+body.mod #updbar{margin:10px auto 0;left:50%;right:auto;transform:translateX(-50%);border-radius:999px;padding:8px 18px}
+body.mod ::-webkit-scrollbar-thumb{border-radius:999px}
+@media (max-width:760px){body.mod #app{gap:8px;padding:8px}body.mod #cfg{padding:8px}body.mod #cfgbody{padding:24px 18px 90px}}
 </style>
 </head>
 <body>
@@ -842,6 +912,10 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
             <div class="tp-row"><span class="tp-btn">Botão</span><span class="tp-bar"></span></div>
           </div>
         </div>
+      </div>
+
+      <div class="cc"><h3>Layout</h3>
+        <div class="rw"><div class="rt"><b>Estilo do app</b><small>Clássico é o visual de sempre. Moderno tem cantos bem arredondados, painéis flutuantes e brilho na cor principal. Os botões continuam nos mesmos lugares.</small></div><div class="seg" id="lySeg"><button type="button" data-v="classic">Clássico</button><button type="button" data-v="modern">Moderno</button></div></div>
       </div>
 
       <div class="cc"><h3>Temas prontos</h3><div id="presets" style="padding:12px 0 16px"></div></div>
@@ -2235,7 +2309,7 @@ $('#bSom').onclick = e => {
 };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, bgb: 0, bgm: 'ia', bgi: false, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', kDeaf: 'Ctrl+Alt+D', kLeave: 'Ctrl+Alt+L', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100 }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, bgb: 0, bgm: 'ia', bgi: false, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', kDeaf: 'Ctrl+Alt+D', kLeave: 'Ctrl+Alt+L', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100, layout: 'classic' }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof }; cfg.cam = { ...DEF.cam, ...cfg.cam }; delete cfg.cam.blur;   // o antigo "desfoque geral" foi removido
@@ -2430,6 +2504,7 @@ function applyTheme() {
   r.setProperty('--onac', lum(accent) > .42 ? '#111' : '#fff');   // texto escuro em cima de cores claras (ex.: dourado)
   r.setProperty('--ff', (FONTS[cfg.theme.font] || FONTS.padrao)[1]);
   r.setProperty('--fsc', (+cfg.theme.fs || 100) / 100);
+  document.body.classList.toggle('mod', cfg.theme.layout === 'modern');   // layout Moderno: só liga a classe, o resto é CSS
 }
 applyTheme();
 
@@ -3028,6 +3103,7 @@ function fillTheme() {
   swatches($('#swAc'), ACCENTS, 'accent', 'cAc'); swatches($('#swFa'), ACCENTS, 'fala', 'cFa'); swatches($('#swBg'), BGS, 'bg', 'cBg');
   $('#fontSel').value = FONTS[cfg.theme.font] ? cfg.theme.font : 'padrao';
   document.querySelectorAll('#fsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.v === (+cfg.theme.fs || 100)));
+  document.querySelectorAll('#lySeg button').forEach(b => b.classList.toggle('on', b.dataset.v === (cfg.theme.layout === 'modern' ? 'modern' : 'classic')));
   $('#icSz').value = cfg.ic || 20; $('#icSzT').textContent = (cfg.ic || 20) + ' px';
   markPresets();
 }
@@ -3043,6 +3119,7 @@ $('#fontSel').onchange = e => setTheme({ font: e.target.value });
   const b = document.createElement('button'); b.type = 'button'; b.textContent = n; b.dataset.v = v; b.onclick = () => setTheme({ fs: v }); $('#fsSeg').append(b);
 });
 $('#faReset').onclick = () => setTheme({ fala: '' });
+document.querySelectorAll('#lySeg button').forEach(b => b.onclick = () => setTheme({ layout: b.dataset.v }));
 $('#thReset').onclick = () => { cfg.theme = { ...DEF.theme }; cfg.ic = DEF.ic; applyTheme(); saveCfg(); fillTheme(); toast('Visual padrão restaurado.'); };
 // Esc fecha as configurações (menos quando está gravando um atalho)
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cfg').hidden && !capt) { $('#cfg').hidden = true; camPrevOff(); } }, true);
