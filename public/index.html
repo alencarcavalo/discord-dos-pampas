@@ -2327,11 +2327,32 @@ function handle(m) {
 // quais fluxos são microfone / câmera / tela (o outro lado precisa saber para montar a tela certa)
 const META = () => ({ [S.mic.id]: 'mic', [S.cam.id]: 'cam', [S.screen.id]: 'screen' });
 
+// O navegador começa a conexão achando que a internet é fraca (uns 300 kbps) e só sobe aos poucos: por isso a tela
+// ficava pixelada por vários minutos. Aqui dizemos no SDP para já começar alto (Chrome/Electron respeitam x-google-*).
+function tuneSdp(sdp) {
+  return sdp.split(/\r?\nm=/).map((sec, i) => {
+    if (!(i === 0 ? false : sec.startsWith('video'))) return sec;
+    const pts = [...sec.matchAll(/a=rtpmap:(\d+) (?:VP8|VP9|H264|AV1)\//g)].map(m => m[1]);
+    const par = 'x-google-min-bitrate=800;x-google-start-bitrate=4000;x-google-max-bitrate=8000';
+    pts.forEach(pt => {
+      const re = new RegExp('(a=fmtp:' + pt + ' [^\\r\\n]*)');
+      if (re.test(sec)) sec = sec.replace(re, '$1;' + par);
+      else sec = sec.replace(new RegExp('(a=rtpmap:' + pt + ' [^\\r\\n]*)'), '$1\r\na=fmtp:' + pt + ' ' + par);
+    });
+    return sec;
+  }).join('\r\nm=');
+}
+async function setLocalTuned(pc) {
+  try {
+    const d = await (pc.signalingState === 'have-remote-offer' ? pc.createAnswer() : pc.createOffer());
+    d.sdp = tuneSdp(d.sdp); await pc.setLocalDescription(d);
+  } catch (e) { console.warn('sdp', e); await pc.setLocalDescription(); }   // se algo falhar, volta ao jeito normal
+}
 function makePeer(id) {
   const pc = new RTCPeerConnection({ iceServers: ICE });
   const p = peers[id] = { pc, polite: me < id, making: false, ignore: false, snd: {}, meta: {} };
   pc.onnegotiationneeded = async () => {
-    try { p.making = true; await pc.setLocalDescription(); send({ type: 'signal', to: id, data: { description: pc.localDescription, meta: META() } }); }
+    try { p.making = true; await setLocalTuned(pc); send({ type: 'signal', to: id, data: { description: pc.localDescription, meta: META() } }); }
     catch (e) { console.error(e); } finally { p.making = false; }
   };
   pc.onicecandidate = e => e.candidate && send({ type: 'signal', to: id, data: { candidate: e.candidate } });
@@ -2359,7 +2380,7 @@ async function onSignal(from, data) {
       p.ignore = !p.polite && clash;
       if (p.ignore) return;
       await p.pc.setRemoteDescription(d);
-      if (d.type === 'offer') { await p.pc.setLocalDescription(); send({ type: 'signal', to: from, data: { description: p.pc.localDescription, meta: META() } }); }
+      if (d.type === 'offer') { await setLocalTuned(p.pc); send({ type: 'signal', to: from, data: { description: p.pc.localDescription, meta: META() } }); }
     } else if (data.candidate) {
       try { await p.pc.addIceCandidate(data.candidate); } catch (e) { if (!p.ignore) throw e; }
     }
@@ -2491,7 +2512,7 @@ async function applyShareQ() {
     try {
       const pr = sn.getParameters(); if (!pr.encodings || !pr.encodings.length) pr.encodings = [{}];
       pr.encodings[0].maxBitrate = br; pr.encodings[0].maxFramerate = fps; pr.encodings[0].scaleResolutionDownBy = 1;
-      pr.degradationPreference = 'balanced';
+      pr.degradationPreference = 'maintain-resolution'; pr.encodings[0].priority = 'high'; pr.encodings[0].networkPriority = 'high';   // prefere perder fps a borrar a imagem
       await sn.setParameters(pr);
     } catch (e) { console.warn('bitrate', e); }
   }
