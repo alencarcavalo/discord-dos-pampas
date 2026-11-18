@@ -1526,7 +1526,8 @@ function mkMsg(m, ch) {
     else { const l = document.createElement('a'); l.className = 'file'; l.href = a.data; l.download = a.name; l.textContent = '📎 ' + a.name + ' (' + Math.ceil(a.size / 1024) + ' KB)'; c.append(l); }
   });
   const rxs = mkRx(m, ch); if (rxs) c.append(rxs);
-  d.append(avatar(m.from, 0, m.uid), c);
+  const au = m.uid && st.users.find(u => u.pid === m.uid);   // foto de quem mandou, achada pelo id fixo da pessoa (se estiver online)
+  d.append(avatar(m.from, 0, au ? au.id : null), c);
   if (m.mid && ch) {
     const t = document.createElement('div'); t.className = 'mact';
     const ab = (icon, title, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ico' + (cls ? ' ' + cls : ''); b.innerHTML = svg(icon); b.title = title; b.onclick = fn; t.append(b); return b; };
