@@ -2846,7 +2846,7 @@ function paintAch() {
   const show = bdShow(ACH), tot = ACH.defs.length * 5, got = ACH.defs.reduce((n, d) => n + (ACH.lv[d.id] || 0), 0);
   top.replaceChildren();
   const tt = document.createElement('div'); tt.className = 'tt';
-  const tb = document.createElement('b'); tb.textContent = '🏅 ' + got + ' de ' + tot + ' níveis conquistados';
+  const tb = document.createElement('b'); tb.textContent = '🏅 ' + got + ' de ' + tot + ' níveis conquistados' + (ACH.adm ? '  ·  🛡️ ADM: tudo liberado' : '');
   const au = document.createElement('button'); au.type = 'button'; au.className = 'sec mini'; au.textContent = 'Escolher automático'; au.hidden = !Array.isArray(ACH.pick);
   au.onclick = () => { ACH.pick = null; bdg[me] = bdShow(ACH); send({ type: 'badge-pick', ids: null }); paintAch(); };
   tt.append(tb, au);
