@@ -145,8 +145,28 @@ small{color:var(--mut)}
 .sec.on{background:var(--blur);color:var(--onac,#fff)}
 /* ===== configurações: visual novo ===== */
 #cfg{position:fixed;inset:0;background:var(--main);z-index:8;display:flex}
-#cfg:not([hidden]){animation:cfgin .18s ease-out}
-@keyframes cfgin{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+#cfg:not([hidden]){animation:cfgin .34s cubic-bezier(.2,.8,.2,1)}
+@keyframes cfgin{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+#cfg:not([hidden]) #cfgtabs{animation:cfgside .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes cfgside{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
+#cfg:not([hidden]) #cfgtabs button{animation:cfgitem .4s cubic-bezier(.2,.8,.2,1) both}
+@keyframes cfgitem{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
+#cfgtabs button:nth-child(2){animation-delay:.03s!important}#cfgtabs button:nth-child(3){animation-delay:.06s!important}#cfgtabs button:nth-child(4){animation-delay:.09s!important}#cfgtabs button:nth-child(5){animation-delay:.12s!important}#cfgtabs button:nth-child(6){animation-delay:.15s!important}#cfgtabs button:nth-child(7){animation-delay:.18s!important}#cfgtabs button:nth-child(8){animation-delay:.21s!important}#cfgtabs button:nth-child(9){animation-delay:.24s!important}#cfgtabs button:nth-child(n+10){animation-delay:.27s!important}
+#cfgbody>section:not([hidden]){animation:secin .34s cubic-bezier(.2,.8,.2,1)}
+@keyframes secin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#cfgbody>section:not([hidden]) .cc{animation:ccin .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ccin{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+#cfgbody>section:not([hidden]) .cc:nth-of-type(2){animation-delay:.05s}#cfgbody>section:not([hidden]) .cc:nth-of-type(3){animation-delay:.1s}#cfgbody>section:not([hidden]) .cc:nth-of-type(4){animation-delay:.15s}#cfgbody>section:not([hidden]) .cc:nth-of-type(n+5){animation-delay:.2s}
+#cfgbody .cc,#cfgtabs button{transition:background .18s,color .18s,transform .18s}
+#cfgtabs button:active{transform:scale(.97)}
+/* troca de tela (canal de texto, chamada, sala de música) */
+#stage:not([hidden]),#chatw:not([hidden]),#musicw:not([hidden]){animation:viewin .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes viewin{from{opacity:0;transform:translateY(10px) scale(.992)}to{opacity:1;transform:none}}
+#top{animation:topin .3s ease-out}
+@keyframes topin{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#cfg,#cfg *,#stage,#chatw,#musicw,#top{animation:none!important}}
+#tmeter{position:relative;height:12px;background:var(--input);border-radius:6px;overflow:hidden}
+#tmBar{height:100%;width:0;background:#7a7f87;transition:width .06s linear}#tmBar.open{background:var(--verde)}
 #cfgtabs{background:var(--side);width:270px;flex:none;padding:48px 14px 20px 22px;display:flex;flex-direction:column;gap:2px;overflow:auto}
 #cfgtabs h4{margin:20px 10px 6px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 #cfgtabs h4:first-child{margin-top:0}
@@ -887,6 +907,19 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
         <div class="rw"><div class="rc"><button type="button" class="sec" id="packIn">▶ Ouvir o de entrar</button><button type="button" class="sec" id="packOut">▶ Ouvir o de sair</button></div></div>
       </div>
 
+      <div class="cc"><h3>Efeitos de voz e teste do microfone</h3>
+        <div class="rw col"><div class="rt"><b>Efeito na sua voz</b><small>Todo mundo na chamada te ouve com o efeito. Para voltar ao normal, escolha "Normal".</small></div>
+          <select id="vfxSel"></select></div>
+        <div class="rw col"><div class="rt"><b>Testar o microfone</b><small>Abre o microfone só para você ver a barra e se ouvir (com o efeito). Fora de chamada, ele fecha sozinho quando você sai desta aba.</small></div>
+          <div class="rc"><button type="button" class="sec" id="tmGo">🎙️ Testar microfone</button></div>
+          <div id="tmBox" hidden style="display:grid;gap:10px;margin-top:8px">
+            <div id="tmeter"><div id="tmBar"></div></div>
+            <small id="tmSt" style="color:var(--mut)">Fale algo: a barra tem que mexer.</small>
+            <div class="rc"><button type="button" class="sec" id="tmRec">⏺ Gravar 5s e ouvir</button></div>
+            <label class="ck" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="tmLive" style="width:auto"> Me ouvir ao vivo (use fone de ouvido, senão dá microfonia)</label>
+          </div></div>
+      </div>
+
       <div class="cc"><h3>Qualidade do microfone</h3>
         <div class="rw"><div class="rt"><b>Supressão de ruído</b><small>Reduz barulho constante de fundo, como ventilador e chiado.</small></div><label class="sw"><input type="checkbox" id="ns"><i></i></label></div>
         <div class="rw"><div class="rt"><b>Supressão de ruído por IA (RNNoise)</b><small>Mais forte, mas experimental e precisa de internet para carregar.</small></div><label class="sw"><input type="checkbox" id="ai"><i></i></label></div>
@@ -1410,6 +1443,7 @@ setInterval(() => {
     if (dk !== sa.cur) { sa.cur = dk; sa.g.gain.setTargetAtTime(dk, ac.currentTime, dk < 1 ? .015 : .3); }
   }
   if (!$('#cfg').hidden) drawMeter();
+  if (tm.on) { const vs = document.querySelector('#cfgbody section[data-p=voz]'); if ($('#cfg').hidden || (vs && vs.hidden)) tmStop(); }   // saiu da aba de voz: fecha o teste
 }, 80);
 
 
@@ -3031,6 +3065,27 @@ const GATE = `class Gate extends AudioWorkletProcessor {
   }
 }
 registerProcessor('gate', Gate);`;
+// muda o tom da voz (voz grossa / de esquilo) sem mudar a velocidade: duas "cabeças de leitura" que se alternam
+const PITCH = `class Pitch extends AudioWorkletProcessor {
+  constructor() { super(); this.r = 1; this.N = 8192; this.buf = new Float32Array(this.N); this.w = 0; this.ph = 0; this.win = Math.round(sampleRate * .05); this.port.onmessage = e => { if (e.data.r) this.r = e.data.r; }; }
+  process(inp, out) {
+    const y = out[0][0]; if (!y) return true;
+    const x = inp[0] && inp[0][0]; if (!x) { y.fill(0); return true; }
+    const N = this.N, M = N - 1, W = this.win, buf = this.buf;
+    for (let k = 0; k < y.length; k++) {
+      buf[this.w] = x[k];
+      let ph = this.ph + (1 - this.r) / W; if (ph >= 1) ph -= 1; else if (ph < 0) ph += 1; this.ph = ph;
+      const p2 = ph + .5 >= 1 ? ph - .5 : ph + .5, g1 = Math.sin(Math.PI * ph) ** 2, g2 = 1 - g1;
+      let p = this.w - ph * W, i = Math.floor(p), f = p - i;
+      const a = buf[(i + N) & M] * (1 - f) + buf[(i + 1 + N) & M] * f;
+      p = this.w - p2 * W; i = Math.floor(p); f = p - i;
+      y[k] = a * g1 + (buf[(i + N) & M] * (1 - f) + buf[(i + 1 + N) & M] * f) * g2;
+      this.w = (this.w + 1) & M;
+    }
+    return true;
+  }
+}
+registerProcessor('pitch', Pitch);`;
 
 // Anti-eco da transmissão: o som do PC leva junto a voz dos amigos tocando no seu alto-falante. Aqui ela é subtraída
 // (o app sabe exatamente o que tocou), então quem assiste ouve o jogo mas não a própria voz de volta.
@@ -3180,6 +3235,8 @@ async function initMic() {
     mic.gate = new AudioWorkletNode(c, 'gate', { channelCount: 1, channelCountMode: 'explicit', outputChannelCount: [1] });
     mic.gate.port.onmessage = e => { micLvl = e.data; };
   } catch (e) { console.error('porta de ruído indisponível', e); }
+  try { await c.audioWorklet.addModule(URL.createObjectURL(new Blob([PITCH], { type: 'text/javascript' }))); mic.pitchOk = true; } catch (e) { console.error('efeito de tom indisponível', e); }
+  mic.mon = c.createGain(); mic.mon.gain.value = 0; mic.mon.connect(outG);   // "me ouvir ao vivo" (teste do microfone)
   wireMic();
   S.mic = mic.dest.stream;          // é este fluxo (já filtrado) que vai para os outros
   const t = S.mic.getAudioTracks()[0]; if (t) t.enabled = !(muted || deaf);
@@ -3187,11 +3244,94 @@ async function initMic() {
 }
 function wireMic() {
   const m = mic; ['src', 'mono', 'hp', 'rnn', 'gate', 'gain'].forEach(k => { try { m[k] && m[k].disconnect(); } catch {} });
+  if (m.fx) { try { m.fx.stop(); } catch {} m.fx = null; }
   let n = m.src.connect(m.mono).connect(m.hp);
   if (m.rnn && cfg.ai) n = n.connect(m.rnn);
   if (m.gate) n = n.connect(m.gate);
-  n.connect(m.gain); m.gain.connect(m.an); m.gain.connect(m.dest);
+  if (cfg.vfx && cfg.vfx !== 'none') { try { m.fx = buildFx(m, cfg.vfx); } catch (e) { console.error('efeito', e); } if (m.fx) { n.connect(m.fx.i); n = m.fx.o; } else toast('Esse efeito não está disponível neste navegador.'); }
+  n.connect(m.gain); m.gain.connect(m.an); m.gain.connect(m.dest); if (m.mon) m.gain.connect(m.mon);
   m.gain.gain.value = cfg.micv; pushGate();
+}
+// ---------- efeitos de voz ----------
+const VFX = { none: 'Normal (sem efeito)', grave: '🧌 Voz grossa', agudo: '🐿️ Voz de esquilo', monstro: '👹 Monstro', robo: '🤖 Robô', eco: '🔊 Eco', caverna: '⛰️ Caverna', radio: '📻 Rádio antigo' };
+function fxImpulse(c, sec, dec) {
+  const n = Math.floor(c.sampleRate * sec), b = c.createBuffer(2, n, c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, dec); }
+  return b;
+}
+function fxCurve(k) { const n = 256, a = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; a[i] = (3 + k) * x * 20 * Math.PI / 180 / (Math.PI + k * Math.abs(x)); } return a; }
+function buildFx(m, kind) {   // devolve { i: entrada, o: saída, stop } ou null se não der
+  const c = m.c, nodes = [], oscs = [], mk = n => (nodes.push(n), n);
+  const i = mk(c.createGain()), o = mk(c.createGain());
+  const pitch = r => { if (!m.pitchOk) return null; const p = mk(new AudioWorkletNode(c, 'pitch', { channelCount: 1, channelCountMode: 'explicit', outputChannelCount: [1] })); p.port.postMessage({ r }); return p; };
+  if (kind === 'grave' || kind === 'agudo' || kind === 'monstro') {
+    const p = pitch(kind === 'grave' ? .78 : kind === 'agudo' ? 1.55 : .6); if (!p) return null;
+    i.connect(p);
+    if (kind === 'monstro') { const w = mk(c.createWaveShaper()); w.curve = fxCurve(12); const lp = mk(c.createBiquadFilter()); lp.type = 'lowpass'; lp.frequency.value = 2600; const g = mk(c.createGain()); g.gain.value = .7; p.connect(w); w.connect(lp); lp.connect(g); g.connect(o); }
+    else p.connect(o);
+  } else if (kind === 'robo') {
+    const g = mk(c.createGain()); g.gain.value = 0; const osc = c.createOscillator(); osc.type = 'sine'; osc.frequency.value = 55; osc.connect(g.gain); osc.start(); oscs.push(osc);
+    i.connect(g); g.connect(o); o.gain.value = 1.8;
+  } else if (kind === 'eco') {
+    const d = mk(c.createDelay(1)), fb = mk(c.createGain()), wet = mk(c.createGain());
+    d.delayTime.value = .24; fb.gain.value = .38; wet.gain.value = .55;
+    i.connect(o); i.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(o);
+  } else if (kind === 'caverna') {
+    const cv = mk(c.createConvolver()); cv.buffer = fxImpulse(c, 2.2, 2.4); const wet = mk(c.createGain()); wet.gain.value = .75; const dry = mk(c.createGain()); dry.gain.value = .8;
+    i.connect(dry); dry.connect(o); i.connect(cv); cv.connect(wet); wet.connect(o);
+  } else if (kind === 'radio') {
+    const hp = mk(c.createBiquadFilter()); hp.type = 'highpass'; hp.frequency.value = 600;
+    const lp = mk(c.createBiquadFilter()); lp.type = 'lowpass'; lp.frequency.value = 3200;
+    const w = mk(c.createWaveShaper()); w.curve = fxCurve(6); const g = mk(c.createGain()); g.gain.value = 1.3;
+    i.connect(hp); hp.connect(lp); lp.connect(w); w.connect(g); g.connect(o);
+  } else return null;
+  return { i, o, stop() { oscs.forEach(x => { try { x.stop(); } catch {} }); [...nodes, ...oscs].forEach(n => { try { n.disconnect(); } catch {} }); } };
+}
+// ---------- teste do microfone ----------
+let tm = { on: false, own: false, rec: false, prev: null };
+function micRelease() {   // fecha o microfone que o teste abriu (fora de chamada)
+  const m = mic; if (!m) return;
+  try { m.raw.getTracks().forEach(t => t.stop()); } catch {}
+  ['src', 'mono', 'hp', 'rnn', 'gate', 'gain', 'mon'].forEach(k => { try { m[k] && m[k].disconnect(); } catch {} });
+  if (m.fx) { try { m.fx.stop(); } catch {} }
+  mic = null; micTried = false; micLvl = {}; S.mic = tm.prev || new MediaStream();
+}
+function tmPaint() {
+  const g = $('#tmGo'); if (!g) return;
+  g.textContent = tm.on ? '⏹ Parar o teste' : '🎙️ Testar microfone';
+  $('#tmBox').hidden = !tm.on; $('#tmRec').disabled = tm.rec;
+  $('#tmRec').textContent = tm.rec ? '⏺ Gravando… fale agora' : '⏺ Gravar 5s e ouvir';
+}
+async function tmStart() {
+  if (!mic) {
+    const prev = S.mic;
+    try { await initMic(); micTried = true; tm.own = true; tm.prev = prev; }
+    catch (e) { console.error(e); toast('Não consegui abrir o microfone. Confira a permissão.'); return; }
+  }
+  tm.on = true; $('#tmLive').checked = false; tmPaint();
+}
+function tmStop() {
+  if (!tm.on) return;
+  tm.on = false; tm.rec = false;
+  if (mic && mic.mon) mic.mon.gain.value = 0;
+  if (tm.own && !cur) micRelease();
+  tm.own = false; tmPaint();
+}
+function tmRecord() {
+  if (!mic || tm.rec) return;
+  if (muted || deaf) { toast('Você está mutado: desmute para gravar o teste.'); return; }
+  tm.rec = true; tmPaint();
+  const chunks = []; let mr;
+  try { mr = new MediaRecorder(mic.dest.stream); } catch { tm.rec = false; tmPaint(); toast('Este navegador não grava o teste.'); return; }
+  mr.ondataavailable = e => e.data.size && chunks.push(e.data);
+  mr.onstop = async () => {
+    tm.rec = false; tmPaint();
+    try {
+      const buf = await getAC().decodeAudioData(await new Blob(chunks).arrayBuffer());
+      const src = ac.createBufferSource(); src.buffer = buf; src.connect(outG); src.start();
+    } catch (e) { console.error(e); toast('Não consegui tocar a gravação.'); }
+  };
+  mr.start(); setTimeout(() => { if (mr.state === 'recording') mr.stop(); }, 5000);
 }
 const pushGate = () => mic && mic.gate && mic.gate.port.postMessage({ on: !!cfg.gate, auto: !!cfg.gAuto, thr: Math.pow(10, cfg.gThr / 20) });
 async function loadAI() {
@@ -3627,13 +3767,20 @@ function fillVoz() {
   $('#micVol').value = Math.round(cfg.micv * 100); $('#micVolT').textContent = Math.round(cfg.micv * 100) + '%';
   $('#gThr').value = cfg.gThr; $('#gThrT').textContent = cfg.gThr + ' dB';
   $('#gAutoW').hidden = !cfg.gate; $('#gThrW').hidden = !cfg.gate || cfg.gAuto;
+  const vs = $('#vfxSel'); if (!vs.options.length) Object.entries(VFX).forEach(([k, t]) => { const o = document.createElement('option'); o.value = k; o.textContent = t; vs.append(o); });
+  vs.value = VFX[cfg.vfx] ? cfg.vfx : 'none'; tmPaint();
 }
 function drawMeter() {
+  const tb = $('#tmBar'); if (tb) { const pt = v => Math.max(0, Math.min(100, (20 * Math.log10(v + 1e-6) + 80) * 100 / 80)); tb.style.width = tm.on ? pt(micLvl.l || 0) + '%' : '0'; tb.classList.toggle('open', !!(tm.on && micLvl.o)); }
   const b = $('#meterBar'); if (!b) return;
   const pc = v => Math.max(0, Math.min(100, (20 * Math.log10(v + 1e-6) + 80) * 100 / 80));   // -80..0 dB
   b.style.width = pc(micLvl.l || 0) + '%'; b.classList.toggle('open', !!micLvl.o);
   $('#meterThr').style.left = pc(micLvl.t || 0) + '%';
 }
+$('#vfxSel').onchange = e => { cfg.vfx = e.target.value; saveCfg(); if (mic) wireMic(); if (cfg.vfx !== 'none' && !tm.on) toast('Efeito ligado! Use "Testar microfone" para se ouvir.'); };
+$('#tmGo').onclick = () => tm.on ? tmStop() : tmStart();
+$('#tmRec').onclick = tmRecord;
+$('#tmLive').onchange = e => { if (mic && mic.mon) mic.mon.gain.value = e.target.checked ? 1 : 0; };
 $('#outSel').onchange = e => { cfg.out = e.target.value; saveCfg(); applyOut(); };
 $('#appVol').oninput = e => { cfg.app = e.target.value / 100; saveCfg(); applyVol(); $('#appVolT').textContent = e.target.value + '%'; };
 $('#packSel').onchange = async e => { cfg.pack = e.target.value; saveCfg(); await loadCustom(); sfx('entra'); };
