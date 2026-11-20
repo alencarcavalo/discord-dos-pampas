@@ -280,6 +280,11 @@ small{color:var(--mut)}
 #picker{position:fixed;inset:0;background:#000a;z-index:11;display:grid;place-items:center;padding:16px}
 .pk{background:var(--main);border-radius:10px;padding:20px;width:min(860px,100%);max-height:90vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 24px #000a}
 .pk h2{margin:0}
+.pkq{display:grid;gap:10px}
+.pkqr{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pkqr>span{font-weight:600}
+.pkq .sec{min-width:92px;text-align:center}
+#pkHint{color:var(--mut);font-size:.82rem}
 #pkGrid{overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;min-height:140px}
 .pkc{background:var(--side);border-radius:8px;padding:8px;display:grid;gap:6px;text-align:left;border:2px solid transparent;align-content:start}
 .pkc:hover{background:var(--hover)}.pkc.on{border-color:var(--blur)}
@@ -912,7 +917,11 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
   <div class="row" id="pkTabs"><button type="button" class="sec" data-k="screen">Telas inteiras</button><button type="button" class="sec" data-k="window">Janelas</button></div>
   <div id="pkGrid"></div>
   <label class="ck" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="pkAud" checked style="width:auto"> Compartilhar o som do computador</label>
-  <label style="display:flex;gap:10px;align-items:center;justify-content:space-between">Qualidade da transmissão<select id="pkQ" style="max-width:60%"><option value="720p30">720p · 30 fps (leve)</option><option value="720p60">720p · 60 fps</option><option value="1080p30">1080p · 30 fps</option><option value="1080p60">1080p · 60 fps (pesada)</option></select></label>
+  <div class="pkq">
+    <div class="pkqr"><span>Resolução</span><div class="row" id="pkRes"><button type="button" class="sec" data-v="720p">720p</button><button type="button" class="sec" data-v="1080p">1080p</button></div></div>
+    <div class="pkqr"><span>Quadros por segundo</span><div class="row" id="pkFps"><button type="button" class="sec" data-v="30">30 fps</button><button type="button" class="sec" data-v="60">60 fps</button></div></div>
+    <small id="pkHint"></small>
+  </div>
   <div class="row"><button type="button" class="go" id="pkOk" disabled>Compartilhar</button><button type="button" class="sec" id="pkNo">Cancelar</button></div>
 </div></div>
 
@@ -4597,16 +4606,26 @@ function renderPicker() {
   $('#pkOk').disabled = !pkSel;
   document.querySelectorAll('#pkTabs [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === pkKind));
 }
+let pkQv = '720p30';   // qualidade escolhida na janela de compartilhar (resolução + fps)
+const PKQ_TXT = { '720p30': 'Leve: boa para PC fraco e internet normal.', '720p60': 'Equilibrada: movimento mais suave, usa um pouco mais do PC.', '1080p30': 'Equilibrada: imagem mais nítida, usa um pouco mais do PC.', '1080p60': 'Pesada: o melhor visual, mas exige PC e internet fortes.' };
+function paintPkQ() {
+  const res = pkQv.startsWith('1080') ? '1080p' : '720p', fps = pkQv.endsWith('60') ? '60' : '30';
+  document.querySelectorAll('#pkRes [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === res));
+  document.querySelectorAll('#pkFps [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === fps));
+  $('#pkHint').textContent = PKQ_TXT[pkQv] || '';
+}
+document.querySelectorAll('#pkRes [data-v]').forEach(b => b.onclick = () => { pkQv = b.dataset.v + pkQv.slice(-2); paintPkQ(); });
+document.querySelectorAll('#pkFps [data-v]').forEach(b => b.onclick = () => { pkQv = (pkQv.startsWith('1080') ? '1080p' : '720p') + b.dataset.v; paintPkQ(); });
 function closePicker(r) { $('#picker').hidden = true; window.pampas.pickResult(r); }
 document.querySelectorAll('#pkTabs [data-k]').forEach(b => b.onclick = () => { pkKind = b.dataset.k; renderPicker(); });
-$('#pkOk').onclick = () => { cfg.sq = $('#pkQ').value; saveCfg(); if (!$('#cfg').hidden) fillVoz(); closePicker({ id: pkSel, audio: $('#pkAud').checked }); };   // a qualidade escolhida aqui vale para a transmissão (applyShareQ roda logo depois)
+$('#pkOk').onclick = () => { cfg.sq = pkQv; saveCfg(); if (!$('#cfg').hidden) fillVoz(); closePicker({ id: pkSel, audio: $('#pkAud').checked }); };   // a qualidade escolhida aqui vale para a transmissão (applyShareQ roda logo depois)
 $('#pkNo').onclick = () => closePicker(null);
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#picker').hidden) closePicker(null); });
 if (window.pampas && pampas.onPick) {
   pampas.onPick(list => {
     pkList = list; pkKind = 'screen'; const f = list.find(s => s.screen) || list[0]; pkSel = f ? f.id : null;
     if (f && !f.screen) pkKind = 'window';
-    $('#pkQ').value = cfg.sq || '720p30'; renderPicker(); $('#picker').hidden = false;
+    pkQv = SQ[cfg.sq] ? cfg.sq : '720p30'; paintPkQ(); renderPicker(); $('#picker').hidden = false;
   });
   window.__pickerReady = true;
 }
