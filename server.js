@@ -607,6 +607,7 @@ const rxPub = (rx, viewer) => {
   return o;
 };
 const okEmoji = e => typeof e === 'string' && e.length > 0 && [...e].length <= 10 && /^[\p{Extended_Pictographic}\p{Emoji_Modifier}‍️]+$/u.test(e) && /\p{Extended_Pictographic}/u.test(e);
+const okRx = e => okEmoji(e) || (typeof e === 'string' && /^[\u{1F1E6}-\u{1F1FF}]$/u.test(e));   // reação: emoji ou uma letra (🇦–🇿)
 const pidOf = cid => cid ? crypto.createHash('sha256').update('pid:' + cid).digest('hex').slice(0, 12) : null;   // id público e FIXO da pessoa (o cid em si nunca é enviado)
 // uid = id público de quem mandou (antes era o número da conexão, que recomeça do 1 a cada reinício e fazia a mensagem pegar a foto de outra pessoa)
 const pub = (m, viewer) => { const { cid, rx, uid, ...rest } = m; return { ...rest, uid: pidOf(cid), rx: rxPub(rx, viewer), own: !!cid && cid === viewer.cid }; };
@@ -987,7 +988,7 @@ wss.on('connection', (ws, req) => {
       clients.forEach(c => c.nick && send(c, { type: 'msg-del', channel: m.channel, mid: m.mid }));
     } else if (m.type === 'react') {
       const x = (hist.get(m.channel) || []).find(y => y.mid === m.mid), e = m.emoji;
-      if (!x || !ws.cid || !okEmoji(e)) return;
+      if (!x || !ws.cid || !okRx(e)) return;
       const rx = x.rx || (x.rx = {});
       let a = rx[e];
       if (!a) { if (Object.keys(rx).length >= 20) return; a = rx[e] = []; }
