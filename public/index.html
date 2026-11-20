@@ -2032,9 +2032,13 @@ function coverFor(music, cb) {
   if (v) { v.then(u => u && cb(u)); return; }
   const [ti] = music.split(' — ');
   const norm = x => (x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const p = fetch('https://itunes.apple.com/search?media=music&entity=song&limit=5&country=BR&term=' + encodeURIComponent(music.replace(' — ', ' ')))
+  const direct = () => fetch('https://itunes.apple.com/search?media=music&entity=song&limit=5&country=BR&term=' + encodeURIComponent(music.replace(' — ', ' ')))
     .then(r => r.json())
-    .then(j => { const nt = norm(ti); const hit = (j.results || []).find(x => { const n = norm(x.trackName); return n && nt && (n.includes(nt) || nt.includes(n)); }); return hit && hit.artworkUrl100 ? hit.artworkUrl100.replace('100x100bb', '200x200bb') : ''; })
+    .then(j => { const nt = norm(ti); const hit = (j.results || []).find(x => { const n = norm(x.trackName); return n && nt && (n.includes(nt) || nt.includes(n)); }); return hit && hit.artworkUrl100 ? hit.artworkUrl100.replace('100x100bb', '200x200bb') : ''; });
+  const [ti2, ...rest] = music.split(' — ');   // o servidor procura em iTunes, Deezer e YouTube (e entende títulos com "Part.", "(Official Video)" etc.)
+  const p = fetch('/music-cover?t=' + encodeURIComponent(ti2) + '&a=' + encodeURIComponent(rest.join(' — ')), { headers: authH() })
+    .then(r => r.ok ? r.json() : null).catch(() => null)
+    .then(j => (j && j.img) ? j.img : direct())
     .catch(() => '').then(u => { covers.set(music, u); return u; });
   covers.set(music, p); p.then(u => u && cb(u));
 }
@@ -2048,9 +2052,9 @@ function gameCoverFor(name, cb) {   // procura a capa pelo servidor (Steam); jog
     .then(j => { const r = j && j.id ? j : ''; gcovers.set(name, r); return r; });
   gcovers.set(name, p); p.then(r => r && cb(r));
 }
-function gameImg(r, cls) {   // capa vertical da Steam; se não existir, usa a imagem pequena que a busca devolveu
-  const im = document.createElement('img'); if (cls) im.className = cls; im.alt = ''; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer';
-  const alt = [r.img].filter(Boolean);
+function gameImg(r, cls) {   // capa vertical da Steam; se não existir, tenta a horizontal e por fim a imagem pequena da busca
+  const im = document.createElement('img'); if (cls) im.className = cls; im.alt = ''; im.referrerPolicy = 'no-referrer';   // sem loading=lazy: imagem solta (fora da tela) não carregaria
+  const alt = ['https://cdn.cloudflare.steamstatic.com/steam/apps/' + r.id + '/header.jpg', 'https://cdn.akamai.steamstatic.com/steam/apps/' + r.id + '/header.jpg', r.img].filter(Boolean);
   im.onerror = () => { const n = alt.shift(); if (n) im.src = n; else im.remove(); };
   im.src = 'https://cdn.cloudflare.steamstatic.com/steam/apps/' + r.id + '/library_600x900.jpg';
   return im;
