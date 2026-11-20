@@ -375,6 +375,8 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .mus{display:flex;gap:12px;align-items:center;margin-top:4px}
 .mus .cv{width:56px;height:56px;border-radius:8px;flex:none;object-fit:cover;background:#4b3a7a;display:grid;place-items:center;font-size:1.5rem}
 .mus .mt{min-width:0;display:grid;gap:2px}
+.mus.gm .cv{width:48px;height:64px;border-radius:6px;background:#2f5a3a}
+.mus.gm .mt small{color:#9bd1a8;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em}
 .mus .mt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.95rem}
 .mus .mt span{color:var(--mut);font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .u small{display:block;line-height:1.1}
@@ -2036,6 +2038,32 @@ function coverFor(music, cb) {
     .catch(() => '').then(u => { covers.set(music, u); return u; });
   covers.set(music, p); p.then(u => u && cb(u));
 }
+const gcovers = new Map();   // nome do jogo -> capa (ou '' se não achou)
+function gameCoverFor(name, cb) {   // procura a capa pelo servidor (Steam); jogos que não estão lá ficam só com o 🎮
+  const v = gcovers.get(name);
+  if (typeof v === 'object' && v && !v.then) { cb(v); return; }
+  if (v === '') return;
+  if (v) { v.then(r => r && cb(r)); return; }
+  const p = fetch('/game-cover?q=' + encodeURIComponent(name), { headers: authH() }).then(r => r.ok ? r.json() : null).catch(() => null)
+    .then(j => { const r = j && j.id ? j : ''; gcovers.set(name, r); return r; });
+  gcovers.set(name, p); p.then(r => r && cb(r));
+}
+function gameImg(r, cls) {   // capa vertical da Steam; se não existir, usa a imagem pequena que a busca devolveu
+  const im = document.createElement('img'); if (cls) im.className = cls; im.alt = ''; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer';
+  const alt = [r.img].filter(Boolean);
+  im.onerror = () => { const n = alt.shift(); if (n) im.src = n; else im.remove(); };
+  im.src = 'https://cdn.cloudflare.steamstatic.com/steam/apps/' + r.id + '/library_600x900.jpg';
+  return im;
+}
+function gameCard(game) {   // capa + nome (cartão de perfil)
+  const d = document.createElement('div'); d.className = 'mus gm'; d.title = game;
+  const cv = document.createElement('div'); cv.className = 'cv'; cv.textContent = '🎮';
+  const mt = document.createElement('div'); mt.className = 'mt';
+  const l = document.createElement('small'); l.textContent = 'Jogando'; const b = document.createElement('b'); b.textContent = game; mt.append(l, b);
+  d.append(cv, mt);
+  gameCoverFor(game, r => { const im = gameImg(r, 'cv'); im.onload = () => { if (cv.parentNode) cv.replaceWith(im); }; const prev = im.onerror; im.onerror = () => { prev(); }; });
+  return d;
+}
 function musicCard(music) {   // capa + nome + artista (cartão de perfil)
   const [ti, ...rest] = music.split(' — ');
   const d = document.createElement('div'); d.className = 'mus'; d.title = music;
@@ -2049,7 +2077,11 @@ function musicCard(music) {   // capa + nome + artista (cartão de perfil)
 }
 function actLines(u, rich) {
   const a = u.act, out = []; if (!a) return out;
-  if (a.game) { const e = document.createElement('small'); e.className = 'act g'; e.textContent = '🎮 ' + a.game; e.title = a.game; out.push(e); }
+  if (a.game && rich) out.push(gameCard(a.game));
+  else if (a.game) {
+    const e = document.createElement('small'); e.className = 'act g'; e.textContent = '🎮 ' + a.game; e.title = a.game; out.push(e);
+    gameCoverFor(a.game, r => { const im = gameImg(r, 'cv'); im.onload = () => { if (e.isConnected || e.parentNode) e.replaceChildren(im, document.createTextNode(a.game)); }; });
+  }
   if (a.music && rich) out.push(musicCard(a.music));
   else if (a.music) {
     const e = document.createElement('small'); e.className = 'act'; e.textContent = '🎵 ' + a.music; e.title = a.music; out.push(e);
