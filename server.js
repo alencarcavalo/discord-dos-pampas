@@ -739,9 +739,45 @@ function checkLv(ws) {
   send(ws, achPayload(ws));
   tellProfile(ws);
 }
+// ---------- ranking semanal ----------
+// A semana começa na segunda-feira 00:00 (horário de Brasília). Cada pessoa guarda a semana atual (s.w) e a anterior (s.pw).
+const WK_KEYS = ['v', 's', 'c', 'm', 'p'];   // chamada, transmissão, câmera (minutos), mensagens, soundboard
+const wkKeyOf = d => dayKey(new Date(d - ((d.getUTCDay() + 6) % 7) * 864e5));   // segunda-feira da semana de d (d já em horário de Brasília)
+const wkKey = () => wkKeyOf(BRT());
+const wkPrev = () => wkKeyOf(new Date(BRT() - 7 * 864e5));
+function wOf(s) {
+  const k = wkKey();
+  if (s.wk !== k) {
+    if (s.wk === wkPrev() && s.w) s.pw = { wk: s.wk, ...s.w }; else if (s.pw && s.pw.wk !== wkPrev()) s.pw = null;
+    s.wk = k; s.w = {};
+  }
+  return s.w || (s.w = {});
+}
+function rankPayload(ws) {
+  const cur = wkKey(), prev = wkPrev(), me = pidOf(ws.cid);
+  const who = new Map();   // cid -> { pid, name }
+  MEMB.forEach((m, pid) => who.set(m.cid, { pid, name: m.name }));
+  clients.forEach(c => { if (c.nick && c.cid) who.set(c.cid, { pid: pidOf(c.cid), name: c.nick }); });
+  const build = pick => {
+    const out = {};
+    WK_KEYS.forEach(k => {
+      const all = [...who].map(([cid, p]) => { const s = STATS.get(cid), w = s && pick(s); return { pid: p.pid, name: p.name, n: (w && w[k]) || 0 }; })
+        .filter(x => x.n > 0).sort((a, b) => b.n - a.n);
+      const i = all.findIndex(x => x.pid === me);
+      out[k] = { top: all.slice(0, 5), me: i >= 0 ? { pos: i + 1, n: all[i].n } : null };
+    });
+    return out;
+  };
+  return {
+    type: 'rank', me, end: Date.parse(cur + 'T00:00:00Z') + 7 * 864e5 + 3 * 3600e3,   // segunda 00:00 de Brasília = 03:00 UTC
+    cur: build(s => s.wk === cur ? s.w : null),
+    prev: build(s => s.wk === prev ? s.w : (s.pw && s.pw.wk === prev ? s.pw : null))
+  };
+}
 function bump(ws, key, n = 1) {
   if (!ws.cid) return;
   const s = stOf(ws.cid); s[key] = (s[key] || 0) + n;
+  if (WK_KEYS.includes(key)) { const w = wOf(s); w[key] = (w[key] || 0) + n; }   // ranking semanal
   markDirty('\0st'); checkLv(ws);
 }
 // conta 1 dia novo (e a sequência de dias seguidos) na primeira vez que a pessoa aparece no dia
@@ -762,6 +798,7 @@ setInterval(() => {
       if (!ws.cid || !ws.nick) return;
       const s = stOf(ws.cid);
       s.v++; if (ws.vs && ws.vs.screen) s.s++; if (ws.vs && ws.vs.cam) s.c++;
+      { const w = wOf(s); w.v = (w.v || 0) + 1; if (ws.vs && ws.vs.screen) w.s = (w.s || 0) + 1; if (ws.vs && ws.vs.cam) w.c = (w.c || 0) + 1; }   // ranking semanal
       if (set.size >= 4) s.g++;
       if (h < 5) s.n++; else if (h < 8) s.e++;
       markDirty('\0st'); checkLv(ws);
@@ -860,6 +897,8 @@ wss.on('connection', (ws, req) => {
       return;
     } else if (m.type === 'ach-get') {
       send(ws, achPayload(ws));
+    } else if (m.type === 'rank-get') {
+      if (ws.nick) send(ws, rankPayload(ws));
     } else if (m.type === 'badge-pick') {   // escolher (até 5) emblemas para o cartão; ids = null volta para o automático
       if (!ws.cid) return;
       const s = stOf(ws.cid);
