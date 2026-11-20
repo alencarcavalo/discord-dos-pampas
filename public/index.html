@@ -504,7 +504,20 @@ html.auto #login{display:none!important}
 .vfxw{display:grid;gap:6px}
 .vfxh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:.8rem;font-weight:600;color:var(--mut)}
 .vfxh .vfxcur{color:var(--txt);font-weight:700;font-size:.78rem;background:color-mix(in srgb,var(--blur) 30%,transparent);padding:2px 8px;border-radius:99px}
-.vfxg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:clamp(120px,calc(100vh - 330px),300px);overflow-y:auto;padding:2px 4px 2px 2px;scrollbar-width:thin}
+.vfxg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:clamp(120px,calc(100vh - 330px),300px);overflow-y:auto;padding:2px 4px 2px 2px}
+.vfxg::-webkit-scrollbar{width:8px}
+.vfxg::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--txt) 14%,transparent);background-clip:padding-box;border:2px solid transparent;border-radius:999px}
+.vfxg:hover::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--txt) 30%,transparent);background-clip:padding-box}
+/* modo compacto (menu do microfone): Normal + abas por categoria, tudo à vista, sem rolagem */
+.vfxg.tb{grid-template-columns:1fr;gap:8px;max-height:none;overflow:visible;padding:0}
+.vfxt{display:flex;gap:2px;padding:3px;border-radius:10px;background:color-mix(in srgb,#000 30%,var(--input))}
+.vfxg .vtab{position:relative;flex:1;display:block;min-height:0;padding:6px 2px;border-radius:8px;background:transparent;border:0;color:var(--mut);font-size:.72rem;font-weight:600;transform:none;white-space:nowrap}
+.vfxg .vtab:hover{background:color-mix(in srgb,var(--txt) 8%,transparent);color:var(--txt);transform:none}
+.vfxg .vtab.sel{background:var(--input);color:var(--txt);box-shadow:0 1px 5px #0007}
+.vfxg .vtab.has::after{content:"";position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--blur)}
+.vfxp{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:64px;gap:6px;align-content:start;min-height:134px;animation:vfxIn .18s ease}   /* altura fixa de 2 linhas: o menu não muda de tamanho ao trocar de aba */
+.vfxp button{min-height:64px}
+@keyframes vfxIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #cfgbody .vfxg{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));max-height:none;overflow:visible;padding:2px}
 .vfxg h6{grid-column:1/-1;margin:6px 2px 0;font-size:.64rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
 .vfxg h6:first-child{margin-top:0}
@@ -3801,27 +3814,49 @@ function volRow(label, val, oninput) {
   const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = 100; r.value = Math.round(val * 100); t.textContent = r.value + '%';
   r.oninput = () => { t.textContent = r.value + '%'; oninput(r.value / 100); }; l.append(t, r); return l;
 }
-function vfxGrid(onpick) {   // grade de efeitos (menu do microfone e Configurações)
-  const g = document.createElement('div'); g.className = 'vfxg';
-  VFX_GROUPS.forEach(([nome, efs]) => {
-    if (nome) { const h = document.createElement('h6'); h.textContent = nome; g.append(h); }
-    Object.entries(efs).forEach(([k, t]) => {
-      const b = document.createElement('button'); b.type = 'button'; b.dataset.k = k; b.title = t.slice(t.indexOf(' ') + 1);
-      const e = document.createElement('b'); e.textContent = t.slice(0, t.indexOf(' ')); const n = document.createElement('span'); n.textContent = t.slice(t.indexOf(' ') + 1);
-      b.append(e, n); b.onclick = () => onpick(k); g.append(b);
+function vfxGrid(onpick, tabs) {   // grade de efeitos: completa (Configurações) ou compacta com abas (menu do microfone)
+  const g = document.createElement('div'); g.className = 'vfxg' + (tabs ? ' tb' : '');
+  const mk = (k, t) => {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.k = k; b.title = t.slice(t.indexOf(' ') + 1);
+    const e = document.createElement('b'); e.textContent = t.slice(0, t.indexOf(' ')); const n = document.createElement('span'); n.textContent = t.slice(t.indexOf(' ') + 1);
+    b.append(e, n); b.onclick = () => onpick(k); return b;
+  };
+  if (!tabs) {
+    VFX_GROUPS.forEach(([nome, efs]) => {
+      if (nome) { const h = document.createElement('h6'); h.textContent = nome; g.append(h); }
+      Object.entries(efs).forEach(([k, t]) => g.append(mk(k, t)));
     });
+    paintVfx(g); return g;
+  }
+  g.append(mk('none', VFX.none));
+  const groups = VFX_GROUPS.filter(([n]) => n), bar = document.createElement('div'), pane = document.createElement('div');
+  bar.className = 'vfxt'; bar.setAttribute('role', 'tablist'); pane.className = 'vfxp';
+  const show = i => {
+    [...bar.children].forEach((t, j) => { t.classList.toggle('sel', j === i); t.setAttribute('aria-selected', j === i); });
+    pane.replaceChildren(...Object.entries(groups[i][1]).map(([k, t]) => mk(k, t)));
+    pane.style.animation = 'none'; void pane.offsetWidth; pane.style.animation = '';
+    paintVfx(g);
+  };
+  groups.forEach(([n, efs], i) => {
+    const t = document.createElement('button'); t.type = 'button'; t.className = 'vtab'; t.setAttribute('role', 'tab'); t.textContent = n; t.dataset.keys = Object.keys(efs).join(',');
+    t.onclick = () => show(i); bar.append(t);
   });
-  paintVfx(g); return g;
+  g.append(bar, pane);
+  const cur = groups.findIndex(([, efs]) => cfg.vfx in efs); show(cur < 0 ? 0 : cur);   // abre já na categoria do efeito ligado
+  return g;
 }
 function paintVfx(root) {
   const k = VFX[cfg.vfx] ? cfg.vfx : 'none';
-  (root ? [root] : [...document.querySelectorAll('.vfxg')]).forEach(g => g.querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.k === k); b.setAttribute('aria-pressed', b.dataset.k === k); }));
+  (root ? [root] : [...document.querySelectorAll('.vfxg')]).forEach(g => {
+    g.querySelectorAll('button[data-k]').forEach(b => { b.classList.toggle('on', b.dataset.k === k); b.setAttribute('aria-pressed', b.dataset.k === k); });
+    g.querySelectorAll('.vtab').forEach(t => t.classList.toggle('has', k !== 'none' && t.dataset.keys.split(',').includes(k)));   // bolinha na aba que tem o efeito ligado
+  });
   document.querySelectorAll('.vfxcur').forEach(el => el.textContent = VFX[k].slice(VFX[k].indexOf(' ') + 1));
 }
 function vfxRow() {   // escolher o efeito de voz direto no menu do microfone
   const w = document.createElement('div'); w.className = 'vfxw';
   const h = document.createElement('div'); h.className = 'vfxh'; const a = document.createElement('span'); a.textContent = 'Efeito de voz'; const c = document.createElement('small'); c.className = 'vfxcur'; h.append(a, c);
-  w.append(h, vfxGrid(k => setVfx(k))); const v = VFX[cfg.vfx] || VFX.none; c.textContent = v.slice(v.indexOf(' ') + 1); return w;
+  w.append(h, vfxGrid(k => setVfx(k), true)); const v = VFX[cfg.vfx] || VFX.none; c.textContent = v.slice(v.indexOf(' ') + 1); return w;
 }
 function cfgBtn(m) {
   const b = document.createElement('button'); b.className = 'sec'; b.textContent = 'Configurações de voz';
