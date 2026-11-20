@@ -515,7 +515,7 @@ html.auto #login{display:none!important}
 .vfxg .vtab:hover{background:color-mix(in srgb,var(--txt) 8%,transparent);color:var(--txt);transform:none}
 .vfxg .vtab.sel{background:var(--input);color:var(--txt);box-shadow:0 1px 5px #0007}
 .vfxg .vtab.has::after{content:"";position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--blur)}
-.vfxp{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:64px;gap:6px;align-content:start;min-height:134px;animation:vfxIn .18s ease}   /* altura fixa de 2 linhas: o menu não muda de tamanho ao trocar de aba */
+.vfxp{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:64px;gap:6px;align-content:start;min-height:204px;animation:vfxIn .18s ease}   /* altura fixa de 3 linhas: o menu não muda de tamanho ao trocar de aba */
 .vfxp button{min-height:64px}
 @keyframes vfxIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #cfgbody .vfxg{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));max-height:none;overflow:visible;padding:2px}
@@ -3281,91 +3281,6 @@ const PITCH = `class Pitch extends AudioWorkletProcessor {
   }
 }
 registerProcessor('pitch', Pitch);`;
-// autotune de verdade: detecta a nota que você está cantando/falando e puxa para a nota certa mais próxima (PSOLA)
-const TUNE = `class Tune extends AudioWorkletProcessor {
-  constructor() {
-    super();
-    const sr = sampleRate;
-    this.M = 16383; this.x = new Float32Array(16384); this.o = new Float32Array(16384);
-    this.t = 0;                                   // amostra atual (entrada e saída andam juntas)
-    this.lat = Math.round(sr * .028);             // atraso fixo: o app precisa de ~2,5 períodos de áudio já gravado
-    this.nom = Math.round(sr * .008);             // período "de mentira" quando não há voz (consoantes, silêncio)
-    this.tmax = Math.floor((this.lat - 1) / 2.5); this.tmin = Math.round(sr / 500);
-    this.T = this.nom; this.te = this.lat; this.ac = 0; this.r = 1; this.rt = 1; this.hold = 0;
-    this.kg = .5; this.amt = 1; this.mask = null;
-    this.dec = Math.max(1, Math.round(sr / 16000)); this.fs = sr / this.dec;
-    this.DM = 2047; this.db = new Float32Array(2048); this.dw = 0; this.acc = 0; this.ac2 = 0;
-    this.WIN = Math.round(this.fs * .04); this.lmin = Math.max(2, Math.floor(this.fs / 500)); this.lmax = Math.ceil(this.fs / 80);
-    this.TT = this.WIN + this.lmax + 2;
-    this.seg = new Float32Array(this.TT); this.P = new Float64Array(this.TT + 1); this.ns = new Float32Array(this.lmax + 3);
-    this.every = Math.round(sr * .006); this.since = 0;
-    this.port.onmessage = e => { const d = e.data || {}; if (d.kg) this.kg = d.kg; if (d.amt !== undefined) this.amt = d.amt; if (d.scale !== undefined) { this.mask = d.scale ? new Array(12).fill(false) : null; if (d.scale) d.scale.forEach(s => this.mask[s] = true); } };
-  }
-  detect() {
-    const TT = this.TT, WIN = this.WIN, db = this.db, DM = this.DM, seg = this.seg, P = this.P, ns = this.ns;
-    for (let i = 0; i < TT; i++) seg[i] = db[(this.dw - TT + i) & DM];
-    P[0] = 0; for (let i = 0; i < TT; i++) P[i + 1] = P[i] + seg[i] * seg[i];
-    const e0 = P[WIN];
-    let voiced = false, f = 0;
-    if (e0 / WIN > 2e-5) {
-      let best = -1;
-      for (let tau = this.lmin - 1; tau <= this.lmax + 1; tau++) {
-        let r = 0; for (let i = 0; i < WIN; i++) r += seg[i] * seg[i + tau];
-        const m = e0 + (P[WIN + tau] - P[tau]);
-        const v = m > 0 ? 2 * r / m : 0; ns[tau] = v; if (tau > this.lmin - 1 && tau <= this.lmax && v > best) best = v;
-      }
-      if (best > .8) {
-        for (let tau = this.lmin; tau <= this.lmax; tau++) {
-          if (ns[tau] >= .9 * best && ns[tau] > ns[tau - 1] && ns[tau] >= ns[tau + 1]) {
-            const a = ns[tau - 1], b = ns[tau], c = ns[tau + 1], dd = a - 2 * b + c;
-            const lag = tau + (dd !== 0 ? .5 * (a - c) / dd : 0);
-            f = this.fs / lag; voiced = true; break;
-          }
-        }
-      }
-    }
-    if (voiced) {
-      const Tn = Math.round(sampleRate / f);
-      if (Tn >= this.tmin && Tn <= this.tmax) {
-        this.hold = 0; this.T = Math.round(this.T * .4 + Tn * .6);
-        const midi = 69 + 12 * Math.log2(f / 440);
-        let tgt = Math.round(midi);
-        if (this.mask) { let bd = 99; for (let n = Math.round(midi) - 3; n <= Math.round(midi) + 3; n++) if (this.mask[((n % 12) + 12) % 12] && Math.abs(n - midi) < bd) { bd = Math.abs(n - midi); tgt = n; } }
-        this.rt = Math.pow(2, (midi + (tgt - midi) * this.amt - midi) / 12);
-        return;
-      }
-    }
-    this.hold += this.every;
-    if (this.hold > sampleRate * .12) { this.rt = 1; this.T = Math.round(this.T * .9 + this.nom * .1); }
-  }
-  grain() {
-    const M = this.M, x = this.x, o = this.o;
-    const Tin = Math.max(this.tmin, Math.min(this.tmax, this.T)), c = this.te - this.lat;
-    while (Math.abs(this.ac + Tin - c) < Math.abs(this.ac - c)) this.ac += Tin;
-    while (Math.abs(this.ac - Tin - c) < Math.abs(this.ac - c)) this.ac -= Tin;
-    this.r += (this.rt - this.r) * this.kg;
-    const r = this.r, ctr = Math.round(this.te), g = 1 / r, ac = this.ac, now = this.t;
-    for (let s = -Tin; s <= Tin; s++) {
-      const si = ac + s; if (si > now || si < now - 16000) continue;
-      o[(ctr + s) & M] += x[si & M] * (.5 + .5 * Math.cos(Math.PI * s / Tin)) * g;
-    }
-    this.te += Tin / r;
-  }
-  process(inp, out) {
-    const y = out[0][0]; if (!y) return true;
-    const xi = inp[0] && inp[0][0]; if (!xi) { y.fill(0); return true; }
-    const M = this.M, x = this.x, o = this.o;
-    for (let k = 0; k < y.length; k++) {
-      const n = this.t; x[n & M] = xi[k];
-      this.acc += xi[k]; if (++this.ac2 >= this.dec) { this.db[this.dw & this.DM] = this.acc / this.dec; this.dw++; this.acc = 0; this.ac2 = 0; }
-      while (n >= this.te - Math.max(this.tmin, Math.min(this.tmax, this.T)) - 1) this.grain();
-      y[k] = o[n & M]; o[n & M] = 0; this.t = n + 1;
-    }
-    this.since += y.length; if (this.since >= this.every) { this.since = 0; this.detect(); }
-    return true;
-  }
-}
-registerProcessor('tune', Tune);`;
 // voz de videogame antigo: segura o som a cada ~9 kHz e usa poucos níveis de volume
 const CRUSH = `class Crush extends AudioWorkletProcessor {
   constructor() { super(); this.h = 0; this.c = 0; this.step = Math.max(1, Math.round(sampleRate / 9000)); this.q = 18; }
@@ -3527,7 +3442,6 @@ async function initMic() {
     mic.gate.port.onmessage = e => { micLvl = e.data; };
   } catch (e) { console.error('porta de ruído indisponível', e); }
   try { await c.audioWorklet.addModule(URL.createObjectURL(new Blob([PITCH], { type: 'text/javascript' }))); mic.pitchOk = true; } catch (e) { console.error('efeito de tom indisponível', e); }
-  try { await c.audioWorklet.addModule(URL.createObjectURL(new Blob([TUNE], { type: 'text/javascript' }))); mic.tuneOk = true; } catch (e) { console.error('autotune indisponível', e); }
   try { await c.audioWorklet.addModule(URL.createObjectURL(new Blob([CRUSH], { type: 'text/javascript' }))); mic.crushOk = true; } catch (e) { console.error('efeito 8 bits indisponível', e); }
   mic.mon = c.createGain(); mic.mon.gain.value = 0; mic.mon.connect(outG);   // "me ouvir ao vivo" (teste do microfone)
   wireMic();
@@ -3541,6 +3455,7 @@ function wireMic() {
   let n = m.src.connect(m.mono).connect(m.hp);
   if (m.rnn && cfg.ai) n = n.connect(m.rnn);
   if (m.gate) n = n.connect(m.gate);
+  if (cfg.vfx && !VFX[cfg.vfx]) { cfg.vfx = 'none'; saveCfg(); }   // efeito que não existe mais (ex.: autotune): volta ao normal
   if (cfg.vfx && cfg.vfx !== 'none') { try { m.fx = buildFx(m, cfg.vfx); } catch (e) { console.error('efeito', e); } if (m.fx) { n.connect(m.fx.i); n = m.fx.o; } else toast('Esse efeito não está disponível neste navegador.'); }
   n.connect(m.gain); m.gain.connect(m.an); m.gain.connect(m.dest); if (m.mon) m.gain.connect(m.mon);
   m.gain.gain.value = cfg.micv; pushGate();
@@ -3548,10 +3463,9 @@ function wireMic() {
 // ---------- efeitos de voz ----------
 const VFX_GROUPS = [
   ['', { none: '🙂 Normal' }],
-  ['Afinação', { autotune_suave: '🎵 Autotune suave', autotune: '🎤 Autotune', autotune_pesado: '🎼 Autotune pesado' }],
-  ['Tom da voz', { grave: '🧌 Voz grossa', agudo: '🐿️ Esquilo', monstro: '👹 Monstro', demonio: '😈 Demônio', alien: '👽 Alienígena', coro: '👥 Coro' }],
-  ['Ambiente', { eco: '🔊 Eco', caverna: '⛰️ Caverna', estadio: '🏟️ Estádio', submarino: '🌊 Submarino', fantasma: '👻 Fantasma' }],
-  ['Estilo', { robo: '🤖 Robô', radio: '📻 Rádio antigo', megafone: '📣 Megafone', bits: '👾 8 bits', medo: '😨 Tremendo' }]
+  ['Tom da voz', { grave: '🧌 Voz grossa', agudo: '🐿️ Esquilo', monstro: '👹 Monstro', demonio: '😈 Demônio', alien: '👽 Alienígena', coro: '👥 Coro', gigante: '🦣 Gigante', crianca: '🧒 Criança', velhinho: '👴 Velhinho' }],
+  ['Ambiente', { eco: '🔊 Eco', caverna: '⛰️ Caverna', estadio: '🏟️ Estádio', submarino: '🌊 Submarino', fantasma: '👻 Fantasma', banheiro: '🚿 Banheiro', igreja: '⛪ Igreja', espaco: '🌌 Espaço' }],
+  ['Estilo', { robo: '🤖 Robô', radio: '📻 Rádio antigo', megafone: '📣 Megafone', bits: '👾 8 bits', medo: '😨 Tremendo', telefone: '☎️ Telefone', lata: '🥫 Voz de lata', ondulante: '🌀 Ondulante' }]
 ];
 const VFX = Object.assign({}, ...VFX_GROUPS.map(g => g[1]));
 function fxImpulse(c, sec, dec) {
@@ -3584,11 +3498,6 @@ function buildFx(m, kind) {   // devolve { i: entrada, o: saída, stop } ou null
     const lp = mk(c.createBiquadFilter()); lp.type = 'lowpass'; lp.frequency.value = 3200;
     const w = mk(c.createWaveShaper()); w.curve = fxCurve(6); const g = mk(c.createGain()); g.gain.value = 1.3;
     i.connect(hp); hp.connect(lp); lp.connect(w); w.connect(g); g.connect(o);
-  } else if (kind === 'autotune_suave' || kind === 'autotune' || kind === 'autotune_pesado') {
-    if (!m.tuneOk) return null;
-    const cf = { autotune_suave: { kg: .12, amt: .85, scale: null }, autotune: { kg: .6, amt: 1, scale: null }, autotune_pesado: { kg: .9, amt: 1, scale: [0, 2, 4, 7, 9] } }[kind];
-    const t = mk(new AudioWorkletNode(c, 'tune', { channelCount: 1, channelCountMode: 'explicit', outputChannelCount: [1] })); t.port.postMessage(cf);
-    i.connect(t); t.connect(o);
   } else if (kind === 'coro') {
     const a = pitch(1.26), b = pitch(.84); if (!a || !b) return null;
     const dry = mk(c.createGain()), ga = mk(c.createGain()), gb = mk(c.createGain()); dry.gain.value = .9; ga.gain.value = .5; gb.gain.value = .5;
@@ -3628,6 +3537,44 @@ function buildFx(m, kind) {   // devolve { i: entrada, o: saída, stop } ou null
   } else if (kind === 'medo') {
     const d = mk(c.createDelay(.1)); d.delayTime.value = .006; const lfo = c.createOscillator(); lfo.frequency.value = 7; const lg = mk(c.createGain()); lg.gain.value = .0035; lfo.connect(lg); lg.connect(d.delayTime); lfo.start(); oscs.push(lfo);
     i.connect(d); d.connect(o);
+  } else if (kind === 'gigante') {
+    const p = pitch(.5); if (!p) return null;
+    const lp = mk(c.createBiquadFilter()); lp.type = 'lowpass'; lp.frequency.value = 3200;
+    const cv = mk(c.createConvolver()); cv.buffer = fxImpulse(c, 1.2, 2.4); const wet = mk(c.createGain()); wet.gain.value = .35; const dry = mk(c.createGain()); dry.gain.value = .9;
+    i.connect(p); p.connect(lp); lp.connect(dry); dry.connect(o); lp.connect(cv); cv.connect(wet); wet.connect(o);
+  } else if (kind === 'crianca') {
+    const p = pitch(1.32); if (!p) return null;
+    const hp = mk(c.createBiquadFilter()); hp.type = 'highpass'; hp.frequency.value = 220;
+    i.connect(p); p.connect(hp); hp.connect(o);
+  } else if (kind === 'velhinho') {
+    const p = pitch(.9); if (!p) return null;
+    const lp = mk(c.createBiquadFilter()); lp.type = 'lowpass'; lp.frequency.value = 3400;
+    const d = mk(c.createDelay(.1)); d.delayTime.value = .008; const lfo = c.createOscillator(); lfo.frequency.value = 5.5; const lg = mk(c.createGain()); lg.gain.value = .0028; lfo.connect(lg); lg.connect(d.delayTime); lfo.start(); oscs.push(lfo);
+    i.connect(p); p.connect(lp); lp.connect(d); d.connect(o);
+  } else if (kind === 'banheiro') {
+    const cv = mk(c.createConvolver()); cv.buffer = fxImpulse(c, .7, 2.2); const wet = mk(c.createGain()); wet.gain.value = .8; const dry = mk(c.createGain()); dry.gain.value = .7;
+    i.connect(dry); dry.connect(o); i.connect(cv); cv.connect(wet); wet.connect(o);
+  } else if (kind === 'igreja') {
+    const cv = mk(c.createConvolver()); cv.buffer = fxImpulse(c, 4, 1.6); const lp = mk(c.createBiquadFilter()); lp.type = 'lowpass'; lp.frequency.value = 4200;
+    const wet = mk(c.createGain()); wet.gain.value = .7; const dry = mk(c.createGain()); dry.gain.value = .75;
+    i.connect(dry); dry.connect(o); i.connect(cv); cv.connect(lp); lp.connect(wet); wet.connect(o);
+  } else if (kind === 'espaco') {
+    const d = mk(c.createDelay(1)), fb = mk(c.createGain()), lp = mk(c.createBiquadFilter()), dw = mk(c.createGain());
+    d.delayTime.value = .42; fb.gain.value = .5; lp.type = 'lowpass'; lp.frequency.value = 2400; dw.gain.value = .5;
+    const cv = mk(c.createConvolver()); cv.buffer = fxImpulse(c, 3, 1.7); const wet = mk(c.createGain()); wet.gain.value = .5;
+    i.connect(o); i.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(dw); dw.connect(o); i.connect(cv); cv.connect(wet); wet.connect(o);
+  } else if (kind === 'telefone') {
+    const hp = mk(c.createBiquadFilter()); hp.type = 'highpass'; hp.frequency.value = 350; hp.Q.value = .9;
+    const lp = mk(c.createBiquadFilter()); lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = .9;
+    const g = mk(c.createGain()); g.gain.value = 1.5;
+    i.connect(hp); hp.connect(lp); lp.connect(g); g.connect(o);
+  } else if (kind === 'lata') {
+    const d = mk(c.createDelay(.1)), fb = mk(c.createGain()), wet = mk(c.createGain()), dry = mk(c.createGain());
+    d.delayTime.value = .005; fb.gain.value = .62; wet.gain.value = .45; dry.gain.value = .6;
+    i.connect(dry); dry.connect(o); i.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(o);
+  } else if (kind === 'ondulante') {
+    const g = mk(c.createGain()); g.gain.value = .55; const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 7; const lg = mk(c.createGain()); lg.gain.value = .45; lfo.connect(lg); lg.connect(g.gain); lfo.start(); oscs.push(lfo);
+    i.connect(g); g.connect(o); o.gain.value = 1.2;
   } else return null;
   return { i, o, stop() { oscs.forEach(x => { try { x.stop(); } catch {} }); [...nodes, ...oscs].forEach(n => { try { n.disconnect(); } catch {} }); } };
 }
