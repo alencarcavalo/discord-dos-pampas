@@ -365,6 +365,10 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .u{display:flex;align-items:center;gap:10px;padding:10px 10px;min-height:64px;margin-bottom:6px;border-radius:8px;background-size:cover;background-position:center}
 .u:hover{background-color:var(--hover)}
 .u.hasb{color:#fff;text-shadow:0 1px 3px #000d}
+.u.off{opacity:.55;cursor:pointer}
+.u.off:hover{opacity:.95}
+.u.off .av{filter:grayscale(.55)}
+#mem h3.oh{margin-top:16px}
 .u.hasb small{color:#e8e8ee}
 .u.hasb .av{box-shadow:0 0 0 2px #0008}
 .act img.cv{width:16px;height:16px;border-radius:3px;vertical-align:-3px;margin-right:4px;object-fit:cover}
@@ -2069,7 +2073,28 @@ function renderMem() {
     }
     b.append(d);
   });
+  const off = st.off || [];
+  if (off.length) {   // quem já entrou alguma vez e agora está offline
+    const h2 = document.createElement('h3'); h2.className = 'oh'; h2.textContent = 'Offline — ' + off.length; b.append(h2);
+    off.forEach(u => {
+      const d = document.createElement('div'); d.className = 'u off'; const t = document.createElement('div');
+      const n = document.createElement('span'); n.textContent = u.name; t.append(n);
+      const sm = document.createElement('small'); sm.textContent = 'visto ' + agoTxt(u.seen); t.append(sm);
+      const pr = prof[u.id] || {};
+      if (pr.banner) { d.classList.add('hasb'); d.style.backgroundImage = 'linear-gradient(90deg,#000b 0%,#0005 70%,#0002 100%), url("' + pr.banner + '")'; }
+      d.append(avatar(u.name, 0, u.id), t); d.onclick = () => card(u.id, d);
+      b.append(d);
+    });
+  }
 }
+function agoTxt(t) {   // "há 5 min", "há 3 h", "há 2 dias" (usa a hora do servidor)
+  const s = Math.max(0, Math.round((Date.now() + (typeof clkOff === 'number' ? clkOff : 0) - t) / 1000));
+  if (s < 90) return 'agora há pouco';
+  const m = Math.round(s / 60); if (m < 60) return 'há ' + m + ' min';
+  const h = Math.round(m / 60); if (h < 24) return 'há ' + h + ' h';
+  const d = Math.round(h / 24); return d === 1 ? 'ontem' : 'há ' + d + ' dias';
+}
+setInterval(() => { try { if (st && st.off && st.off.length) renderMem(); } catch {} }, 60000);   // atualiza os "visto há..."
 
 function firstText() { const c = st.channels.find(c => c.kind === 'text'); if (c) openText(c.id); }
 function openText(id) {
@@ -3811,7 +3836,8 @@ function cardEl(name, p, bd) {
   c.append(b, a, t); return c;
 }
 function card(id, anchor) {
-  const u = st.users.find(u => u.id === id); if (!u) return;
+  const isOff = String(id).startsWith('o:');
+  const u = st.users.find(u => u.id === id) || (isOff && (st.off || []).find(u => u.id === id)); if (!u) return;
   document.getElementById('cardw')?.remove();
   const pr = prof[id] || {};
   const w = document.createElement('div'); w.id = 'cardw';
@@ -3824,9 +3850,10 @@ function card(id, anchor) {
   const sec = (title, ...els) => { const d = document.createElement('div'); const h = document.createElement('h4'); h.textContent = title; d.append(h, ...els); bx.append(document.createElement('hr'), d); };
   if (pr.about) { const t = document.createElement('p'); t.textContent = pr.about; sec('Sobre mim', t); }
   const bdr = bdRow(bdg[id]); if (bdr) sec('Emblemas', bdr);
+  if (isOff) { const t = document.createElement('p'); t.textContent = '⚫ Offline · visto ' + agoTxt(u.seen); sec('Status', t); }
   const al = actLines(u, true); if (al.length) sec('Atividade', ...al);
   if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
-  if (isAdm && id !== me) { const b = document.createElement('button'); b.className = 'go'; b.style.background = '#da373c'; b.textContent = '🛡️ Expulsar do servidor'; b.onclick = async () => { if (await askYes('Expulsar ' + u.name + ' do servidor? A pessoa pode entrar de novo.', 'Expulsar')) { send({ type: 'kick', id }); w.remove(); } }; bx.append(b); }
+  if (isAdm && id !== me && !isOff) { const b = document.createElement('button'); b.className = 'go'; b.style.background = '#da373c'; b.textContent = '🛡️ Expulsar do servidor'; b.onclick = async () => { if (await askYes('Expulsar ' + u.name + ' do servidor? A pessoa pode entrar de novo.', 'Expulsar')) { send({ type: 'kick', id }); w.remove(); } }; bx.append(b); }
   if (id === me) { const b = document.createElement('button'); b.className = 'go'; b.textContent = 'Editar perfil'; b.onclick = () => { w.remove(); $('#bCfg').click(); }; bx.append(b); }
   c.append(bn, av, bx); w.append(c); document.body.append(w);
   const close = () => { w.remove(); document.removeEventListener('keydown', esc, true); };
