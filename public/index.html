@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<script>try{if((localStorage.getItem('pampas-nome')||'').trim())document.documentElement.classList.add('auto','spl')}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>Discord dos Guri</title>
 <link rel="manifest" href="/manifest.webmanifest">
@@ -407,6 +408,44 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 #lbx img{max-width:min(96vw,100%);max-height:100%;object-fit:contain;border-radius:6px;cursor:zoom-in;box-shadow:0 8px 40px #000a}
 #lbx.zm .lbw{place-items:start center}
 #lbx.zm img{max-width:none;max-height:none;cursor:zoom-out}
+/* ---------- abertura animada (aparece no lugar da tela de login quando a entrada é automática) ---------- */
+#splash{display:none;position:fixed;inset:0;z-index:2000;place-items:center;overflow:hidden;background:#0d0a14;color:#fff;transition:opacity .6s ease,transform .6s ease,filter .6s ease}
+html.spl #splash{display:grid}
+html.auto #login{display:none!important}
+#splash::before,#splash::after{content:"";position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(70px);opacity:.5;animation:spDrift 7s ease-in-out infinite alternate}
+#splash::before{left:-25vmax;top:-30vmax;background:radial-gradient(circle,var(--blur,#5865f2),transparent 65%)}
+#splash::after{right:-25vmax;bottom:-30vmax;background:radial-gradient(circle,var(--pampa,#c8372d),transparent 65%);animation-delay:-3s}
+#splash .sp{position:relative;z-index:1;display:grid;justify-items:center;gap:22px}
+#splash .lg{position:relative;width:150px;height:150px;display:grid;place-items:center}
+#splash .lg img{width:112px;height:112px;object-fit:contain;position:relative;z-index:2;animation:spPop .9s cubic-bezier(.2,1.3,.4,1) both,spFloat 3s ease-in-out .9s infinite}
+#splash .glow{position:absolute;inset:-34px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--blur,#5865f2) 55%,transparent),transparent 68%);animation:spPulse 2.2s ease-in-out infinite}
+#splash .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 50%,var(--blur,#5865f2) 80%,#fff 100%);-webkit-mask:radial-gradient(circle,transparent 63%,#000 65%);mask:radial-gradient(circle,transparent 63%,#000 65%);animation:spSpin 1.5s linear infinite,spFade .5s .2s both}
+#splash h1{margin:0;font-size:1.9rem;letter-spacing:.01em;display:flex;overflow:hidden;padding:3px 0}
+#splash h1 span{display:inline-block;transform:translateY(115%);opacity:0;animation:spRise .6s cubic-bezier(.2,.9,.3,1) both;animation-delay:calc(.55s + var(--i)*.045s)}
+#splash h1 span.w{width:.32em}
+#splash .bar{width:190px;height:3px;border-radius:3px;background:#ffffff1f;overflow:hidden;opacity:0;animation:spFade .5s 1.2s both}
+#splash .bar i{display:block;height:100%;width:40%;border-radius:3px;background:linear-gradient(90deg,transparent,var(--blur,#5865f2),#fff);animation:spBar 1.2s ease-in-out infinite}
+#splash .cap{color:#c9c6d6;font-size:.9rem;min-height:1.2em;opacity:0;animation:spFade .5s 1.3s both;text-align:center;padding:0 16px}
+#splash .cap.dots::after{content:"";display:inline-block;width:1.3em;text-align:left;animation:spDots 1.2s steps(1) infinite}
+#splash .pt{position:absolute;bottom:-12px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:0;filter:blur(.5px);animation:spUp var(--d) linear var(--w) infinite}
+#splash.out{opacity:0;transform:scale(1.08);filter:blur(6px);pointer-events:none}
+@keyframes spPop{from{opacity:0;transform:scale(.4) rotate(-12deg);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
+@keyframes spFloat{50%{transform:translateY(-7px)}}
+@keyframes spSpin{to{transform:rotate(360deg)}}
+@keyframes spFade{from{opacity:0}to{opacity:1}}
+@keyframes spPulse{50%{transform:scale(1.14);opacity:.65}}
+@keyframes spRise{to{transform:none;opacity:1}}
+@keyframes spDrift{to{transform:translate(8vmax,6vmax) scale(1.15)}}
+@keyframes spBar{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+@keyframes spDots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+@keyframes spUp{0%{transform:translateY(0);opacity:0}12%{opacity:.7}100%{transform:translateY(-105vh);opacity:0}}
+@keyframes spCard{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+#loginc{animation:spCard .45s ease both}
+@media (prefers-reduced-motion:reduce){
+  #splash *,#splash::before,#splash::after,#loginc{animation:none!important}
+  #splash h1 span,#splash .cap,#splash .bar{opacity:1;transform:none}
+  #splash .pt{display:none}
+}
 .lp{margin-top:6px;max-width:440px}.lp[hidden]{display:none}
 .lpc{display:block;padding:10px 12px;background:var(--side);border-left:4px solid var(--blur,#5865f2);border-radius:6px;color:inherit;text-decoration:none}
 .lpc small{display:block;color:var(--mut);font-size:.72rem;margin-bottom:2px}
@@ -771,6 +810,15 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
 </style>
 </head>
 <body>
+<div id="splash" aria-live="polite">
+  <i class="pt" style="--x:8%;--s:5px;--d:9.0s;--w:0.0s"></i><i class="pt" style="--x:21%;--s:3px;--d:7.0s;--w:2.2s"></i><i class="pt" style="--x:34%;--s:6px;--d:11.0s;--w:0.8s"></i><i class="pt" style="--x:47%;--s:4px;--d:8.0s;--w:3.4s"></i><i class="pt" style="--x:60%;--s:5px;--d:10.0s;--w:1.5s"></i><i class="pt" style="--x:73%;--s:3px;--d:7.5s;--w:4.1s"></i><i class="pt" style="--x:86%;--s:6px;--d:12.0s;--w:0.3s"></i><i class="pt" style="--x:94%;--s:4px;--d:9.5s;--w:2.8s"></i><i class="pt" style="--x:15%;--s:4px;--d:10.5s;--w:5.2s"></i><i class="pt" style="--x:67%;--s:3px;--d:8.5s;--w:6.0s"></i>
+  <div class="sp">
+    <div class="lg"><div class="glow"></div><div class="ring"></div><img src="/icon-512.png" alt=""></div>
+    <h1 aria-label="Discord dos Guri"><span style="--i:0">D</span><span style="--i:1">i</span><span style="--i:2">s</span><span style="--i:3">c</span><span style="--i:4">o</span><span style="--i:5">r</span><span style="--i:6">d</span><span class="w" style="--i:7"></span><span style="--i:8">d</span><span style="--i:9">o</span><span style="--i:10">s</span><span class="w" style="--i:11"></span><span style="--i:12">G</span><span style="--i:13">u</span><span style="--i:14">r</span><span style="--i:15">i</span></h1>
+    <div class="bar"><i></i></div>
+    <div class="cap dots" id="spCap">Entrando</div>
+  </div>
+</div>
 <form id="login">
   <div id="loginc">
     <img class="logo" src="/icon-512.png" alt="">
@@ -2423,7 +2471,7 @@ function handle(m) {
   if (typeof m.type === 'string' && m.type.startsWith('mus-')) return musHandle(m);
   if (m.type === 'hello-ok') {
     musReconnect();
-    me = m.id; $('#login').hidden = true; $('#app').hidden = false;
+    me = m.id; $('#login').hidden = true; $('#app').hidden = false; splashDone();
     if (m.v) {   // o site foi atualizado enquanto o servidor reiniciava: recarrega sozinho para pegar a tela nova (e volta para a chamada)
       if (appVer && appVer !== m.v) { try { sessionStorage.setItem('pampas-rejoin', rcRoom || ''); } catch {} return location.reload(); }
       appVer = m.v;
@@ -2475,7 +2523,7 @@ function handle(m) {
   else if (m.type === 'sb-err') toast(m.msg || 'Não deu para adicionar o som.');
   else if (m.type === 'sb-play') sbPlay(m.id, m.from, m.name);
   else if (m.type === 'bad-pass') {
-    badPass = true; $('#senhaW').hidden = false; $('#senha').required = true; $('#senha').value = ''; $('#senha').focus();
+    badPass = true; splashFail(); $('#senhaW').hidden = false; $('#senha').required = true; $('#senha').value = ''; $('#senha').focus();
     $('#erro').textContent = m.wait ? 'Muitas tentativas erradas. Espere uns 10 minutos e tente de novo.' : 'Senha incorreta.';
     try { localStorage.removeItem('pampas-senha'); } catch {}
   } else if (m.type === 'kicked') { kickedBy = m.by || 'alguém'; dropAll();
@@ -4544,7 +4592,30 @@ if (window.pampas && pampas.onUpdate) {
 }
 
 // quem já tem nome salvo entra direto, sem clicar em "Entrar"
-try { if (($('#nome').value || '').trim()) $('#login').requestSubmit(); } catch {}
+// ---------- abertura animada: aparece no lugar da tela de login quando o app entra sozinho ----------
+const splash = { t0: Date.now(), done: false, el: $('#splash') };
+const splashStop = () => { clearTimeout(splash.slow); clearTimeout(splash.give); };
+function splashDone() {   // conectou: deixa a animação aparecer um pouquinho e some revelando o app
+  if (splash.done) return; splash.done = true; splashStop();
+  setTimeout(() => {
+    splash.el.classList.add('out');
+    setTimeout(() => document.documentElement.classList.remove('auto', 'spl'), 700);
+  }, Math.max(0, 1800 - (Date.now() - splash.t0)));
+}
+function splashFail() {   // não deu para entrar sozinho (senha errada, servidor fora...): mostra a tela de login
+  if (splash.done) return; splash.done = true; splashStop();
+  document.documentElement.classList.remove('auto');
+  splash.el.classList.add('out');
+  setTimeout(() => document.documentElement.classList.remove('spl'), 650);
+}
+try {
+  if (($('#nome').value || '').trim()) {
+    splash.slow = setTimeout(() => { const c = $('#spCap'); if (c) c.textContent = 'Acordando o servidor… pode levar um minutinho'; }, 7000);
+    splash.give = setTimeout(splashFail, 45000);
+    $('#login').requestSubmit();
+    if (!ws) splashFail();   // o formulário não passou na validação
+  } else splashFail();
+} catch { splashFail(); }
 </script>
 </body>
 </html>
