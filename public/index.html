@@ -323,6 +323,21 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 @keyframes bdshine{to{background-position:-150% 0}}
 .bds{display:flex;gap:8px;flex-wrap:wrap}
 .bds .bd{--s:34px}
+#rkTop{display:grid;gap:12px}
+#rkTop .tt{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#rkTop .tt b{font-size:1.05rem}
+#rkTop .tt small{color:var(--mut)}
+.rkw{display:grid;gap:4px;font-size:.86rem}
+.rkw div{display:flex;gap:8px;align-items:center}
+.rkw small{color:var(--mut)}
+.rkr{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:10px}
+.rkr+.rkr{margin-top:2px}
+.rkr.me{background:color-mix(in srgb,var(--blur) 20%,transparent)}
+.rkr .pos{width:26px;text-align:center;font-size:1.15rem;font-weight:700;color:var(--mut)}
+.rkr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.rkr .vl{font-weight:700;color:var(--txt);white-space:nowrap}
+.rkr.mine{opacity:.9;border-top:1px dashed color-mix(in srgb,var(--txt) 18%,transparent);border-radius:0;margin-top:6px}
+.rkc .none{padding:10px 4px 14px;color:var(--mut);font-size:.88rem}
 #bdTop{display:grid;gap:14px}
 #bdTop .tt{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 #bdTop .tt b{font-size:1.05rem}
@@ -906,6 +921,7 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
     <h4>Minha conta</h4>
     <button data-t="perfil"><span>👤</span>Meu perfil</button>
     <button data-t="conq"><span>🏅</span>Conquistas</button>
+    <button data-t="rank"><span>🏆</span>Ranking semanal</button>
     <button data-t="ativ"><span>🎮</span>Atividade</button>
     <h4>App</h4>
     <button data-t="voz"><span>🎙️</span>Voz e áudio</button>
@@ -961,6 +977,12 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
       <div id="bdRew"></div>
       <h3 style="margin:4px 0 10px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)">Emblemas</h3>
       <div id="bdGrid"></div>
+    </section>
+
+    <section data-p="rank" hidden><h2>Ranking semanal</h2>
+      <p class="sub">Quem mais apareceu nesta semana. Zera toda segunda-feira à meia-noite (horário de Brasília). Tempo em chamada só conta com mais alguém na sala.</p>
+      <div class="cc pad" id="rkTop"></div>
+      <div id="rkBody"></div>
     </section>
 
     <section data-p="ativ" hidden><h2>Atividade</h2>
@@ -2551,6 +2573,7 @@ function handle(m) {
   else if (m.type === 'profiles') m.list.forEach(p => { prof[p.id] = p.prof; bdg[p.id] = p.bd || []; admOf[p.id] = !!p.adm; renderMem(); renderChans(); })
   else if (m.type === 'profile') { prof[m.id] = m.prof; bdg[m.id] = m.bd || []; admOf[m.id] = !!m.adm; renderMem(); renderChans(); syncStage(); }
   else if (m.type === 'admin') { isAdm = !!m.on; admEnabled = m.enabled !== false; admErr = m.err || ''; admOf[me] = isAdm; paintAdm(); if (view?.k === 't') renderMsgs(); if (isAdm && admWant) toast('🛡️ Você é ADM agora.'); admWant = false; }
+  else if (m.type === 'rank') { RANK = m; if (!$('#cfg').hidden) paintRank(); }
   else if (m.type === 'ach') { ACH = m; bdg[me] = bdShow(ACH); if (!$('#cfg').hidden) { paintAch(); renderPrev(); fillFrames(); } }
   else if (m.type === 'unlock') { bdQueue.push([m.id, m.lvl]); bdNext(); }
   else if (m.type === 'unlock-fr') { bdQueue.push([m.id, 'fr']); bdNext(); }
@@ -3097,6 +3120,54 @@ function bdShow(a) {   // mesmos emblemas que o servidor mostraria para a turma
   const have = a.defs.filter(d => (a.lv[d.id] || 0) > 0);
   const ids = Array.isArray(a.pick) ? a.pick.filter(id => have.some(d => d.id === id)) : have.map((d, i) => ({ d, i })).sort((x, y) => (y.d.adm ? 1 : 0) - (x.d.adm ? 1 : 0) || a.lv[y.d.id] - a.lv[x.d.id] || x.i - y.i).map(x => x.d.id);
   return ids.slice(0, 5).map(id => ({ id, lvl: a.lv[id] }));
+}
+// ---------- ranking semanal ----------
+let RANK = null;
+const RK = [['v', '🎙️', 'Tempo em chamada', 'min'], ['s', '📺', 'Transmissão de tela', 'min'], ['c', '📷', 'Câmera ligada', 'min'], ['m', '💬', 'Mensagens', 'n'], ['p', '🪗', 'Soundboard', 'n']];
+function rkFmt(n, u) {
+  if (u !== 'min') return n + (n === 1 ? ' vez' : ' vezes');
+  const h = Math.floor(n / 60), m = n % 60;
+  return h ? h + 'h' + (m ? String(m).padStart(2, '0') : '') : n + ' min';
+}
+function rkProf(pid) {   // foto/cor da pessoa: online (pelo id da conexão) ou offline (o:pid)
+  const u = (st.users || []).find(x => x.pid === pid);
+  return (u && prof[u.id]) || prof['o:' + pid] || {};
+}
+function rkRow(pos, who, n, u, me, mine) {
+  const r = document.createElement('div'); r.className = 'rkr' + (me ? ' me' : '') + (mine ? ' mine' : '');
+  const ps = document.createElement('span'); ps.className = 'pos'; ps.textContent = mine ? '#' + pos : ['🥇', '🥈', '🥉'][pos - 1] || '#' + pos;
+  const av = document.createElement('div'); av.className = 'av s'; paintAv(av, who.name || '?', rkProf(who.pid));
+  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = mine ? 'Você' : who.name;
+  const vl = document.createElement('span'); vl.className = 'vl'; vl.textContent = rkFmt(n, u);
+  r.append(ps, av, nm, vl); return r;
+}
+function paintRank() {
+  const top = $('#rkTop'), body = $('#rkBody'); if (!top || !body) return;
+  if (!RANK) { top.textContent = 'Carregando o ranking…'; body.replaceChildren(); return; }
+  top.replaceChildren(); body.replaceChildren();
+  const left = Math.max(0, RANK.end - Date.now()), d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5);
+  const tt = document.createElement('div'); tt.className = 'tt';
+  const tb = document.createElement('b'); tb.textContent = '🏆 Esta semana';
+  const ts = document.createElement('small'); ts.textContent = 'termina em ' + (d ? d + (d === 1 ? ' dia e ' : ' dias e ') : '') + h + 'h';
+  tt.append(tb, ts); top.append(tt);
+  const win = RK.filter(([k]) => RANK.prev[k].top.length);
+  const pw = document.createElement('div'); pw.className = 'rkw';
+  const ph = document.createElement('small'); ph.textContent = win.length ? 'Campeões da semana passada' : 'Ainda não tem campeões da semana passada: essa é a primeira semana valendo!';
+  pw.append(ph);
+  win.forEach(([k, ic, nome, u]) => {
+    const w = RANK.prev[k].top[0], l = document.createElement('div');
+    l.textContent = ic + ' ' + nome + ': 👑 ' + w.name + ' (' + rkFmt(w.n, u) + ')'; pw.append(l);
+  });
+  top.append(pw);
+  RK.forEach(([k, ic, nome, u]) => {
+    const c = document.createElement('div'); c.className = 'cc rkc';
+    const h3 = document.createElement('h3'); h3.textContent = ic + ' ' + nome; c.append(h3);
+    const x = RANK.cur[k];
+    if (!x.top.length) { const e = document.createElement('div'); e.className = 'none'; e.textContent = 'Ninguém ainda. Seja o primeiro!'; c.append(e); }
+    x.top.forEach((w, i) => c.append(rkRow(i + 1, w, w.n, u, w.pid === RANK.me, false)));
+    if (x.me && x.me.pos > x.top.length) c.append(rkRow(x.me.pos, { name: myName, pid: RANK.me }, x.me.n, u, true, true));
+    body.append(c);
+  });
 }
 function paintAch() {
   const top = $('#bdTop'), grid = $('#bdGrid'); if (!top || !grid) return;
@@ -3987,6 +4058,7 @@ function tab(t) {
   if (t === 'cam') fillCam();
   if (t === 'sobre') showAbout();
   if (t === 'conq') { send({ type: 'ach-get' }); paintAch(); }
+  if (t === 'rank') { send({ type: 'rank-get' }); paintRank(); }
   if (t === 'ativ') { $('#actGame').checked = !!cfg.actGame; $('#actMusic').checked = !!cfg.actMusic; $('#actManual').value = cfg.actManual || ''; actStatus(); }
 }
 document.querySelectorAll('#cfgtabs [data-t]').forEach(b => b.onclick = () => tab(b.dataset.t));
