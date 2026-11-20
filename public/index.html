@@ -396,9 +396,9 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .lk{color:#00a8fc;text-decoration:none;overflow-wrap:anywhere}.lk:hover{text-decoration:underline}
 .lkimg{display:block;width:fit-content;max-width:100%}
 .msg img.a{cursor:zoom-in}
-#lbx{position:fixed;inset:0;z-index:20;background:#000d;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 16px 16px;animation:lbin .12s ease-out}
+#lbx{position:fixed;inset:0;z-index:20;background:#000d;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:68px 16px 16px;animation:lbin .12s ease-out}
 @keyframes lbin{from{opacity:0}to{opacity:1}}
-#lbx .lbb{position:absolute;top:10px;left:0;right:0;display:flex;gap:8px;justify-content:center;align-items:center;padding:0 12px}
+#lbx .lbb{position:absolute;top:16px;left:0;right:0;display:flex;gap:8px;justify-content:center;align-items:center;padding:0 12px}
 #lbx .lbb span{color:#dcdde2;font-size:.85rem;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #lbx .lbb button{background:#1e1f22;color:#fff;border:1px solid #ffffff22;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
 #lbx .lbb button:hover{background:#2b2d31}
@@ -2213,13 +2213,20 @@ function openImg(src, name) {
   const cl = document.createElement('button'); cl.type = 'button'; cl.textContent = '✕ Fechar';
   bar.append(nm, dl, cl);
   const w = document.createElement('div'); w.className = 'lbw';
-  const im = document.createElement('img'); im.src = src; im.alt = ''; im.draggable = false; w.append(im);
+  const im = document.createElement('img'); im.alt = ''; im.draggable = false;
+  const fit = () => {   // toda imagem se ajusta à tela (pequenas aumentam até 4x, grandes diminuem); no zoom fica no tamanho real
+    const nw = im.naturalWidth, nh = im.naturalHeight; if (!nw || !nh) return;
+    const sc = o.classList.contains('zm') ? 1 : Math.min(w.clientWidth / nw, w.clientHeight / nh, 4);
+    im.style.width = Math.round(nw * sc) + 'px'; im.style.height = Math.round(nh * sc) + 'px';
+  };
+  im.onload = fit; im.src = src; w.append(im);
   o.append(bar, w); document.body.append(o);
-  const done = () => { o.remove(); document.removeEventListener('keydown', esc, true); };
+  fit(); window.addEventListener('resize', fit);
+  const done = () => { o.remove(); window.removeEventListener('resize', fit); document.removeEventListener('keydown', esc, true); };
   const esc = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(); } };
   document.addEventListener('keydown', esc, true);
   dl.onclick = () => saveFile(src, name); cl.onclick = done;
-  im.onclick = e => { e.stopPropagation(); o.classList.toggle('zm'); };   // clique na imagem: zoom 100% / ajustar
+  im.onclick = e => { e.stopPropagation(); o.classList.toggle('zm'); fit(); };   // clique na imagem: zoom 100% / ajustar
   o.onclick = e => { if (e.target === o || e.target === w) done(); };
 }
 // ---------- reações e apagar mensagem ----------
