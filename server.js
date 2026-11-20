@@ -192,31 +192,72 @@ setInterval(() => { const now = Date.now(); PV_RATE.forEach((r, ip) => { if (now
 // "versão" do site: muda sempre que o public/index.html muda. O app compara ao reconectar e se recarrega sozinho quando for outra.
 let VER = '';
 try { VER = crypto.createHash('md5').update(fs.readFileSync(path.join(PUB, 'index.html'))).digest('hex').slice(0, 10); } catch {}
-// ---------- capa do jogo (busca na loja da Steam; guarda o resultado para não repetir) ----------
-const GCOV = new Map();
+// ---------- capas: jogo (Steam) e música (iTunes, Deezer e por último YouTube) ----------
+const COVC = new Map();   // guarda resultados (achou: 24 h, não achou: poucos minutos) para não repetir a busca
+const cget = k => { const h = COVC.get(k); return h && Date.now() - h.at < h.ttl ? h : null; };
+const cset = (k, v, ttl) => { if (COVC.size > 500) COVC.delete(COVC.keys().next().value); COVC.set(k, { at: Date.now(), ttl, v }); return v; };
 const gnorm = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[™®©:'’.,!?-]+/g, ' ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const gtoks = t => gnorm(t).split(' ').filter(w => w.length > 1 || /\d/.test(w));
+const BR_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+async function jget(u) {
+  const r = await fetch(u, { headers: { 'user-agent': BR_UA, accept: 'application/json', 'accept-language': 'pt-BR,pt;q=0.9,en;q=0.5' }, signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error('status ' + r.status);
+  return r.json();
+}
 const GALIAS = { cs2: 'counter strike 2', csgo: 'counter strike global offensive', gta5: 'grand theft auto v', gtav: 'grand theft auto v', pubg: 'pubg battlegrounds', 'gta san andreas': 'grand theft auto san andreas' };
-async function gameCover(name) {
-  const key = gnorm(name); if (!key) return null;
-  const hit = GCOV.get(key); if (hit && Date.now() - hit.at < 6 * 3600e3) return hit.v;
-  let v = null;
+async function steamFind(term) {
+  const q = gtoks(term);
+  const pick = items => {   // o resultado que mais combina com o nome (precisa combinar bem, para não pôr a capa de outro jogo)
+    let best = null, bs = 0;
+    for (const it of items) { const t = gtoks(it.name); if (!t.length || !q.length) continue; const sc = q.filter(w => t.includes(w)).length / Math.min(q.length, t.length); if (sc > bs) { best = it; bs = sc; } }
+    return bs >= .6 ? best : null;
+  };
   try {
-    const term = GALIAS[key] || key;
-    const r = await fetchSafe('https://store.steampowered.com/api/storesearch/?cc=br&l=portuguese&term=' + encodeURIComponent(term), 'json');
-    const j = JSON.parse(r.body.toString('utf8'));
-    const toks = t => gnorm(t).split(' ').filter(w => w.length > 1 || /\d/.test(w));
-    const q = toks(term);
-    let best = null, bestS = 0;
-    for (const it of (j.items || [])) {
-      if (it.type && it.type !== 'app') continue;
-      const n = toks(it.name); if (!n.length || !q.length) continue;
-      const shared = q.filter(w => n.includes(w)).length, sc = shared / Math.min(q.length, n.length);
-      if (sc > bestS) { best = it; bestS = sc; }
-    }
-    if (best && bestS >= .6) v = { id: best.id, name: best.name, img: best.tiny_image || '' };
-  } catch (e) { if (!/status 4|timeout/.test(String(e.message))) console.error('capa do jogo falhou:', e.message); GCOV.set(key, { at: Date.now() - 5 * 3600e3, v: null }); return null; }   // erro: tenta de novo em ~1 h
-  if (GCOV.size > 400) GCOV.delete(GCOV.keys().next().value);
-  GCOV.set(key, { at: Date.now(), v }); return v;
+    const j = await jget('https://store.steampowered.com/api/storesearch/?cc=br&l=english&term=' + encodeURIComponent(term));
+    const b = pick((j.items || []).filter(it => !it.type || it.type === 'app'));
+    if (b) return { id: b.id, name: b.name, img: b.tiny_image || '' };
+  } catch (e) { console.error('Steam (loja) falhou:', e.message); }
+  try {
+    const j = await jget('https://steamcommunity.com/actions/SearchApps/' + encodeURIComponent(term));
+    const b = pick(Array.isArray(j) ? j : []);
+    if (b) return { id: +b.appid, name: b.name, img: b.logo || b.icon || '' };
+  } catch (e) { console.error('Steam (comunidade) falhou:', e.message); }
+  return null;
+}
+async function gameCover(name) {
+  const key = 'g:' + gnorm(name); if (key === 'g:') return null;
+  const h = cget(key); if (h) return h.v;
+  const v = await steamFind(GALIAS[gnorm(name)] || gnorm(name));
+  console.log('Capa do jogo: "' + name + '" → ' + (v ? v.name + ' (' + v.id + ')' : 'não achei na Steam'));
+  return cset(key, v, v ? 24 * 3600e3 : 30 * 60e3);
+}
+// tira do título o que atrapalha a busca: (Official Video), [Lyrics], "Part. fulano", "feat. ..."
+const mclean = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\(\[][^)\]]*[\)\]]/g, ' ')
+  .replace(/\b(official|oficial|video|videoclipe|clipe|lyrics?|letra|audio|ao vivo|live|hd|4k|remaster(ed)?|part|feat|ft|prod)\b.*$/i, ' ').replace(/\s+/g, ' ').trim();
+async function musicCover(title, artist) {
+  const key = 'm:' + gnorm(title + ' ' + artist); const h = cget(key); if (h) return h.v;
+  const ct = mclean(title) || title, want = gtoks(ct);
+  const score = n => { const t = gtoks(mclean(n) || n); return want.length && t.length ? want.filter(w => t.includes(w)).length / want.length : 0; };
+  const term = (ct + ' ' + artist).trim();
+  let img = '', src = '';
+  try {
+    const j = await jget('https://itunes.apple.com/search?media=music&entity=song&limit=10&country=BR&term=' + encodeURIComponent(term));
+    const hit = (j.results || []).find(x => score(x.trackName) >= .6 && x.artworkUrl100);
+    if (hit) { img = hit.artworkUrl100.replace('100x100bb', '300x300bb'); src = 'iTunes'; }
+  } catch (e) { console.error('capa (iTunes) falhou:', e.message); }
+  if (!img) try {
+    const j = await jget('https://api.deezer.com/search?limit=10&q=' + encodeURIComponent(term));
+    const hit = (j.data || []).find(x => score(x.title) >= .6 && x.album && (x.album.cover_big || x.album.cover_medium));
+    if (hit) { img = hit.album.cover_big || hit.album.cover_medium; src = 'Deezer'; }
+  } catch (e) { console.error('capa (Deezer) falhou:', e.message); }
+  if (!img) try {   // vídeo do YouTube (título cheio de enfeite): usa a miniatura do vídeo
+    const r = await ytSearch(term);
+    const hit = r.find(x => score(x.title) >= .6);
+    if (hit) { img = 'https://i.ytimg.com/vi/' + hit.v + '/mqdefault.jpg'; src = 'YouTube'; }
+  } catch (e) { console.error('capa (YouTube) falhou:', e.message); }
+  console.log('Capa da música: "' + term + '" → ' + (img ? src : 'não achei'));
+  const v = img ? { img } : null;
+  return cset(key, v, v ? 24 * 3600e3 : 30 * 60e3);
 }
 const srv = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
@@ -234,6 +275,13 @@ const srv = http.createServer((req, res) => {
     res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'private, max-age=3600');
     if (!q.trim() || q.length > 60 || !previewRate(ipOf(req))) return res.end('null');
     return gameCover(q).then(v => res.end(JSON.stringify(v || null))).catch(() => res.end('null'));
+  }
+  if (url === '/music-cover') {   // capa da música que a pessoa está ouvindo
+    if (!httpAuth(req, res)) return;
+    let t = '', ar = ''; try { const sp = new URL(req.url, 'http://x').searchParams; t = sp.get('t') || ''; ar = sp.get('a') || ''; } catch {}
+    res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'private, max-age=3600');
+    if (!t.trim() || t.length > 100 || ar.length > 100 || !previewRate(ipOf(req))) return res.end('null');
+    return musicCover(t, ar).then(v => res.end(JSON.stringify(v || null))).catch(() => res.end('null'));
   }
   if (url === '/mus-search') {   // busca de música (sala de música)
     if (!httpAuth(req, res)) return;
