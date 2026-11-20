@@ -465,6 +465,8 @@ async function flush() {
       if (id === '\0ch') { await up(['SET', 'guri:canais', JSON.stringify(CH)]); continue; }
       if (id === '\0adm') { await up(['SET', 'guri:admins', JSON.stringify([...ADMINS])]); continue; }
       if (id === '\0mus') { await up(['SET', 'guri:mus', JSON.stringify({ lib: MUS.lib, pls: MUS.pls })]); continue; }
+      if (id === '\0mbl') { await up(['SET', 'guri:mbl', JSON.stringify([...MEMB.keys()])]); continue; }
+      if (id.startsWith('\0mb:')) { const pid = id.slice(4), m = MEMB.get(pid); await up(m ? ['SET', 'guri:mb:' + pid, JSON.stringify(slimMemb(m))] : ['DEL', 'guri:mb:' + pid]); continue; }
       if (id === '\0st') { await up(['SET', 'guri:stats', JSON.stringify([...STATS])]); continue; }
       if (id === '\0sbl') { await up(['SET', 'guri:sbl', JSON.stringify(SB.map(s => s.id))]); continue; }
       if (id.startsWith('\0sb:')) { const sid = id.slice(4), s = SB.find(x => x.id === sid); await up(s ? ['SET', 'guri:sb:' + sid, JSON.stringify(s)] : ['DEL', 'guri:sb:' + sid]); continue; }
@@ -501,6 +503,10 @@ async function loadSaved() {
       const raw = await up(['GET', 'guri:stats']);
       if (raw) JSON.parse(raw).forEach(([cid, v]) => { if (!STATS.has(cid)) STATS.set(cid, { ...stOf(cid), ...v }); });
     } catch (e) { console.error('não consegui carregar os emblemas:', e.message); }
+    try {   // quem já entrou alguma vez (lista de offline)
+      const ids = JSON.parse((await up(['GET', 'guri:mbl'])) || '[]');
+      for (const pid of ids) { const raw = await up(['GET', 'guri:mb:' + pid]); if (raw && !MEMB.has(pid)) MEMB.set(pid, JSON.parse(raw)); }
+    } catch (e) { console.error('não consegui carregar a lista de membros:', e.message); }
     hist.forEach(fixMids);
     prune();
     console.log('Mensagens e canais carregados do Upstash.');
@@ -685,10 +691,35 @@ setInterval(() => {
 
 const pj = c => ({ id: c.id, name: c.nick, prof: c.prof || {}, bd: showcase(c.cid), adm: !!c.admin });
 
+// ---------- membros que já entraram (aparecem como OFFLINE na lista da direita) ----------
+// pid -> { cid, name, prof, seen }. Fica salvo no Upstash (uma chave por pessoa). GIF muito grande não é guardado (a pessoa fica só com a letra/cor).
+const MEMB = new Map(), MEMB_MAX = 80, KEEP_AV = 200000, KEEP_BN = 300000;
+function slimMemb(m) {
+  const pr = { ...(m.prof || {}) };
+  if ((pr.avatar || '').length > KEEP_AV) pr.avatar = '';
+  if ((pr.banner || '').length > KEEP_BN) pr.banner = '';
+  return { cid: m.cid, name: m.name, prof: pr, seen: m.seen };
+}
+const isOnlinePid = pid => [...clients].some(c => c.nick && c.cid && pidOf(c.cid) === pid);
+function rememberMember(ws) {
+  if (!ws.cid || !ws.nick) return;
+  const pid = pidOf(ws.cid);
+  MEMB.set(pid, { cid: ws.cid, name: ws.nick, prof: ws.prof || {}, seen: Date.now() });
+  markDirty('\0mb:' + pid);
+  if (MEMB.size > MEMB_MAX) {   // passou do limite: tira quem ficou mais tempo sem aparecer
+    const old = [...MEMB].filter(([k]) => k !== pid && !isOnlinePid(k)).sort((a, b) => a[1].seen - b[1].seen)[0];
+    if (old) { MEMB.delete(old[0]); markDirty('\0mb:' + old[0]); }
+  }
+  markDirty('\0mbl');
+}
+const offPj = pid => { const m = MEMB.get(pid); return m ? { type: 'profile', id: 'o:' + pid, name: m.name, prof: m.prof || {}, bd: showcase(m.cid), adm: isAdmCid(m.cid) } : null; };
+const offList = () => { const on = new Set([...clients].filter(c => c.nick && c.cid).map(c => pidOf(c.cid))); return [...MEMB].filter(([k]) => !on.has(k)).sort((a, b) => b[1].seen - a[1].seen).map(([k, m]) => ({ id: 'o:' + k, pid: k, name: m.name, seen: m.seen })); };
+
 function state() {
   const users = [...clients].filter(c => c.nick).map(c => ({ id: c.id, name: c.nick, pid: pidOf(c.cid), room: c.room || null, vs: c.vs || {}, act: c.act || null, jt: c.room ? (c.jt || null) : null }));
   const now = Date.now();   // hora do servidor: o app usa para contar o tempo de chamada sem depender do relógio do PC
-  clients.forEach(c => c.nick && send(c, { type: 'state', channels: CH, users, now }));
+  const off = offList();
+  clients.forEach(c => c.nick && send(c, { type: 'state', channels: CH, users, off, now }));
 }
 function leave(ws) {
   const set = rooms.get(ws.room);
@@ -727,10 +758,12 @@ wss.on('connection', (ws, req) => {
         setTimeout(() => { try { old.terminate(); } catch {} }, 200);
       });
       setProf(ws, m.prof);
+      rememberMember(ws);
       send(ws, { type: 'hello-ok', id: ws.id, v: VER });
       sendSb(ws);
       musHello(ws);
       [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
+      offList().forEach(o => { const j = offPj(o.pid); if (j) send(ws, j); });   // perfis de quem está offline (um por um)
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
       ws.admin = !!ADMIN_SENHA && !!ws.cid && ADMINS.has(ws.cid);
       send(ws, { type: 'admin', on: ws.admin, enabled: !!ADMIN_SENHA });
@@ -739,6 +772,7 @@ wss.on('connection', (ws, req) => {
     } else if (m.type === 'profile' && ws.nick) {
       ws.nick = String(m.name || ws.nick).slice(0, 24);
       setProf(ws, m.prof);
+      rememberMember(ws);
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
       state();
     } else if (!ws.nick) {
@@ -885,7 +919,17 @@ wss.on('connection', (ws, req) => {
       if (t) send(t, { type: 'signal', from: ws.id, data: m.data });
     }
   });
-  ws.on('close', (code) => { if (ws.nick) console.log('Saiu: ' + ws.nick + ' (código ' + code + ')'); leave(ws); clients.delete(ws); musIdle(); state(); });
+  ws.on('close', (code) => {
+    if (ws.nick) console.log('Saiu: ' + ws.nick + ' (código ' + code + ')');
+    const wasNick = ws.nick, wasCid = ws.cid;
+    leave(ws); clients.delete(ws);
+    if (wasNick && wasCid) {   // guarda a última vez visto e avisa os outros do perfil dele como offline (se não entrou de novo em outro lugar)
+      rememberMember(ws);
+      const pid = pidOf(wasCid);
+      if (!isOnlinePid(pid)) { const j = offPj(pid); if (j) clients.forEach(c => c.nick && send(c, j)); }
+    }
+    musIdle(); state();
+  });
 });
 
 // a cada 4 s manda para todo mundo o ping de cada pessoa (medido por ela mesma até o servidor)
