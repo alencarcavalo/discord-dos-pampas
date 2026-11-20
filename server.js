@@ -192,6 +192,32 @@ setInterval(() => { const now = Date.now(); PV_RATE.forEach((r, ip) => { if (now
 // "versão" do site: muda sempre que o public/index.html muda. O app compara ao reconectar e se recarrega sozinho quando for outra.
 let VER = '';
 try { VER = crypto.createHash('md5').update(fs.readFileSync(path.join(PUB, 'index.html'))).digest('hex').slice(0, 10); } catch {}
+// ---------- capa do jogo (busca na loja da Steam; guarda o resultado para não repetir) ----------
+const GCOV = new Map();
+const gnorm = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[™®©:'’.,!?-]+/g, ' ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const GALIAS = { cs2: 'counter strike 2', csgo: 'counter strike global offensive', gta5: 'grand theft auto v', gtav: 'grand theft auto v', pubg: 'pubg battlegrounds', 'gta san andreas': 'grand theft auto san andreas' };
+async function gameCover(name) {
+  const key = gnorm(name); if (!key) return null;
+  const hit = GCOV.get(key); if (hit && Date.now() - hit.at < 6 * 3600e3) return hit.v;
+  let v = null;
+  try {
+    const term = GALIAS[key] || key;
+    const r = await fetchSafe('https://store.steampowered.com/api/storesearch/?cc=br&l=portuguese&term=' + encodeURIComponent(term), 'json');
+    const j = JSON.parse(r.body.toString('utf8'));
+    const toks = t => gnorm(t).split(' ').filter(w => w.length > 1 || /\d/.test(w));
+    const q = toks(term);
+    let best = null, bestS = 0;
+    for (const it of (j.items || [])) {
+      if (it.type && it.type !== 'app') continue;
+      const n = toks(it.name); if (!n.length || !q.length) continue;
+      const shared = q.filter(w => n.includes(w)).length, sc = shared / Math.min(q.length, n.length);
+      if (sc > bestS) { best = it; bestS = sc; }
+    }
+    if (best && bestS >= .6) v = { id: best.id, name: best.name, img: best.tiny_image || '' };
+  } catch (e) { if (!/status 4|timeout/.test(String(e.message))) console.error('capa do jogo falhou:', e.message); GCOV.set(key, { at: Date.now() - 5 * 3600e3, v: null }); return null; }   // erro: tenta de novo em ~1 h
+  if (GCOV.size > 400) GCOV.delete(GCOV.keys().next().value);
+  GCOV.set(key, { at: Date.now(), v }); return v;
+}
 const srv = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/ok') { res.setHeader('cache-control', 'no-store'); return res.end('ok'); }   // só para saber se o servidor já acordou
@@ -201,6 +227,13 @@ const srv = http.createServer((req, res) => {
     res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'private, max-age=600');
     if (!/^https?:\/\//i.test(q) || q.length > 600 || !previewRate(ipOf(req))) return res.end('null');
     return linkPreview(q).then(v => res.end(JSON.stringify(v || null)));
+  }
+  if (url === '/game-cover') {   // capa do jogo que a pessoa está jogando
+    if (!httpAuth(req, res)) return;
+    let q = ''; try { q = new URL(req.url, 'http://x').searchParams.get('q') || ''; } catch {}
+    res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'private, max-age=3600');
+    if (!q.trim() || q.length > 60 || !previewRate(ipOf(req))) return res.end('null');
+    return gameCover(q).then(v => res.end(JSON.stringify(v || null))).catch(() => res.end('null'));
   }
   if (url === '/mus-search') {   // busca de música (sala de música)
     if (!httpAuth(req, res)) return;
