@@ -4628,6 +4628,7 @@ if (window.pampas && pampas.onUpdate) {
 
 // quem já tem nome salvo entra direto, sem clicar em "Entrar"
 // ---------- abertura animada: aparece no lugar da tela de login quando o app entra sozinho ----------
+const SPLASH_MIN = 4000;   // tempo mínimo (em milissegundos) que a abertura fica na tela; mude aqui se quiser mais ou menos
 const splash = { t0: Date.now(), done: false, el: $('#splash') };
 const splashStop = () => { clearTimeout(splash.slow); clearTimeout(splash.give); };
 function splashDone() {   // conectou: deixa a animação aparecer um pouquinho e some revelando o app
@@ -4635,7 +4636,7 @@ function splashDone() {   // conectou: deixa a animação aparecer um pouquinho 
   setTimeout(() => {
     splash.el.classList.add('out');
     setTimeout(() => document.documentElement.classList.remove('auto', 'spl'), 700);
-  }, Math.max(0, 1800 - (Date.now() - splash.t0)));
+  }, Math.max(0, SPLASH_MIN - (Date.now() - splash.t0)));
 }
 function splashFail() {   // não deu para entrar sozinho (senha errada, servidor fora...): mostra a tela de login
   if (splash.done) return; splash.done = true; splashStop();
