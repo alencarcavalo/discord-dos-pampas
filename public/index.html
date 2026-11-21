@@ -172,11 +172,11 @@ small{color:var(--mut)}
 #cfgbody .cc,#cfgtabs button{transition:background .18s,color .18s,transform .18s}
 #cfgtabs button:active{transform:scale(.97)}
 /* troca de tela (canal de texto, chamada, sala de música) */
-#stage:not([hidden]),#chatw:not([hidden]),#musicw:not([hidden]){animation:viewin .3s cubic-bezier(.2,.8,.2,1)}
+#stage:not([hidden]),#chatw:not([hidden]),#musicw:not([hidden]),#videow:not(.bg){animation:viewin .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes viewin{from{opacity:0;transform:translateY(10px) scale(.992)}to{opacity:1;transform:none}}
 #top{animation:topin .3s ease-out}
 @keyframes topin{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){#cfg,#cfg *,#stage,#chatw,#musicw,#top{animation:none!important}}
+@media(prefers-reduced-motion:reduce){#cfg,#cfg *,#stage,#chatw,#musicw,#videow,#top{animation:none!important}}
 #tmeter{position:relative;height:12px;background:var(--input);border-radius:6px;overflow:hidden}
 #tmBar{height:100%;width:0;background:#7a7f87;transition:width .06s linear}#tmBar.open{background:var(--verde)}
 #cfgtabs{background:var(--side);width:270px;flex:none;padding:48px 14px 20px 22px;display:flex;flex-direction:column;gap:2px;overflow:auto}
@@ -808,6 +808,34 @@ body.mod ::-webkit-scrollbar-thumb{border-radius:999px}
 .mvol .mt{font-size:.8rem;color:var(--txt);padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--txt) 10%,transparent);white-space:nowrap}
 .mvol .mt.on{background:color-mix(in srgb,var(--verde) 30%,transparent)}
 #musplayer{position:fixed;left:-500px;top:0;width:320px;height:200px;overflow:hidden;pointer-events:none;opacity:0}
+
+#videow{display:flex;flex-direction:column;min-height:0;min-width:0;flex:1;padding:12px;gap:12px;position:relative}
+#videow.bg{position:fixed;left:-3000px;top:0;width:900px;height:600px;flex:none;opacity:0;pointer-events:none;animation:none}   /* fora da tela, mas ainda "vivo": o vídeo continua tocando se você sair da sala */
+.vgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,32%);gap:12px}
+.vmain{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+#vidStage{position:relative;flex:none;width:100%;aspect-ratio:16/9;max-height:calc(100% - 56px);background:#000;border-radius:12px;overflow:hidden;margin:0 auto}
+#vidStage iframe,#vidyt{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+#vidStage:fullscreen{aspect-ratio:auto;max-height:none;border-radius:0}
+#vPh{position:absolute;inset:0;z-index:2;background:#0b0b0d;color:#cfd1d6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px}
+#vPh .ico svg{width:56px;height:56px;opacity:.6}
+#vPh b{font-size:1.1rem}#vPh small{color:var(--mut)}
+#vBlock{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:4;background:var(--verm);color:#fff;padding:10px 16px;border-radius:999px;font-weight:600;box-shadow:0 4px 18px #0007;max-width:92%}
+.vctl{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:center;gap:4px;padding:26px 10px 8px;background:linear-gradient(transparent,#000c);opacity:0;transition:opacity .2s;color:#fff}
+.vctl .mb{color:#fff}
+#vidStage:hover .vctl,#vidStage:focus-within .vctl{opacity:1}
+@media(hover:none){.vctl{opacity:1}}
+#vTitle b{display:block;font-size:1.05rem;font-weight:600}#vTitle small{color:var(--mut)}
+#vSearch{display:flex;align-items:center;border:1.5px solid color-mix(in srgb,var(--txt) 80%,transparent);border-radius:999px;padding:0 4px 0 16px;margin-bottom:8px;flex:none}
+#vSearch:focus-within{border-color:var(--blur)}
+#vSearch input{background:transparent;padding:.55rem 0;border-radius:0;min-width:0;flex:1;outline:none}
+.mrh .mt{color:var(--txt);font-size:.82rem;padding:4px 8px;border-radius:6px;flex:none}
+.mrh .mt:hover{background:color-mix(in srgb,var(--txt) 12%,transparent)}
+@media(max-width:900px){
+ .vgrid{display:flex;flex-direction:column;overflow:auto}
+ .vmain{flex:none}
+ .vgrid .mcard{flex:none;height:360px}
+ #vidStage{max-height:none}
+}
 #mBlock{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:3;background:var(--verm);color:#fff;padding:10px 16px;border-radius:999px;font-weight:600;box-shadow:0 4px 18px #0007}
 .mmenu{position:fixed;z-index:12;min-width:210px;max-width:300px;max-height:60vh;overflow:auto;background:#111214;border-radius:8px;padding:6px;box-shadow:0 6px 22px #000b;display:grid;gap:1px}
 .mmenu button{display:block;text-align:left;padding:7px 10px;border-radius:4px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -919,6 +947,7 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
       <input type="file" id="arq" multiple hidden>
     </div>
     <div id="musicw" hidden></div>
+    <div id="videow" class="bg"></div>
   </section>
   <aside id="mem"></aside>
   <div id="audios" hidden></div>
@@ -1724,7 +1753,7 @@ function musLoadYT(cb) {
   if (musLoadYT.l) return; musLoadYT.l = 1;
   window.onYouTubeIframeAPIReady = () => { const q = musLoadYT.q; musLoadYT.q = []; q.forEach(f => f()); };
   const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api';
-  s.onerror = () => { musLoadYT.l = 0; musLoadYT.q = []; mus.making = false; mus.wait = []; toast('Não consegui carregar o player do YouTube. Confira a internet.'); };
+  s.onerror = () => { musLoadYT.l = 0; musLoadYT.q = []; mus.making = false; mus.wait = []; vid.making = false; vid.wait = []; toast('Não consegui carregar o player do YouTube. Confira a internet.'); };
   document.head.append(s);
 }
 function musEnsure(cb) {
@@ -2004,6 +2033,7 @@ function musPlEdit(id) {
 // ----- entrada na barra lateral e abrir a tela -----
 function openMusic() {
   view = { k: 'm', id: MV }; musBuild();
+  if (vid.on) { vidListen(false); toast('Parei o vídeo para você ouvir a música.'); }
   if (!mus.on) musListen(true);
   renderChans(); renderTop(); musPaintAll();
 }
@@ -2016,6 +2046,225 @@ function musSide(box) {
   if (mus.cur && (mus.on || mus.n)) {   // mini "tocando agora" embaixo do botão
     const m = mel('div', 'mem mmini'); m.title = mus.cur.title + (mus.cur.artist ? ' — ' + mus.cur.artist : '');
     m.append(mel('span', '', (mus.playing ? '▶ ' : '⏸ ') + mus.cur.title)); m.onclick = openMusic; box.append(m);
+  }
+}
+
+// ---------- sala de vídeo (assistir YouTube junto) ----------
+// Parecida com a sala de música, mas separada: fila e "ponto do vídeo" próprios, e o player aparece na tela.
+const VV = '\0video';   // id da tela (não pode bater com o id de nenhum canal)
+const vid = { q: [], cur: null, playing: false, pos: 0, at: 0, n: 0, off: 0, on: false, vol: 60, results: null, rq: '', busy: false, seeking: false, blocked: false, yt: null, ready: false, loaded: '', wait: [], making: false };
+try { const v = localStorage.getItem('pampas-vid-vol'); if (v !== null && v !== '' && !isNaN(+v)) vid.vol = Math.min(100, Math.max(0, +v)); } catch {}
+const vExp = () => vid.playing ? vid.pos + (Date.now() + vid.off - vid.at) / 1000 : vid.pos;   // ponto em que o vídeo deve estar agora
+
+function vidEnsure(cb) {
+  if (vid.ready) return cb();
+  vid.wait.push(cb);
+  if (vid.making) return; vid.making = true;
+  musLoadYT(() => {
+    vid.yt = new YT.Player('vidyt', { width: '100%', height: '100%', playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0, fs: 0, modestbranding: 1, iv_load_policy: 3, origin: location.origin },
+      events: { onReady: () => { vid.ready = true; try { vid.yt.setVolume(vid.vol); } catch {} const w = vid.wait; vid.wait = []; w.forEach(f => f()); }, onStateChange: vidState, onError: vidYtErr } });
+  });
+}
+function vidApply() {   // faz o player acompanhar o estado do servidor
+  if (!vid.on) return;
+  vidEnsure(() => {
+    if (!vid.on) return;
+    const yt = vid.yt, c = vid.cur;
+    try {
+      if (!c) { yt.stopVideo(); vid.loaded = ''; return; }
+      const want = Math.max(0, vExp());
+      if (vid.loaded !== c.uid) {
+        vid.loaded = c.uid;
+        const o = { videoId: c.v, startSeconds: vid.playing ? want : vid.pos };
+        if (vid.playing) yt.loadVideoById(o); else yt.cueVideoById(o);
+        return vidWatch();
+      }
+      const s = yt.getPlayerState();
+      if (vid.playing) {
+        if (s !== 1 && s !== 3 && s !== 0) { yt.playVideo(); vidWatch(); }
+        if (s !== 0 && Math.abs(yt.getCurrentTime() - want) > 1.5) yt.seekTo(want, true);
+      } else {
+        if (s === 1 || s === 3) yt.pauseVideo();
+        if (Math.abs(yt.getCurrentTime() - vid.pos) > .8) yt.seekTo(vid.pos, true);
+      }
+    } catch (e) { console.error('player de vídeo:', e); }
+  });
+}
+function vidWatch() {   // o navegador pode bloquear o som sem clique: se nada tocar em 3 s, pede um clique
+  clearTimeout(vidWatch.t);
+  vidWatch.t = setTimeout(() => {
+    if (!vid.on || !vid.playing || !vid.ready) return;
+    let s = -1; try { s = vid.yt.getPlayerState(); } catch {}
+    if (s !== 1 && s !== 3 && s !== 0) { vid.blocked = true; vidPaintBlock(); if (view?.k !== 'w') toast('O vídeo está esperando um clique: abra a Sala de vídeo.'); }
+  }, 3000);
+}
+function vidState(e) {
+  const c = vid.cur;
+  if (e.data === 1) {
+    if (vid.blocked) { vid.blocked = false; vidPaintBlock(); }
+    if (c && !c.dur) { const d = Math.round(vid.yt.getDuration()); if (d > 0) send({ type: 'vid-dur', v: c.v, dur: d }); }
+  } else if (e.data === 0 && c && vid.loaded === c.uid) send({ type: 'vid-ended', uid: c.uid });   // acabou: qualquer um avisa, o servidor passa para o próximo
+}
+function vidYtErr() { const c = vid.cur; if (c && vid.loaded === c.uid) send({ type: 'vid-ended', uid: c.uid, err: 1 }); }   // dono do vídeo bloqueou fora do YouTube
+setInterval(() => {   // corrige a diferença se o vídeo foi atrasando
+  if (!vid.on || !vid.playing || !vid.ready) return;
+  try { if (vid.yt.getPlayerState() === 1 && Math.abs(vid.yt.getCurrentTime() - vExp()) > 2.5) vid.yt.seekTo(vExp(), true); } catch {}
+}, 5000);
+function vidListen(on) {
+  vid.on = !!on;
+  if (vid.on && mus.on) { musListen(false); toast('Parei a música para você assistir ao vídeo.'); }
+  send({ type: 'vid-listen', on: vid.on });
+  if (vid.on) vidApply(); else { clearTimeout(vidWatch.t); vid.blocked = false; vid.loaded = ''; try { vid.ready && vid.yt.stopVideo(); } catch {} }
+  vidPaintBar(); vidPaintBlock(); renderChans();
+}
+function vidHandle(m) {
+  if (m.type !== 'vid-st') return;
+  vid.cur = m.cur; vid.q = m.q || []; vid.playing = !!m.playing; vid.pos = +m.pos || 0; vid.at = m.at; vid.n = m.n || 0; vid.off = (m.now || Date.now()) - Date.now();
+  vidPaintList(); vidPaintBar(); renderChans(); vidApply();
+}
+function vidReconnect() { if (vid.on) send({ type: 'vid-listen', on: true }); }
+
+// ----- tela -----
+function vidBuild() {
+  const w = $('#videow'); if (w.dataset.built) return; w.dataset.built = 1;
+  const g = mel('div', 'vgrid'), main = mel('div', 'vmain');
+  // palco (player + controles por cima)
+  const stage = mel('div'); stage.id = 'vidStage';
+  stage.append(Object.assign(mel('div'), { id: 'vidyt' }));
+  const ph = mel('div'); ph.id = 'vPh'; ph.onclick = () => { if (!vid.on) vidListen(true); };
+  ph.append(ico('play'), mel('b', '', ''), mel('small', ''));
+  const blk = mel('button', '', '🔊 O navegador bloqueou o vídeo. Clique aqui para assistir'); blk.id = 'vBlock'; blk.type = 'button'; blk.hidden = true;
+  blk.onclick = () => { try { vid.yt.playVideo(); vid.yt.seekTo(Math.max(0, vExp()), true); vid.yt.setVolume(vid.vol); } catch {} vid.blocked = false; vidPaintBlock(); };
+  const ov = mel('div', 'vctl');
+  const opp = mBtn('play', 'Tocar / pausar', () => send({ type: 'vid-toggle' })); opp.id = 'vOvPP';
+  ov.append(opp, mBtn('next', 'Próximo', () => send({ type: 'vid-next' })), Object.assign(mel('span'), { style: 'flex:1' }), mBtn('expand', 'Tela cheia', () => fullscreen(stage)));
+  stage.append(ph, blk, ov); stage.ondblclick = e => { if (!e.target.closest('button')) fullscreen(stage); };
+  const tt = mel('div'); tt.id = 'vTitle';
+  main.append(stage, tt);
+  // lado direito: busca + resultados / fila
+  const side = mel('section', 'mcard');
+  const h = mel('div', 'mh'); h.append(mel('h2', '', 'Fila'));
+  const clr = mel('button', 'mt', 'limpar'); clr.type = 'button'; clr.onclick = () => { if (vid.q.length) send({ type: 'vid-q-clear' }); }; h.append(clr);
+  const f = mel('form'); f.id = 'vSearch';
+  const inp = mel('input'); inp.id = 'vQ'; inp.maxLength = 200; inp.autocomplete = 'off'; inp.placeholder = 'Procure um vídeo ou cole um link do YouTube…';
+  const sb = mBtn('search', 'Buscar', () => {}); sb.type = 'submit'; sb.onclick = null;
+  f.append(inp, sb); f.onsubmit = e => { e.preventDefault(); vidSearch(inp.value); };
+  inp.oninput = () => { if (!inp.value.trim() && vid.results) { vid.results = null; vidPaintList(); } };
+  side.append(h, f, Object.assign(mel('div', 'ml'), { id: 'vL' }));
+  g.append(main, side);
+  // barra de baixo
+  const bar = mel('div', 'mbar');
+  const now = mel('div', 'mnow'); now.id = 'vNow';
+  const ctr = mel('div', 'mctr'), bt = mel('div', 'mbtns');
+  const pp = mBtn('play', 'Tocar / pausar', () => send({ type: 'vid-toggle' }), 'big'); pp.id = 'vPP';
+  bt.append(mBtn('prev', 'Anterior', () => send({ type: 'vid-prev' })), pp, mBtn('next', 'Próximo', () => send({ type: 'vid-next' })));
+  const sk = mel('div', 'mseek'), t0 = mel('span', '', '0:00'), t1 = mel('span', '', '0:00'), r = mel('input'); t0.id = 'vT0'; t1.id = 'vT1'; r.id = 'vSeek'; r.type = 'range'; r.min = 0; r.max = 100; r.value = 0; r.step = 1; r.disabled = true;
+  r.oninput = () => { vid.seeking = true; t0.textContent = mFmt(+r.value); };
+  r.onchange = () => { vid.seeking = false; send({ type: 'vid-seek', pos: +r.value }); };
+  sk.append(t0, r, t1); ctr.append(bt, sk);
+  const vol = mel('div', 'mvol'), lis = mel('button', 'mt'); lis.id = 'vLis'; lis.type = 'button'; lis.onclick = () => vidListen(!vid.on);
+  const vb = mBtn('speaker', 'Volume (só para você)', () => { vr.value = +vr.value ? 0 : 60; vr.oninput(); });
+  const vr = mel('input'); vr.type = 'range'; vr.min = 0; vr.max = 100; vr.value = vid.vol; vr.title = 'Volume (só para você)';
+  vr.oninput = () => { vid.vol = +vr.value; try { localStorage.setItem('pampas-vid-vol', String(vid.vol)); } catch {} try { vid.ready && vid.yt.setVolume(vid.vol); } catch {} vb.replaceChildren(ico(vid.vol ? 'speaker' : 'volx')); };
+  vb.replaceChildren(ico(vid.vol ? 'speaker' : 'volx'));
+  vol.append(lis, vb, vr);
+  bar.append(now, ctr, vol);
+  w.append(g, bar);
+  paintRange(vr); paintRange(r);
+  vidPaintAll();
+}
+const vidPaintAll = () => { vidPaintList(); vidPaintBar(); vidPaintBlock(); };
+function vidPaintBlock() { const b = $('#vBlock'); if (b) b.hidden = !(vid.blocked && vid.on); }
+const vidAdd = (s, then) => send({ type: 'vid-add', v: s.v, title: s.title, artist: s.artist, dur: s.dur, then });
+
+function vidPaintList() {
+  const box = $('#vL'); if (!box) return; box.replaceChildren();
+  if (vid.results) {   // resultados da busca
+    const h = mel('div', 'mrh'), bk = mel('button', 'mt', '← fila'); bk.type = 'button';
+    bk.onclick = () => { vid.results = null; $('#vQ').value = ''; vidPaintList(); };
+    h.append(mel('b', '', 'Resultados: ' + vid.rq), bk); box.append(h);
+    if (vid.busy) return box.append(mel('div', 'mvz', 'Procurando…'));
+    if (!vid.results.length) return box.append(mel('div', 'mvz', 'Não achei nada. Tente outras palavras ou cole o link do vídeo.'));
+    vid.results.forEach(s => {
+      const d = mel('div', 'mi'); d.title = s.title;
+      const x = mel('div', 'mx'); x.append(mel('b', '', s.title), mel('small', '', mSub(s)));
+      const a = mel('div', 'ma'); a.append(mBtn('play', 'Assistir agora', () => vidAdd(s, 'now')), mBtn('plus', 'Adicionar à fila', () => vidAdd(s, 'queue')));
+      d.append(mCover(s.v), x, a); d.ondblclick = () => vidAdd(s, 'now'); box.append(d);
+    });
+    return;
+  }
+  if (!vid.cur && !vid.q.length) return box.append(mel('div', 'mvz', 'Nenhum vídeo ainda. Procure um acima ou cole o link do YouTube.'));
+  const row = (s, cur) => {
+    const d = mel('div', 'mi q' + (cur ? ' cur' : '')); d.title = s.title + (s.by ? ' (adicionado por ' + s.by + ')' : '');
+    const x = mel('div', 'mx'); x.append(mel('b', '', s.title), mel('small', '', (s.artist || '') + (s.by ? (s.artist ? ' · ' : '') + s.by : '')));
+    d.append(mCover(s.v), x);
+    const qa = mel('div', 'ma'); d.append(qa);
+    if (cur) qa.append(mBtn('x', 'Pular este vídeo', () => send({ type: 'vid-next' })));
+    else { qa.append(mBtn('x', 'Tirar da fila', () => send({ type: 'vid-q-del', uid: s.uid }))); d.onclick = () => send({ type: 'vid-q-go', uid: s.uid }); }
+    return d;
+  };
+  if (vid.cur) box.append(row(vid.cur, true));
+  if (vid.q.length) { box.append(mel('div', 'msub', 'A seguir')); vid.q.forEach(s => box.append(row(s, false))); }
+}
+function vidPaintBar() {
+  const now = $('#vNow'); if (!now) return;
+  const c = vid.cur;
+  now.replaceChildren(mCover(c && c.v));
+  const x = mel('div', 'mx'); x.append(mel('b', '', c ? c.title : 'Nada passando'), mel('small', '', c ? (c.artist || '') : 'Escolha um vídeo ao lado')); now.append(x);
+  const ic = ico(vid.playing ? 'pause' : 'play'), tl = vid.playing ? 'Pausar' : 'Tocar';
+  [$('#vPP'), $('#vOvPP')].forEach(b => { if (b) { b.replaceChildren(ico(vid.playing ? 'pause' : 'play')); b.title = tl; } });
+  const lis = $('#vLis'); lis.textContent = vid.on ? '📺 Assistindo' + (vid.n > 1 ? ' · ' + vid.n : '') : '📺 Assistir' + (vid.n ? ' · ' + vid.n + ' assistindo' : '');
+  lis.classList.toggle('on', vid.on); lis.title = vid.on ? 'Clique para parar de assistir (o vídeo continua para os outros)' : 'Clique para assistir junto com a turma';
+  const tt = $('#vTitle'); tt.replaceChildren(); if (c) { tt.append(mel('b', '', c.title)); if (c.artist || c.by) tt.append(mel('small', '', [c.artist, c.by ? 'adicionado por ' + c.by : ''].filter(Boolean).join(' · '))); }
+  const ph = $('#vPh');   // aviso em cima do palco quando não há nada para ver
+  ph.hidden = !!(c && vid.on);
+  ph.querySelector('b').textContent = !c ? 'Nenhum vídeo passando' : 'Você não está assistindo';
+  ph.querySelector('small').textContent = !c ? 'Procure um vídeo ao lado ou cole um link do YouTube' : 'Clique aqui para voltar a assistir junto';
+  ph.style.cursor = c && !vid.on ? 'pointer' : 'default';
+  vidPaintProg();
+}
+function vidPaintProg() {
+  const r = $('#vSeek'); if (!r) return;
+  const c = vid.cur, dur = c && c.dur ? c.dur : 0;
+  r.disabled = !c || !dur;
+  if (vid.seeking) return;
+  const p = c ? Math.min(Math.max(0, vExp()), dur || Infinity) : 0;
+  r.max = dur || 1; r.value = c && dur ? p : 0;
+  $('#vT0').textContent = mFmt(p); $('#vT1').textContent = dur ? mFmt(dur) : '--:--';
+}
+setInterval(() => { if (view?.k === 'w') vidPaintProg(); }, 500);
+
+async function vidSearch(q) {
+  q = q.trim();
+  if (!q) { vid.results = null; return vidPaintList(); }
+  if (/^(https?:\/\/|www\.|youtu\.be|(m\.|music\.)?youtube\.com)/i.test(q)) {   // link: entra direto na fila
+    send({ type: 'vid-add', url: /^https?:/i.test(q) ? q : 'https://' + q, then: 'queue' }); $('#vQ').value = ''; vid.results = null; vidPaintList();
+    return toast('Adicionando à fila…');
+  }
+  vid.busy = true; vid.results = []; vid.rq = q; vidPaintList();
+  try {
+    const r = await fetch('/mus-search?q=' + encodeURIComponent(q), { headers: authH() });
+    if (!r.ok) throw new Error('status ' + r.status);
+    vid.results = await r.json();
+  } catch { vid.results = null; toast('A busca não respondeu agora. Cole o link do YouTube do vídeo: funciona do mesmo jeito.'); }
+  vid.busy = false; vidPaintList();
+}
+
+// ----- entrada na barra lateral e abrir a tela -----
+function openVideo() {
+  view = { k: 'w', id: VV }; vidBuild();
+  if (!vid.on) vidListen(true);
+  renderChans(); renderTop(); vidPaintAll();
+}
+function vidSide(box) {
+  const h = mel('div', 'cat'); h.append(mel('span', '', 'Vídeo')); box.append(h);
+  const b = mel('button', 'ch' + (view?.k === 'w' ? ' on' : '')); b.append(ico('play'), document.createTextNode('Sala de vídeo'));
+  if (vid.on && vid.playing) { const e = mel('span', 'eq'); e.append(mel('i'), mel('i'), mel('i')); e.style.marginLeft = 'auto'; b.append(e); }
+  else if (vid.n) { const n = mel('span', 'mct', '📺 ' + vid.n); n.title = vid.n + ' assistindo'; b.append(n); }
+  b.onclick = openVideo; box.append(b);
+  if (vid.cur && (vid.on || vid.n)) {   // mini "passando agora" embaixo do botão
+    const m = mel('div', 'mem mmini'); m.title = vid.cur.title;
+    m.append(mel('span', '', (vid.playing ? '▶ ' : '⏸ ') + vid.cur.title)); m.onclick = openVideo; box.append(m);
   }
 }
 
@@ -2033,6 +2282,7 @@ function renderTop() {
   if (!v) tp.append('Discord dos Guri');
   else if (v.k === 't') tp.append('# ' + label(v.id));
   else if (v.k === 'm') tp.append(ico('music'), 'Sala de música');
+  else if (v.k === 'w') tp.append(ico('play'), 'Sala de vídeo');
   else tp.append(ico('speaker'), label(v.id));
   // botões que só aparecem no celular (no computador ficam escondidos pelo CSS)
   const mb = mel('button', 'mnav', '☰'); mb.type = 'button'; mb.title = 'Canais'; mb.onclick = () => openNav('navo'); tp.prepend(mb);
@@ -2044,7 +2294,7 @@ function renderTop() {
     rt.append(qm, qs);
   }
   const mm = mel('button', 'mnav', '👥'); mm.type = 'button'; mm.title = 'Membros'; mm.onclick = () => openNav('memo'); rt.append(mm); tp.append(rt);
-  $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't'); $('#musicw').hidden = !(v && v.k === 'm');
+  $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't'); $('#musicw').hidden = !(v && v.k === 'm'); $('#videow').classList.toggle('bg', !(v && v.k === 'w'));
   $('#vc').hidden = !cur; $('#vcn').textContent = cur ? label(cur) : '';
   $('#txt').placeholder = v && v.k === 't' ? 'Conversar em #' + label(v.id) : ''; emptyCheck();
 }
@@ -2143,6 +2393,7 @@ function renderChans() {
   });
   vSeen = nowSeen;
   musSide(box);
+  vidSide(box);
   tickCalls();
 }
 const covers = new Map();   // "título — artista" -> endereço da capa ('' se não achou)
@@ -2549,8 +2800,9 @@ function dropAll() {
 
 function handle(m) {
   if (typeof m.type === 'string' && m.type.startsWith('mus-')) return musHandle(m);
+  if (typeof m.type === 'string' && m.type.startsWith('vid-')) return vidHandle(m);
   if (m.type === 'hello-ok') {
-    musReconnect();
+    musReconnect(); vidReconnect();
     me = m.id; $('#login').hidden = true; $('#app').hidden = false; splashDone();
     if (m.v) {   // o site foi atualizado enquanto o servidor reiniciava: recarrega sozinho para pegar a tela nova (e volta para a chamada)
       if (appVer && appVer !== m.v) { try { sessionStorage.setItem('pampas-rejoin', rcRoom || ''); } catch {} return location.reload(); }
@@ -2573,7 +2825,7 @@ function handle(m) {
   } else if (m.type === 'state') {
     st = m; if (m.now) clkOff = m.now - Date.now();
     if (cur && !chan(cur)) { dropAll(); }
-    if (!view || (view.k !== 'm' && !chan(view.id))) { firstText(); } else { renderChans(); renderTop(); }
+    if (!view || (view.k !== 'm' && view.k !== 'w' && !chan(view.id))) { firstText(); } else { renderChans(); renderTop(); }
     renderMem();
   } else if (m.type === 'pong') {
     myPing = Math.max(0, Math.round(performance.now() - m.t)); pings[me] = myPing; send({ type: 'ping-rep', ms: myPing }); paintPing();
