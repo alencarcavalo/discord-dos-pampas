@@ -390,6 +390,9 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .bdt.out{opacity:0;transform:translateX(30px);transition:.3s}
 @keyframes bdin{from{opacity:0;transform:translateX(40px) scale(.9)}to{opacity:1;transform:none}}
 #cardw{position:fixed;inset:0;z-index:9}
+.msg .cl{cursor:pointer}
+.msg .hd b.cl:hover{text-decoration:underline}
+.msg .av.cl:hover{filter:brightness(1.12)}
 #loginc img.logo{width:150px;height:auto;margin:0 auto;border-radius:0;background:none}
 #rail img{width:48px;height:48px;border-radius:16px;object-fit:cover}
 #mem{background:var(--side);padding:12px 8px;overflow:auto;border-left:1px solid color-mix(in srgb,var(--txt) 9%,transparent)}
@@ -2616,7 +2619,15 @@ function mkMsg(m, ch) {
   });
   const rxs = mkRx(m, ch); if (rxs) c.append(rxs);
   const au = m.uid && st.users.find(u => u.pid === m.uid);   // foto de quem mandou, achada pelo id fixo da pessoa (se estiver online)
-  d.append(avatar(m.from, 0, au ? au.id : null), c);
+  // quem é a pessoa (online, ou offline pelo id fixo; mensagem antiga sem id: acha pelo nome) para abrir o cartão de perfil ao clicar
+  const who = au ? au.id : (m.uid ? ((st.off || []).some(o => o.pid === m.uid) ? 'o:' + m.uid : null) : (st.users.find(u => u.name === m.from) || {}).id) || null;
+  const av = avatar(m.from, 0, who);
+  if (who) {
+    const open = e => { e.stopPropagation(); card(who, e.currentTarget); };
+    av.onclick = open; av.classList.add('cl'); av.title = 'Ver perfil de ' + m.from;
+    b.onclick = open; b.classList.add('cl'); b.title = 'Ver perfil de ' + m.from;
+  }
+  d.append(av, c);
   if (m.mid && ch) {
     const t = document.createElement('div'); t.className = 'mact';
     const ab = (icon, title, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ico' + (cls ? ' ' + cls : ''); b.innerHTML = svg(icon); b.title = title; b.onclick = fn; t.append(b); return b; };
