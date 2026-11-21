@@ -135,7 +135,14 @@ function waitPage() {   // espera a animação de entrada do próprio site termi
 const BAR_CSS = `html{--tb:${TB}px}
 body{padding-top:var(--tb)!important}
 body.mod #app{padding-top:0!important}
-html::before{content:"";position:fixed;left:0;top:0;right:0;height:var(--tb);-webkit-app-region:drag;z-index:2147483000}`;
+html::before{content:"";position:fixed;left:0;top:0;right:0;height:var(--tb);-webkit-app-region:drag;z-index:2147483000}
+/* telas que cobrem a janela inteira: descem a altura da faixa para não ficar por baixo dos botões do Windows */
+#cfg{padding-top:var(--tb)!important}
+#cfgx{top:calc(22px + var(--tb))!important}
+#updbar{top:var(--tb)!important}
+#lbx{padding-top:calc(68px + var(--tb))!important}
+#lbx .lbb{top:calc(16px + var(--tb))!important}
+body>div[style*="top:14px"]{top:calc(14px + var(--tb))!important}`;
 let lastBar = '';
 async function syncBar() {   // pinta o fundo dos botões com a cor real do app naquele canto (acompanha o tema)
   try {
@@ -220,8 +227,9 @@ app.whenReady().then(() => {
     setTimeout(syncBar, 900);
   });
   // tela cheia da janela: sem faixa em cima
-  win.on('enter-full-screen', () => win.webContents.executeJavaScript("document.documentElement.style.setProperty('--tb','0px')").catch(() => {}));
-  win.on('leave-full-screen', () => win.webContents.executeJavaScript("document.documentElement.style.removeProperty('--tb')").catch(() => {}));
+  const tb = on => win.webContents.executeJavaScript(on ? "document.documentElement.style.removeProperty('--tb')" : "document.documentElement.style.setProperty('--tb','0px')").catch(() => {});
+  ['enter-full-screen', 'enter-html-full-screen'].forEach(ev => win.on(ev, () => tb(false)));   // tela cheia (da janela ou de um vídeo): sem faixa
+  ['leave-full-screen', 'leave-html-full-screen'].forEach(ev => win.on(ev, () => tb(true)));
   waitPage();
   load();
   setupUpdater();
