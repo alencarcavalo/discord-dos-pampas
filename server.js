@@ -506,11 +506,9 @@ const VID = { q: [], cur: null, playing: false, pos: 0, at: 0, prev: [] };
 const VID_MAX_Q = 100;
 const vidPos = () => VID.playing ? VID.pos + (musNow() - VID.at) / 1000 : VID.pos;
 const vidListeners = () => [...clients].filter(c => c.nick && c.vidOn);
-function vidSt() {
-  const p = { type: 'vid-st', cur: VID.cur, q: VID.q, playing: VID.playing, pos: VID.pos, at: VID.at, now: musNow(), n: vidListeners().length };
-  clients.forEach(c => c.nick && send(c, p));
-}
-const vidHello = ws => send(ws, { type: 'vid-st', cur: VID.cur, q: VID.q, playing: VID.playing, pos: VID.pos, at: VID.at, now: musNow(), n: vidListeners().length });
+const vidPayload = () => { const l = vidListeners(); return { type: 'vid-st', cur: VID.cur, q: VID.q, playing: VID.playing, pos: VID.pos, at: VID.at, now: musNow(), n: l.length, who: l.map(c => c.nick).slice(0, 12) }; };
+function vidSt() { const p = vidPayload(); clients.forEach(c => c.nick && send(c, p)); }
+const vidHello = ws => send(ws, vidPayload());
 function vidStart(item) { VID.cur = item; VID.pos = 0; VID.at = musNow(); VID.playing = !!item; }
 function vidAdvance() {
   if (VID.cur) { VID.prev.push(VID.cur); if (VID.prev.length > 20) VID.prev.shift(); }
