@@ -102,7 +102,7 @@ function fetchSafe(u, want, hops = 0) {
     if (net.isIP(host) && !publicIp(host)) return reject(new Error('bloqueado'));
     const req = (url.protocol === 'https:' ? https : http).request(url, {
       method: 'GET', lookup: safeLookup, timeout: 5000,
-      headers: { 'user-agent': 'Mozilla/5.0 (compatible; DiscordDosGuriBot/1.0; link-preview)', accept: want === 'json' ? 'application/json' : 'text/html,image/*;q=0.8,*/*;q=0.5',
+      headers: { 'user-agent': 'Mozilla/5.0 (compatible; PampaChatBot/1.0; link-preview)', accept: want === 'json' ? 'application/json' : 'text/html,image/*;q=0.8,*/*;q=0.5',
         'accept-language': 'pt-BR,pt;q=0.9,en;q=0.5', 'accept-encoding': 'gzip, deflate, br' }
     }, res => {
       const code = res.statusCode;
@@ -559,4 +559,4 @@ setInterval(prune, 3600e3);   // limpeza das mensagens/anexos antigos, de hora e
 // o Render avisa (SIGTERM) antes de desligar: grava o que faltar
 process.on('SIGTERM', async () => { clearTimeout(flushTimer); await flush().catch(() => {}); process.exit(0); });
 
-Promise.race([loadSaved(), new Promise(r => setTimeout(r, 10000))]).finally(() => srv.listen(PORT, () => console.log('Discord dos Guri em http://localhost:' + PORT)));
+Promise.race([loadSaved(), new Promise(r => setTimeout(r, 10000))]).finally(() => srv.listen(PORT, () => console.log('Pampa Chat em http://localhost:' + PORT)));
