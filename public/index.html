@@ -1217,7 +1217,10 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
     </section>
 
     <section data-p="sobre" hidden><h2>Atualizações</h2>
-      <p class="sub">Versão do app e uso de memória do servidor.</p>
+      <p class="sub">Versão do app, inicialização com o Windows e uso de memória do servidor.</p>
+      <div class="cc" id="autoCard" hidden>
+        <div class="rw"><div class="rt"><b>Iniciar com o Windows</b><small>O app abre sozinho quando você liga o computador, escondido perto do relógio, já pronto para usar. Clique no ícone para abrir a janela.</small></div><label class="sw"><input type="checkbox" id="autoStart"><i></i></label></div>
+      </div>
       <div class="cc">
         <div class="rw col"><div class="rt"><b id="verTxt"></b><small id="updTxt"></small></div>
           <div class="rc"><button type="button" class="sec" id="updBtn">Verificar atualizações</button><button type="button" class="sec" id="updGo" hidden>Reiniciar e atualizar</button></div></div>
@@ -5018,7 +5021,13 @@ function showAbout() {
   if (!has) { $('#verTxt').textContent = 'Você está usando pelo navegador: ele já pega a versão mais nova sempre que você recarrega a página.'; return; }
   pampas.version().then(v => $('#verTxt').textContent = 'App de computador, versão ' + v).catch(() => {});
   pampas.updState().then(paintUpd).catch(() => {});
+  if (pampas.autostartGet) pampas.autostartGet().then(v => { $('#autoCard').hidden = v === null; if (v !== null) $('#autoStart').checked = !!v; }).catch(() => {});   // null = app não instalado (modo de teste)
 }
+if (window.pampas && pampas.autostartSet) $('#autoStart').onchange = e => {
+  const want = e.target.checked; e.target.disabled = true;
+  pampas.autostartSet(want).then(v => { e.target.checked = !!v; toast(v ? 'Pronto: o app vai abrir junto com o Windows.' : want ? 'O Windows não deixou ativar. Veja em Configurações > Aplicativos > Inicialização.' : 'O app não abre mais junto com o Windows.'); })
+    .catch(() => { e.target.checked = !want; toast('Não consegui mudar agora.'); }).finally(() => { e.target.disabled = false; });
+};
 function paintUpd(m) {
   if (!m) return;
   const txt = { checking: 'Procurando atualizações…', none: 'Você está com a versão mais recente.', ready: 'A versão ' + m.v + ' está pronta.',
