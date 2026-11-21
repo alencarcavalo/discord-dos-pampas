@@ -866,11 +866,10 @@ function touchDay(ws) {
   s.d++; s.ld = t; s.bs = Math.max(s.bs || 0, s.sk);
   markDirty('\0st'); checkLv(ws);
 }
-// a cada minuto: quem está em chamada COM mais alguém ganha tempo (sozinho na sala não conta, para não dar para "farmar")
+// a cada minuto: quem está em chamada ganha tempo (inclusive sozinho na sala)
 setInterval(() => {
   const h = BRT().getUTCHours();
   rooms.forEach(set => {
-    if (set.size < 2) return;
     set.forEach(ws => {
       if (!ws.cid || !ws.nick) return;
       const s = stOf(ws.cid);
