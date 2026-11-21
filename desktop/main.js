@@ -102,7 +102,7 @@ function openSplash() {
   splash = new BrowserWindow({
     width: 440, height: 520, frame: false, transparent: true, hasShadow: false, resizable: false,
     minimizable: false, maximizable: false, fullscreenable: false, show: false, center: true,
-    backgroundColor: '#00000000', title: 'Discord dos Guri', icon: path.join(__dirname, 'build', 'icon.png'),
+    backgroundColor: '#00000000', title: 'Pampa Chat', icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { contextIsolation: true, nodeIntegration: false },
   });
   splash.removeMenu();
@@ -163,7 +163,7 @@ app.whenReady().then(() => {
   if (startHidden) shown = true; else openSplash();   // escondido: sem abertura; o ícone do relógio abre a janela
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 700, minHeight: 500, show: false,
-    title: 'Discord dos Guri', backgroundColor: '#0d0a14', autoHideMenuBar: true,
+    title: 'Pampa Chat', backgroundColor: '#0d0a14', autoHideMenuBar: true,
     titleBarStyle: 'hidden', titleBarOverlay: { color: '#0d0a14', symbolColor: '#dbdee1', height: TB },
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
@@ -175,9 +175,9 @@ app.whenReady().then(() => {
     const img = nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png'));
     if (!img.isEmpty()) {
       tray = new Tray(img.resize({ width: 32, height: 32 }));
-      tray.setToolTip('Discord dos Guri');
+      tray.setToolTip('Pampa Chat');
       tray.setContextMenu(Menu.buildFromTemplate([
-        { label: 'Abrir o Discord dos Guri', click: showWin },
+        { label: 'Abrir o Pampa Chat', click: showWin },
         { type: 'separator' },
         { label: 'Sair', click: () => { quitting = true; app.quit(); } },
       ]));
@@ -186,7 +186,7 @@ app.whenReady().then(() => {
       win.on('close', e => {
         if (quitting) return;
         e.preventDefault(); win.hide();
-        if (!avisou) { avisou = true; try { tray.displayBalloon({ title: 'Discord dos Guri', content: 'Continua rodando aqui. Clique no ícone para abrir, ou botão direito > Sair.' }); } catch {} }
+        if (!avisou) { avisou = true; try { tray.displayBalloon({ title: 'Pampa Chat', content: 'Continua rodando aqui. Clique no ícone para abrir, ou botão direito > Sair.' }); } catch {} }
       });
     }
   } catch {}
