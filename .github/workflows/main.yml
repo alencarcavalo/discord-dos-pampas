@@ -26,5 +26,5 @@ jobs:
             -c.publish.releaseType=release
       - uses: actions/upload-artifact@v4
         with:
-          name: Discord-dos-Pampas-Setup
-          path: desktop/dist/Discord-dos-Pampas-Setup.exe
+          name: Pampa-Chat-Setup
+          path: desktop/dist/Pampa-Chat-Setup.exe
