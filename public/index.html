@@ -2135,11 +2135,26 @@ setInterval(() => {   // corrige a diferença se o vídeo foi atrasando
 }, 5000);
 function vidCC() {   // aplica a escolha de legenda ao player (o YouTube costuma ligar sozinho pela preferência da conta)
   if (!vid.ready) return;
-  try { if (vid.cc) vid.yt.loadModule('captions'); else { vid.yt.setOption('captions', 'track', {}); vid.yt.unloadModule('captions'); } } catch {}
+  try { if (vid.cc) vidCCon(0); else { vid.yt.setOption('captions', 'track', {}); vid.yt.unloadModule('captions'); } } catch {}
+}
+function vidCCon(tries) {   // liga a legenda: carrega o módulo e ESCOLHE uma faixa (português se tiver); a lista de faixas demora um pouco para aparecer
+  if (!vid.cc || !vid.ready) return;
+  try {
+    const yt = vid.yt; yt.loadModule('captions');
+    const list = yt.getOption('captions', 'tracklist') || [];
+    if (list.length) {
+      const t = list.find(x => /^pt/i.test(x.languageCode || '')) || list[0];
+      const now = yt.getOption('captions', 'track');
+      if (!now || now.languageCode !== t.languageCode) yt.setOption('captions', 'track', { languageCode: t.languageCode });
+      vid.ccMiss = false;
+    } else if (tries < 8) setTimeout(() => vidCCon(tries + 1), 600);
+    else if (!vid.ccMiss) { vid.ccMiss = true; toast('Esse vídeo não tem legenda disponível.'); }
+  } catch {}
 }
 function vidCCpaint() { vid.ccBtns.forEach(b => { b.classList.toggle('on', vid.cc); b.title = vid.cc ? 'Desligar legenda' : 'Ligar legenda'; b.setAttribute('aria-pressed', vid.cc ? 'true' : 'false'); }); }
 function vidCCset(on) {
   vid.cc = !!on; try { localStorage.setItem('pampas-vid-cc', vid.cc ? '1' : '0'); } catch {}
+  vid.ccMiss = false;
   vidCC(); setTimeout(vidCC, 600); vidCCpaint();
   toast(vid.cc ? 'Legenda ligada (só para você).' : 'Legenda desligada.');
 }
