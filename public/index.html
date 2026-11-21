@@ -2082,7 +2082,8 @@ function vidEnsure(cb) {
   vid.wait.push(cb);
   if (vid.making) return; vid.making = true;
   musLoadYT(() => {
-    vid.yt = new YT.Player('vidyt', { width: '100%', height: '100%', playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0, fs: 0, modestbranding: 1, iv_load_policy: 3, origin: location.origin },
+    vid.madeCC = vid.cc ? 1 : 0;   // com cc_load_policy=1 o YouTube mostra a legenda desde o começo (jeito oficial; ligar depois pelo módulo não funciona com o player sem controles)
+    vid.yt = new YT.Player('vidyt', { width: '100%', height: '100%', playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0, fs: 0, modestbranding: 1, iv_load_policy: 3, cc_load_policy: vid.madeCC, cc_lang_pref: 'pt', hl: 'pt', origin: location.origin },
       events: { onReady: () => { vid.ready = true; try { vid.yt.setVolume(vid.vol); } catch {} const w = vid.wait; vid.wait = []; w.forEach(f => f()); }, onStateChange: vidState, onError: vidYtErr } });
   });
 }
@@ -2152,10 +2153,18 @@ function vidCCon(tries) {   // liga a legenda: carrega o módulo e ESCOLHE uma f
   } catch {}
 }
 function vidCCpaint() { vid.ccBtns.forEach(b => { b.classList.toggle('on', vid.cc); b.title = vid.cc ? 'Desligar legenda' : 'Ligar legenda'; b.setAttribute('aria-pressed', vid.cc ? 'true' : 'false'); }); }
+function vidRemake() {   // recria o player (ao ligar/desligar a legenda); o vídeo volta sozinho para o ponto certo
+  try { vid.yt && vid.yt.destroy(); } catch {}
+  vid.yt = null; vid.ready = false; vid.making = false; vid.loaded = ''; vid.ccFor = ''; vid.wait = [];
+  const st = $('#vidStage');
+  if (st && !$('#vidyt')) { const d = document.createElement('div'); d.id = 'vidyt'; st.prepend(d); }
+  vidApply();
+}
 function vidCCset(on) {
   vid.cc = !!on; try { localStorage.setItem('pampas-vid-cc', vid.cc ? '1' : '0'); } catch {}
   vid.ccMiss = false;
-  vidCC(); setTimeout(vidCC, 600); vidCCpaint();
+  if (vid.ready && vid.madeCC !== (vid.cc ? 1 : 0)) vidRemake(); else { vidCC(); setTimeout(vidCC, 600); }
+  vidCCpaint();
   toast(vid.cc ? 'Legenda ligada (só para você).' : 'Legenda desligada.');
 }
 function vidCCbtn() { const b = mel('button', 'mb vcc', 'CC'); b.type = 'button'; b.onclick = e => { e.stopPropagation(); vidCCset(!vid.cc); }; vid.ccBtns.push(b); vidCCpaint(); return b; }
