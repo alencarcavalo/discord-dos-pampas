@@ -15,4 +15,6 @@ contextBridge.exposeInMainWorld('pampas', {
   actEnable: on => ipcRenderer.invoke('act-enable', on),
   onAct: cb => ipcRenderer.on('act', (e, m) => cb(m)),
   installUpdate: () => ipcRenderer.invoke('upd-install'),
+  autostartGet: () => ipcRenderer.invoke('autostart-get'),
+  autostartSet: on => ipcRenderer.invoke('autostart-set', on),
 });

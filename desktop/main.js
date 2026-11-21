@@ -6,7 +6,8 @@ try { ({ autoUpdater } = require('electron-updater')); } catch { /* sem atualiza
 const URL_SITE = process.env.PAMPAS_URL || 'https://discord-dos-pampas.onrender.com/';
 let win, tray = null, quitting = false;   // quitting = true só quando a pessoa escolhe Sair de verdade
 let splash = null, shown = false;          // janelinha de abertura / janela principal já apareceu?
-const TB = 32;                             // altura da faixa de cima (onde ficam minimizar, maximizar e fechar)
+const TB = 32;
+const startHidden = process.argv.includes('--hidden');   // aberto junto com o Windows: fica escondido perto do relógio, sem a janelinha de abertura                             // altura da faixa de cima (onde ficam minimizar, maximizar e fechar)
 
 // Com o jogo em tela cheia por cima, o Chromium acha que a janela está "escondida" e
 // congela timers (indicador de quem está falando, redução de eco...). Desligamos isso.
@@ -159,7 +160,7 @@ async function syncBar() {   // pinta o fundo dos botões com a cor real do app 
 setInterval(syncBar, 4000);
 
 app.whenReady().then(() => {
-  openSplash();
+  if (startHidden) shown = true; else openSplash();   // escondido: sem abertura; o ícone do relógio abre a janela
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 700, minHeight: 500, show: false,
     title: 'Discord dos Guri', backgroundColor: '#0d0a14', autoHideMenuBar: true,
@@ -189,6 +190,8 @@ app.whenReady().then(() => {
       });
     }
   } catch {}
+
+  if (startHidden && !tray) { win.show(); }   // sem ícone perto do relógio ninguém conseguiria abrir a janela: mostra
 
   // microfone, câmera e tela liberados só para o site da turma
   session.defaultSession.setPermissionRequestHandler((wc, perm, cb) => cb(['media', 'display-capture', 'fullscreen'].includes(perm)));
@@ -230,9 +233,19 @@ app.whenReady().then(() => {
   const tb = on => win.webContents.executeJavaScript(on ? "document.documentElement.style.removeProperty('--tb')" : "document.documentElement.style.setProperty('--tb','0px')").catch(() => {});
   ['enter-full-screen', 'enter-html-full-screen'].forEach(ev => win.on(ev, () => tb(false)));   // tela cheia (da janela ou de um vídeo): sem faixa
   ['leave-full-screen', 'leave-html-full-screen'].forEach(ev => win.on(ev, () => tb(true)));
-  waitPage();
+  if (!startHidden) waitPage();
   load();
   setupUpdater();
+});
+
+// ---------- iniciar com o Windows ----------
+const canAuto = () => app.isPackaged && process.platform === 'win32';   // só no app instalado (no modo de teste registraria o Electron solto)
+const autoOn = () => { const s = app.getLoginItemSettings({ args: ['--hidden'] }); return !!s.openAtLogin && s.executableWillLaunchAtLogin !== false; };
+ipcMain.handle('autostart-get', () => canAuto() ? autoOn() : null);
+ipcMain.handle('autostart-set', (e, on) => {
+  if (!canAuto()) return null;
+  try { app.setLoginItemSettings({ openAtLogin: !!on, path: process.execPath, args: ['--hidden'] }); } catch {}
+  return autoOn();
 });
 
 // atalho global: funciona mesmo com o jogo em foco
