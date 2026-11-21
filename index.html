@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Discord dos Guri</title>
+<title>Pampa Chat</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -545,7 +545,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 <form id="login">
   <div id="loginc">
     <img class="logo" src="/icon-512.png" alt="">
-    <h1>Discord dos Guri</h1>
+    <h1>Pampa Chat</h1>
     <small>Voz, câmera, tela e chat pra turma.</small>
     <label>Como a turma te chama?<input id="nome" maxlength="24" required autocomplete="nickname"></label>
     <label id="senhaW" hidden>Senha da turma<input id="senha" type="password" maxlength="100" autocomplete="current-password"></label>
@@ -556,9 +556,9 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 </form>
 
 <div id="app" hidden>
-  <nav id="rail"><img src="/icon-192.png" alt="Discord dos Guri" title="Discord dos Guri"></nav>
+  <nav id="rail"><img src="/icon-192.png" alt="Pampa Chat" title="Pampa Chat"></nav>
   <section id="side">
-    <div id="sname">Discord dos Guri</div>
+    <div id="sname">Pampa Chat</div>
     <div id="chans"></div>
     <div id="vc" hidden>
       <div id="vch">
@@ -659,7 +659,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
     </section>
 
     <section data-p="conq" hidden><h2>Conquistas</h2>
-      <p class="sub">Emblemas que você ganha usando o Discord dos Guri: tempo em chamada, transmissão, conversa e mais. O servidor conta tudo sozinho.</p>
+      <p class="sub">Emblemas que você ganha usando o Pampa Chat: tempo em chamada, transmissão, conversa e mais. O servidor conta tudo sozinho.</p>
       <div class="cc pad" id="bdTop"></div>
       <div id="bdRew"></div>
       <h3 style="margin:4px 0 10px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)">Emblemas</h3>
@@ -821,7 +821,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
       <div class="cc pad">
         <div class="tp" id="tprev" aria-hidden="true">
           <div class="tp-rail"><i></i><i></i><i></i></div>
-          <div class="tp-side"><b>Discord dos Pampas</b><span class="on"># geral</span><span># jogos</span><span>🔊 Sala 1</span><span>🔊 Sala 2</span></div>
+          <div class="tp-side"><b>Pampa Chat</b><span class="on"># geral</span><span># jogos</span><span>🔊 Sala 1</span><span>🔊 Sala 2</span></div>
           <div class="tp-main">
             <div class="tp-msg"><span class="av s" style="background:#eb459e">A</span><div><b>Alencar</b><br><small>bora jogar? 🎮</small></div></div>
             <div class="tp-tile"><span class="av s speaking" style="background:#23a559">F</span><span>Fulano falando</span></div>
@@ -1371,7 +1371,7 @@ function emptyCheck() { syncStage(); }
 function renderTop() {
   const v = view;
   const tp = $('#top'); tp.replaceChildren();
-  if (!v) tp.append('Discord dos Guri');
+  if (!v) tp.append('Pampa Chat');
   else if (v.k === 't') tp.append('# ' + label(v.id));
   else tp.append(ico('speaker'), label(v.id));
   $('#stage').hidden = !(v && v.k === 'v'); $('#chatw').hidden = !(v && v.k === 't');
