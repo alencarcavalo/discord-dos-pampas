@@ -822,6 +822,8 @@ body.mod ::-webkit-scrollbar-thumb{border-radius:999px}
 #vBlock{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:4;background:var(--verm);color:#fff;padding:10px 16px;border-radius:999px;font-weight:600;box-shadow:0 4px 18px #0007;max-width:92%}
 .vctl{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:center;gap:4px;padding:26px 10px 8px;background:linear-gradient(transparent,#000c);opacity:0;transition:opacity .2s;color:#fff}
 .vctl .mb{color:#fff}
+.vcc{font-size:.72rem;font-weight:800;letter-spacing:.02em;width:auto;min-width:34px;padding:0 8px;border-radius:6px;border:2px solid currentColor;height:26px;align-self:center;opacity:.75}
+.vcc.on{opacity:1;background:var(--verde);border-color:var(--verde);color:#fff!important}
 #vidStage:hover .vctl,#vidStage:focus-within .vctl{opacity:1}
 @media(hover:none){.vctl{opacity:1}}
 #vTitle b{display:block;font-size:1.05rem;font-weight:600}#vTitle small{color:var(--mut)}
@@ -2053,6 +2055,8 @@ function musSide(box) {
 // Parecida com a sala de música, mas separada: fila e "ponto do vídeo" próprios, e o player aparece na tela.
 const VV = '\0video';   // id da tela (não pode bater com o id de nenhum canal)
 const vid = { q: [], cur: null, playing: false, pos: 0, at: 0, n: 0, off: 0, on: false, vol: 60, results: null, rq: '', busy: false, seeking: false, blocked: false, yt: null, ready: false, loaded: '', wait: [], making: false };
+vid.cc = false; vid.ccBtns = []; vid.ccFor = '';   // legenda: desligada por padrão (só para quem ligar)
+try { vid.cc = localStorage.getItem('pampas-vid-cc') === '1'; } catch {}
 try { const v = localStorage.getItem('pampas-vid-vol'); if (v !== null && v !== '' && !isNaN(+v)) vid.vol = Math.min(100, Math.max(0, +v)); } catch {}
 const vExp = () => vid.playing ? vid.pos + (Date.now() + vid.off - vid.at) / 1000 : vid.pos;   // ponto em que o vídeo deve estar agora
 
@@ -2102,6 +2106,7 @@ function vidState(e) {
   const c = vid.cur;
   if (e.data === 1) {
     if (vid.blocked) { vid.blocked = false; vidPaintBlock(); }
+    if (c && vid.ccFor !== c.uid) { vid.ccFor = c.uid; vidCC(); setTimeout(vidCC, 700); }
     if (c && !c.dur) { const d = Math.round(vid.yt.getDuration()); if (d > 0) send({ type: 'vid-dur', v: c.v, dur: d }); }
   } else if (e.data === 0 && c && vid.loaded === c.uid) send({ type: 'vid-ended', uid: c.uid });   // acabou: qualquer um avisa, o servidor passa para o próximo
 }
@@ -2110,6 +2115,17 @@ setInterval(() => {   // corrige a diferença se o vídeo foi atrasando
   if (!vid.on || !vid.playing || !vid.ready) return;
   try { if (vid.yt.getPlayerState() === 1 && Math.abs(vid.yt.getCurrentTime() - vExp()) > 2.5) vid.yt.seekTo(vExp(), true); } catch {}
 }, 5000);
+function vidCC() {   // aplica a escolha de legenda ao player (o YouTube costuma ligar sozinho pela preferência da conta)
+  if (!vid.ready) return;
+  try { if (vid.cc) vid.yt.loadModule('captions'); else vid.yt.unloadModule('captions'); } catch {}
+}
+function vidCCpaint() { vid.ccBtns.forEach(b => { b.classList.toggle('on', vid.cc); b.title = vid.cc ? 'Desligar legenda' : 'Ligar legenda'; b.setAttribute('aria-pressed', vid.cc ? 'true' : 'false'); }); }
+function vidCCset(on) {
+  vid.cc = !!on; try { localStorage.setItem('pampas-vid-cc', vid.cc ? '1' : '0'); } catch {}
+  vidCC(); setTimeout(vidCC, 600); vidCCpaint();
+  toast(vid.cc ? 'Legenda ligada (só para você).' : 'Legenda desligada.');
+}
+function vidCCbtn() { const b = mel('button', 'mb vcc', 'CC'); b.type = 'button'; b.onclick = e => { e.stopPropagation(); vidCCset(!vid.cc); }; vid.ccBtns.push(b); vidCCpaint(); return b; }
 function vidListen(on) {
   vid.on = !!on;
   if (vid.on && mus.on) { musListen(false); toast('Parei a música para você assistir ao vídeo.'); }
@@ -2137,7 +2153,7 @@ function vidBuild() {
   blk.onclick = () => { try { vid.yt.playVideo(); vid.yt.seekTo(Math.max(0, vExp()), true); vid.yt.setVolume(vid.vol); } catch {} vid.blocked = false; vidPaintBlock(); };
   const ov = mel('div', 'vctl');
   const opp = mBtn('play', 'Tocar / pausar', () => send({ type: 'vid-toggle' })); opp.id = 'vOvPP';
-  ov.append(opp, mBtn('next', 'Próximo', () => send({ type: 'vid-next' })), Object.assign(mel('span'), { style: 'flex:1' }), mBtn('expand', 'Tela cheia', () => fullscreen(stage)));
+  ov.append(opp, mBtn('next', 'Próximo', () => send({ type: 'vid-next' })), Object.assign(mel('span'), { style: 'flex:1' }), vidCCbtn(), mBtn('expand', 'Tela cheia', () => fullscreen(stage)));
   stage.append(ph, blk, ov); stage.ondblclick = e => { if (!e.target.closest('button')) fullscreen(stage); };
   const tt = mel('div'); tt.id = 'vTitle';
   main.append(stage, tt);
@@ -2167,7 +2183,7 @@ function vidBuild() {
   const vr = mel('input'); vr.type = 'range'; vr.min = 0; vr.max = 100; vr.value = vid.vol; vr.title = 'Volume (só para você)';
   vr.oninput = () => { vid.vol = +vr.value; try { localStorage.setItem('pampas-vid-vol', String(vid.vol)); } catch {} try { vid.ready && vid.yt.setVolume(vid.vol); } catch {} vb.replaceChildren(ico(vid.vol ? 'speaker' : 'volx')); };
   vb.replaceChildren(ico(vid.vol ? 'speaker' : 'volx'));
-  vol.append(lis, vb, vr);
+  vol.append(lis, vidCCbtn(), vb, vr);
   bar.append(now, ctr, vol);
   w.append(g, bar);
   paintRange(vr); paintRange(r);
