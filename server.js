@@ -500,6 +500,82 @@ function musMsg(ws, m) {
   }
 }
 
+// ---------- sala de vídeo (assistir YouTube junto) ----------
+// Igual à sala de música, mas separada: tem fila e "ponto do vídeo" próprios, e o player aparece na tela. Não salva nada (a fila some se o servidor reiniciar).
+const VID = { q: [], cur: null, playing: false, pos: 0, at: 0, prev: [] };
+const VID_MAX_Q = 100;
+const vidPos = () => VID.playing ? VID.pos + (musNow() - VID.at) / 1000 : VID.pos;
+const vidListeners = () => [...clients].filter(c => c.nick && c.vidOn);
+function vidSt() {
+  const p = { type: 'vid-st', cur: VID.cur, q: VID.q, playing: VID.playing, pos: VID.pos, at: VID.at, now: musNow(), n: vidListeners().length };
+  clients.forEach(c => c.nick && send(c, p));
+}
+const vidHello = ws => send(ws, { type: 'vid-st', cur: VID.cur, q: VID.q, playing: VID.playing, pos: VID.pos, at: VID.at, now: musNow(), n: vidListeners().length });
+function vidStart(item) { VID.cur = item; VID.pos = 0; VID.at = musNow(); VID.playing = !!item; }
+function vidAdvance() {
+  if (VID.cur) { VID.prev.push(VID.cur); if (VID.prev.length > 20) VID.prev.shift(); }
+  vidStart(VID.q.shift() || null);
+}
+function vidIdle() {   // ninguém assistindo: pausa onde está
+  if (VID.playing && !vidListeners().length) { VID.pos = vidPos(); VID.playing = false; vidSt(); }
+}
+function vidMsg(ws, m) {
+  const t = m.type;
+  if (t === 'vid-listen') { ws.vidOn = !!m.on; if (!ws.vidOn) vidIdle(); vidSt(); return; }
+  if (t === 'vid-ended') {
+    if (!VID.cur || VID.cur.uid !== m.uid) return;
+    if (m.err) { const bad = VID.cur; vidListeners().forEach(c => musErr(c, 'Não deu para tocar "' + bad.title + '" (o dono do vídeo bloqueou). Pulei.')); }
+    vidAdvance(); return vidSt();
+  }
+  if (t === 'vid-dur') {
+    const d = durOk(m.dur), v = String(m.v || ''); if (!d) return;
+    let ch = false;
+    [...(VID.cur && VID.cur.v === v ? [VID.cur] : []), ...VID.q.filter(x => x.v === v)].forEach(s => { if (s && !s.dur) { s.dur = d; ch = true; } });
+    if (ch) vidSt();
+    return;
+  }
+  if (!musRate(ws)) return;
+  if (t === 'vid-add') {
+    (async () => {
+      const v = ytId(m.v || m.url);
+      if (!v) return musErr(ws, 'Esse link não parece ser de um vídeo do YouTube.');
+      let info = m.title ? { v, title: m.title, artist: m.artist, dur: m.dur } : null;
+      if (!info) { try { info = await ytInfo(v); } catch { return musErr(ws, 'Não achei esse vídeo. Confira o link.'); } }
+      const it = qItem(mkSong(info, ws.nick), ws.nick), then = m.then;
+      if (then === 'now') { if (VID.cur) { VID.prev.push(VID.cur); } vidStart(it); }
+      else {
+        if (VID.q.length >= VID_MAX_Q) return musErr(ws, 'A fila de vídeos está cheia.');
+        if (!VID.cur) vidStart(it); else if (then === 'next') VID.q.unshift(it); else VID.q.push(it);
+      }
+      vidSt();
+    })().catch(e => console.error('vid-add:', e.message));
+  } else if (t === 'vid-q-del') {
+    const i = VID.q.findIndex(x => x.uid === m.uid); if (i < 0) return;
+    VID.q.splice(i, 1); vidSt();
+  } else if (t === 'vid-q-clear') { VID.q.length = 0; vidSt();
+  } else if (t === 'vid-q-go') {
+    const i = VID.q.findIndex(x => x.uid === m.uid); if (i < 0) return;
+    if (VID.cur) VID.prev.push(VID.cur);
+    vidStart(VID.q.splice(i, 1)[0]); vidSt();
+  } else if (t === 'vid-toggle') {
+    if (!VID.cur) return;
+    const want = m.play === undefined ? !VID.playing : !!m.play;
+    if (want && !VID.playing) { VID.playing = true; VID.at = musNow(); }
+    else if (!want && VID.playing) { VID.pos = vidPos(); VID.playing = false; }
+    vidSt();
+  } else if (t === 'vid-seek') {
+    if (!VID.cur) return;
+    const p = Number(m.pos); if (!Number.isFinite(p)) return;
+    VID.pos = Math.max(0, Math.min(p, VID.cur.dur ? VID.cur.dur - 1 : 36000)); VID.at = musNow(); vidSt();
+  } else if (t === 'vid-next') { if (VID.cur) { vidAdvance(); vidSt(); }
+  } else if (t === 'vid-prev') {
+    if (!VID.cur && !VID.prev.length) return;
+    if (!VID.prev.length || vidPos() > 4) { VID.pos = 0; VID.at = musNow(); }
+    else { const back = VID.prev.pop(); if (VID.cur) VID.q.unshift(VID.cur); vidStart(back); }
+    vidSt();
+  }
+}
+
 const wss = new WebSocketServer({ server: srv, maxPayload: 18 * 1024 * 1024 });
 const rooms = new Map();
 const clients = new Set();
@@ -880,7 +956,7 @@ wss.on('connection', (ws, req) => {
       rememberMember(ws);
       send(ws, { type: 'hello-ok', id: ws.id, v: VER });
       sendSb(ws);
-      musHello(ws);
+      musHello(ws); vidHello(ws);
       [...clients].filter(c => c.nick && c !== ws).forEach(c => send(ws, { type: 'profile', ...pj(c) })); // um por um: GIFs grandes não cabem num pacote só
       offList().forEach(o => { const j = offPj(o.pid); if (j) send(ws, j); });   // perfis de quem está offline (um por um)
       clients.forEach(c => c !== ws && c.nick && send(c, { type: 'profile', ...pj(ws) }));
@@ -1021,6 +1097,8 @@ wss.on('connection', (ws, req) => {
       bump(ws, 'p');
     } else if (typeof m.type === 'string' && m.type.startsWith('mus-')) {
       musMsg(ws, m);
+    } else if (typeof m.type === 'string' && m.type.startsWith('vid-')) {
+      vidMsg(ws, m);
     } else if (m.type === 'join') {
       const c = CH.find(c => c.id === m.room && c.kind === 'voice');
       if (!c || ws.room === c.id) return;
@@ -1049,7 +1127,7 @@ wss.on('connection', (ws, req) => {
       const pid = pidOf(wasCid);
       if (!isOnlinePid(pid)) { const j = offPj(pid); if (j) clients.forEach(c => c.nick && send(c, j)); }
     }
-    musIdle(); state();
+    musIdle(); vidIdle(); state();
   });
 });
 
