@@ -5,6 +5,8 @@ try { ({ autoUpdater } = require('electron-updater')); } catch { /* sem atualiza
 
 const URL_SITE = process.env.PAMPAS_URL || 'https://discord-dos-pampas.onrender.com/';
 let win, tray = null, quitting = false;   // quitting = true só quando a pessoa escolhe Sair de verdade
+let splash = null, shown = false;          // janelinha de abertura / janela principal já apareceu?
+const TB = 32;                             // altura da faixa de cima (onde ficam minimizar, maximizar e fechar)
 
 // Com o jogo em tela cheia por cima, o Chromium acha que a janela está "escondida" e
 // congela timers (indicador de quem está falando, redução de eco...). Desligamos isso.
@@ -13,7 +15,7 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.setAppUserModelId('br.pampas.discord');
 
 if (!app.requestSingleInstanceLock()) app.quit();
-function showWin() { if (!win || win.isDestroyed()) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
+function showWin() { if (!win || win.isDestroyed()) return; if (!shown) { if (splash && !splash.isDestroyed()) splash.focus(); return; } if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
 app.on('second-instance', showWin);
 
 function load() {
@@ -93,10 +95,68 @@ function pollActivity() {
 ipcMain.handle('act-enable', (e, on) => { actOn = !!on; if (actOn) pollActivity(); return process.platform === 'win32'; });
 setInterval(pollActivity, 20000);
 
+// ---------- janelinha de abertura (pequena, sem moldura, cantos arredondados) ----------
+const splashAt = Date.now();
+function openSplash() {
+  splash = new BrowserWindow({
+    width: 440, height: 520, frame: false, transparent: true, hasShadow: false, resizable: false,
+    minimizable: false, maximizable: false, fullscreenable: false, show: false, center: true,
+    backgroundColor: '#00000000', title: 'Discord dos Guri', icon: path.join(__dirname, 'build', 'icon.png'),
+    webPreferences: { contextIsolation: true, nodeIntegration: false },
+  });
+  splash.removeMenu();
+  splash.loadFile(path.join(__dirname, 'splash.html')).catch(() => {});
+  splash.once('ready-to-show', () => { if (splash && !splash.isDestroyed()) splash.show(); });
+  splash.on('closed', () => { splash = null; if (!shown) { quitting = true; app.quit(); } });   // fechou a abertura antes de abrir: sai do app
+}
+function revealMain() {   // a página já está pronta: mostra a janela grande e some com a abertura
+  if (shown || !win || win.isDestroyed()) return; shown = true;
+  win.show(); win.focus(); setTimeout(syncBar, 700);
+  if (splash && !splash.isDestroyed()) {
+    splash.webContents.executeJavaScript("document.getElementById('splash').classList.add('out')").catch(() => {});
+    setTimeout(() => { if (splash && !splash.isDestroyed()) splash.close(); }, 450);
+  }
+}
+let siteLoaded = false;
+function waitPage() {   // espera a animação de entrada do próprio site terminar (ou a tela de login aparecer)
+  const t0 = Date.now();
+  const iv = setInterval(async () => {
+    if (shown || !win || win.isDestroyed()) return clearInterval(iv);
+    const giveUp = Date.now() - t0 > 90000;
+    if (!siteLoaded && !giveUp) return;
+    const ok = giveUp || await win.webContents.executeJavaScript("document.readyState !== 'loading' && !document.documentElement.classList.contains('spl')").catch(() => false);
+    if (!ok) return;
+    clearInterval(iv);
+    setTimeout(revealMain, Math.max(0, 1800 - (Date.now() - splashAt)));   // a animação aparece pelo menos um pouquinho
+  }, 300);
+}
+
+// ---------- faixa de cima: sem barra cinza e sem nome, só os 3 botões na cor do app ----------
+const BAR_CSS = `html{--tb:${TB}px}
+body{padding-top:var(--tb)!important}
+body.mod #app{padding-top:0!important}
+html::before{content:"";position:fixed;left:0;top:0;right:0;height:var(--tb);-webkit-app-region:drag;z-index:2147483000}`;
+let lastBar = '';
+async function syncBar() {   // pinta o fundo dos botões com a cor real do app naquele canto (acompanha o tema)
+  try {
+    if (!win || win.isDestroyed() || typeof win.setTitleBarOverlay !== 'function' || !win.isVisible() || win.isMinimized()) return;
+    const [w] = win.getContentSize();
+    const img = await win.webContents.capturePage({ x: Math.max(0, w - 90), y: 6, width: 1, height: 1 });
+    const bm = img.toBitmap(); if (!bm || bm.length < 4) return;
+    const r = bm[2], g = bm[1], b = bm[0];
+    const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+    if (hex === lastBar) return; lastBar = hex;
+    win.setTitleBarOverlay({ color: hex, symbolColor: (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1e1f22' : '#dbdee1', height: TB });
+  } catch {}
+}
+setInterval(syncBar, 4000);
+
 app.whenReady().then(() => {
+  openSplash();
   win = new BrowserWindow({
-    width: 1280, height: 800, minWidth: 700, minHeight: 500,
-    title: 'Discord dos Guri', backgroundColor: '#1e1f22', autoHideMenuBar: true,
+    width: 1280, height: 800, minWidth: 700, minHeight: 500, show: false,
+    title: 'Discord dos Guri', backgroundColor: '#0d0a14', autoHideMenuBar: true,
+    titleBarStyle: 'hidden', titleBarOverlay: { color: '#0d0a14', symbolColor: '#dbdee1', height: TB },
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
   });
@@ -154,6 +214,15 @@ app.whenReady().then(() => {
   // o Render grátis dorme: se o site ainda estiver acordando, tenta de novo
   win.webContents.on('did-fail-load', (e, code, desc, url, main) => { if (main && code !== -3) setTimeout(load, 5000); });
   win.webContents.on('page-title-updated', e => e.preventDefault());
+  win.webContents.on('dom-ready', () => {
+    win.webContents.insertCSS(BAR_CSS).catch(() => {});
+    try { if (win.webContents.getURL().startsWith(new URL(URL_SITE).origin)) siteLoaded = true; } catch {}   // página de erro do Chromium não conta
+    setTimeout(syncBar, 900);
+  });
+  // tela cheia da janela: sem faixa em cima
+  win.on('enter-full-screen', () => win.webContents.executeJavaScript("document.documentElement.style.setProperty('--tb','0px')").catch(() => {}));
+  win.on('leave-full-screen', () => win.webContents.executeJavaScript("document.documentElement.style.removeProperty('--tb')").catch(() => {}));
+  waitPage();
   load();
   setupUpdater();
 });

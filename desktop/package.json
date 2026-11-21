@@ -1,6 +1,6 @@
 {
   "name": "discord-dos-pampas-desktop",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "App de computador do Discord dos Pampas",
   "main": "main.js",
   "author": "Turma dos Pampas",
@@ -15,7 +15,7 @@
     "publish": { "provider": "github", "owner": "alencarcavalo", "repo": "discord-dos-pampas", "releaseType": "release" },
     "appId": "br.pampas.discord",
     "productName": "Discord dos Pampas",
-    "files": ["main.js", "preload.js", "build/icon.png"],
+    "files": ["main.js", "preload.js", "splash.html", "build/icon.png"],
     "directories": { "buildResources": "build" },
     "win": { "target": "nsis", "icon": "build/icon.png" },
     "nsis": { "oneClick": true, "perMachine": false },
