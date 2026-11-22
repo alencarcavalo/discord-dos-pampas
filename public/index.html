@@ -906,6 +906,23 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
   #chat{padding:0 8px 8px}
   #ask,#ask.mpe{max-width:calc(100vw - 24px)}
 }
+
+/* ===== Estilo NATAL (Configurações > Aparência > Estilo do app). Usa o layout Moderno por baixo (body.mod) e só acrescenta clima de Natal ===== */
+body.natal{background:radial-gradient(1200px 700px at 6% -10%,#d8392f66,transparent 64%),radial-gradient(1000px 640px at 106% 108%,#2fb45755,transparent 62%),#08120c}
+body.natal #sname{color:#ffe9a8}
+body.natal #sname::after{content:"🎄";margin-left:8px}
+body.natal #side,body.natal #mem,body.natal #main{border-color:#ffd23f30;box-shadow:0 10px 34px #0007,0 0 0 1px #ffd23f14}
+body.natal #sname,body.natal #vch b{text-shadow:0 0 12px #ffd23f55}
+/* gorrinho de Papai Noel nas fotos (lista de voz, lista de membros e o seu perfil embaixo) */
+body.natal .mem .av,body.natal .u .av,body.natal #meav{position:relative}
+body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{content:"";position:absolute;z-index:2;top:-50%;left:-18%;width:92%;height:92%;transform:rotate(-14deg);pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M10 44Q14 14 40 8Q36 22 54 44Z' fill='%23d8392f'/%3E%3Crect x='5' y='40' width='52' height='13' rx='6.5' fill='%23fff'/%3E%3Ccircle cx='42' cy='9' r='7' fill='%23fff'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 1px 1px #0008)}
+/* luzinhas piscando no alto da tela e neve */
+#xl{position:fixed;top:0;left:0;right:0;height:22px;display:flex;justify-content:space-around;pointer-events:none;z-index:30}
+#xl::before{content:"";position:absolute;left:0;right:0;top:2px;height:2px;background:#05100a;opacity:.8}
+#xl i{display:block;width:9px;height:12px;margin-top:3px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:var(--c);box-shadow:0 0 9px 2px var(--c);animation:xlTw 1.8s ease-in-out infinite;animation-delay:var(--d,0s)}
+@keyframes xlTw{0%,100%{opacity:1}50%{opacity:.25}}
+#xs{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
+@media(prefers-reduced-motion:reduce){#xl i{animation:none!important}}
 </style>
 </head>
 <body>
@@ -1093,6 +1110,7 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
             <option value="1">Meme 1 · risada ao entrar, "nese auuu" ao sair</option>
             <option value="2">Meme 2 · "de novo" ao entrar, "aaaaaaa" ao sair</option>
             <option value="3">Meme 3 · "tão me empurrando" ao entrar, "que nojo" ao sair</option>
+            <option value="4">🎄 Natal · guizos e sininhos ao entrar e ao sair</option>
           </select></div>
         <div class="rw"><div class="rc"><button type="button" class="sec" id="packIn">▶ Ouvir o de entrar</button><button type="button" class="sec" id="packOut">▶ Ouvir o de sair</button></div></div>
       </div>
@@ -1247,7 +1265,8 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
       </div>
 
       <div class="cc"><h3>Layout</h3>
-        <div class="rw"><div class="rt"><b>Estilo do app</b><small>Clássico é o visual de sempre. Moderno tem cantos bem arredondados, painéis flutuantes e brilho na cor principal. Os botões continuam nos mesmos lugares.</small></div><div class="seg" id="lySeg"><button type="button" data-v="classic">Clássico</button><button type="button" data-v="modern">Moderno</button></div></div>
+        <div class="rw"><div class="rt"><b>Estilo do app</b><small>Clássico é o visual de sempre. Moderno tem cantos bem arredondados, painéis flutuantes e brilho na cor principal. Os botões continuam nos mesmos lugares.</small></div><div class="seg" id="lySeg"><button type="button" data-v="classic">Clássico</button><button type="button" data-v="modern">Moderno</button><button type="button" data-v="natal">🎄 Natal</button></div></div>
+        <div class="rw"><div class="rt"><b>Neve no estilo Natal</b><small>Neve caindo de leve na tela. Desligue se o PC estiver pesado. As luzinhas e os gorrinhos ficam sempre.</small></div><div class="seg" id="snSeg"><button type="button" data-v="1">Ligada</button><button type="button" data-v="0">Desligada</button></div></div>
       </div>
 
       <div class="cc"><h3>Temas prontos</h3><div id="presets" style="padding:12px 0 16px"></div></div>
@@ -1575,7 +1594,7 @@ const SND = {
 const custom = {};
 // Pacotes de sons de entrar/sair: cada pessoa escolhe nas Configurações > Voz o que quer ouvir (só no próprio aparelho).
 // "padrao" = sininhos (ou public/sons/entrar.mp3 e sair.mp3, se existirem). Os memes ficam em public/sons/memeN-entra.mp3 e memeN-sai.mp3.
-const PACKS = { '1': 'meme1', '2': 'meme2', '3': 'meme3' };
+const PACKS = { '1': 'meme1', '2': 'meme2', '3': 'meme3', '4': 'natal' };
 let loadTok = 0;
 async function loadSnd(file, ks, exts, out) {
   for (const ext of exts) {
@@ -3424,7 +3443,7 @@ $('#bSom').onclick = e => {
 };
 
 // ---------- configurações (salvas neste aparelho) ----------
-const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, bgb: 0, bgm: 'ia', bgi: false, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', kDeaf: 'Ctrl+Alt+D', kLeave: 'Ctrl+Alt+L', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100, layout: 'modern' }, prof: { about: '', avatar: '', banner: '', color: '' } };
+const DEF = { cam: { dev: '', res: '720p', fps: 30, br: 'auto', mirror: false, f: 'none', bri: 100, con: 100, sat: 100, hue: 0, bgb: 0, bgm: 'ia', bgi: false, bgs: 75, bgy: 0, zoom: 100, bd: 'none', bc: '#5865f2', bc2: '#eb459e', bw: 2.5, vig: false, scan: false, tag: false }, pack: 'padrao', sbv: .7, actGame: true, actMusic: true, actManual: '', sq: '720p30', aec: true, app: 1, out: '', micv: 1, gate: true, gAuto: true, gThr: -48, ai: false, duck: true, svol: {}, ic: 20, vol: {}, ns: true, ec: true, agc: true, mic: '', mute: 'Ctrl+Alt+M', kDeaf: 'Ctrl+Alt+D', kLeave: 'Ctrl+Alt+L', theme: { accent: '#5865f2', bg: '#313338', fala: '', font: 'padrao', fs: 100, layout: 'modern', snow: true }, prof: { about: '', avatar: '', banner: '', color: '' } };
 let cfg = { ...DEF };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('pampas-cfg') || '{}')); } catch {}
 cfg.theme = { ...DEF.theme, ...cfg.theme }; cfg.prof = { ...DEF.prof, ...cfg.prof }; cfg.cam = { ...DEF.cam, ...cfg.cam }; delete cfg.cam.blur;   // o antigo "desfoque geral" foi removido
@@ -3658,16 +3677,52 @@ const FONTS = {
   mono: ['Código', '"Cascadia Code",Consolas,ui-monospace,monospace']
 };
 const lum = h => { const n = parseInt(String(h).slice(1), 16) || 0; return [n >> 16 & 255, n >> 8 & 255, n & 255].map((v, i) => { v /= 255; v = v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; return v * [.2126, .7152, .0722][i]; }).reduce((a, b) => a + b, 0); };
+// ---------- estilo NATAL: cores, luzinhas e neve (o resto é CSS em body.natal, em cima do layout Moderno) ----------
+const xm = { c: null, flakes: [], raf: 0, w: 0, h: 0 };
+function snowFit() { if (xm.c) { xm.w = xm.c.width = innerWidth; xm.h = xm.c.height = innerHeight; } }
+function snowTick() {
+  const c = xm.c; if (!c) { xm.raf = 0; return; }
+  const g = c.getContext('2d'); g.clearRect(0, 0, xm.w, xm.h); g.fillStyle = '#fff';
+  for (const f of xm.flakes) {
+    f.y += f.v; f.x += Math.sin((f.y + f.p) / 40) * .4 + f.dx;
+    if (f.y > xm.h + 6) { f.y = -6; f.x = Math.random() * xm.w; }
+    if (f.x > xm.w + 6) f.x = -6; else if (f.x < -6) f.x = xm.w + 6;
+    g.globalAlpha = f.a; g.beginPath(); g.arc(f.x, f.y, f.r, 0, 6.2832); g.fill();
+  }
+  xm.raf = requestAnimationFrame(snowTick);
+}
+function snowSet(on) {
+  if (!on) { cancelAnimationFrame(xm.raf); xm.raf = 0; if (xm.c) xm.c.remove(); xm.c = null; return; }
+  if (xm.c) return;
+  const c = xm.c = document.createElement('canvas'); c.id = 'xs'; document.body.append(c); snowFit();
+  xm.flakes = Array.from({ length: 70 }, () => ({ x: Math.random() * xm.w, y: Math.random() * xm.h, r: 1 + Math.random() * 2.4, v: .5 + Math.random() * 1.1, dx: (Math.random() - .5) * .3, p: Math.random() * 99, a: .45 + Math.random() * .5 }));
+  xm.raf = requestAnimationFrame(snowTick);
+}
+function lightsBuild() {
+  const L = document.getElementById('xl'); if (!L) return; L.textContent = '';
+  const cols = ['#ff3b30', '#2fd35f', '#ffd23f', '#3b9cff'], n = Math.max(8, Math.round(innerWidth / 44));
+  for (let i = 0; i < n; i++) { const b = document.createElement('i'); b.style.setProperty('--c', cols[i % 4]); b.style.setProperty('--d', (i % 5) * .3 + 's'); L.append(b); }
+}
+function xmasSet(on) {
+  let L = document.getElementById('xl');
+  if (!on) { if (L) L.remove(); snowSet(false); return; }
+  if (!L) { L = document.createElement('div'); L.id = 'xl'; document.body.append(L); lightsBuild(); }
+  snowSet(cfg.theme.snow !== false && !matchMedia('(prefers-reduced-motion:reduce)').matches);
+}
+let xmT = 0;
+addEventListener('resize', () => { if (!document.body.classList.contains('natal')) return; clearTimeout(xmT); xmT = setTimeout(() => { snowFit(); lightsBuild(); }, 150); });
 function applyTheme() {
-  const r = document.documentElement.style, { accent, bg } = cfg.theme;
+  const nat = cfg.theme.layout === 'natal';   // no Natal as cores são fixas (vermelho + verde); as suas continuam salvas para quando voltar
+  const r = document.documentElement.style, accent = nat ? '#d8392f' : cfg.theme.accent, bg = nat ? '#14231b' : cfg.theme.bg;
   const mx = (p, c) => `color-mix(in srgb, ${bg} ${100 - p}%, ${c} ${p}%)`;
   r.setProperty('--ic', (cfg.ic || 20) + 'px'); r.setProperty('--blur', accent); r.setProperty('--main', bg); r.setProperty('--side', mx(12, '#000')); r.setProperty('--rail', mx(28, '#000'));
   r.setProperty('--input', mx(8, '#fff')); r.setProperty('--hover', mx(5, '#fff')); $('meta[name=theme-color]').content = bg;
-  r.setProperty('--fala', cfg.theme.fala || accent);
+  r.setProperty('--fala', nat ? '#2fb457' : (cfg.theme.fala || accent));
   r.setProperty('--onac', lum(accent) > .42 ? '#111' : '#fff');   // texto escuro em cima de cores claras (ex.: dourado)
   r.setProperty('--ff', (FONTS[cfg.theme.font] || FONTS.padrao)[1]);
   r.setProperty('--fsc', (+cfg.theme.fs || 100) / 100);
-  document.body.classList.toggle('mod', cfg.theme.layout === 'modern');   // layout Moderno: só liga a classe, o resto é CSS
+  document.body.classList.toggle('mod', cfg.theme.layout === 'modern' || nat);   // layout Moderno: só liga a classe, o resto é CSS (o Natal usa o Moderno por baixo)
+  document.body.classList.toggle('natal', nat); xmasSet(nat);
 }
 applyTheme();
 
@@ -4515,7 +4570,8 @@ function fillTheme() {
   swatches($('#swAc'), ACCENTS, 'accent', 'cAc'); swatches($('#swFa'), ACCENTS, 'fala', 'cFa'); swatches($('#swBg'), BGS, 'bg', 'cBg');
   $('#fontSel').value = FONTS[cfg.theme.font] ? cfg.theme.font : 'padrao';
   document.querySelectorAll('#fsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.v === (+cfg.theme.fs || 100)));
-  document.querySelectorAll('#lySeg button').forEach(b => b.classList.toggle('on', b.dataset.v === (cfg.theme.layout === 'modern' ? 'modern' : 'classic')));
+  document.querySelectorAll('#lySeg button').forEach(b => b.classList.toggle('on', b.dataset.v === (cfg.theme.layout === 'modern' || cfg.theme.layout === 'natal' ? cfg.theme.layout : 'classic')));
+  document.querySelectorAll('#snSeg button').forEach(b => b.classList.toggle('on', (b.dataset.v === '1') === (cfg.theme.snow !== false)));
   $('#icSz').value = cfg.ic || 20; $('#icSzT').textContent = (cfg.ic || 20) + ' px';
   markPresets();
 }
@@ -4531,7 +4587,13 @@ $('#fontSel').onchange = e => setTheme({ font: e.target.value });
   const b = document.createElement('button'); b.type = 'button'; b.textContent = n; b.dataset.v = v; b.onclick = () => setTheme({ fs: v }); $('#fsSeg').append(b);
 });
 $('#faReset').onclick = () => setTheme({ fala: '' });
-document.querySelectorAll('#lySeg button').forEach(b => b.onclick = () => setTheme({ layout: b.dataset.v }));
+document.querySelectorAll('#lySeg button').forEach(b => b.onclick = async () => {
+  const v = b.dataset.v, was = cfg.theme.layout; setTheme({ layout: v });
+  // ao entrar no Natal troca o som de entrar/sair para o de Natal (se ainda estava no padrão); ao sair, volta
+  if (v === 'natal' && was !== 'natal' && cfg.pack === 'padrao') { cfg.pack = '4'; saveCfg(); $('#packSel').value = '4'; await loadCustom(); sfx('entra'); }
+  else if (v !== 'natal' && was === 'natal' && cfg.pack === '4') { cfg.pack = 'padrao'; saveCfg(); $('#packSel').value = 'padrao'; await loadCustom(); }
+});
+document.querySelectorAll('#snSeg button').forEach(b => b.onclick = () => setTheme({ snow: b.dataset.v === '1' }));
 $('#thReset').onclick = () => { cfg.theme = { ...DEF.theme }; cfg.ic = DEF.ic; applyTheme(); saveCfg(); fillTheme(); toast('Visual padrão restaurado.'); };
 // Esc fecha as configurações (menos quando está gravando um atalho)
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cfg').hidden && !capt) { $('#cfg').hidden = true; camPrevOff(); } }, true);
