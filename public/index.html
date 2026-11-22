@@ -907,15 +907,10 @@ body.mod .mcard,body.mod .mbar{border-radius:var(--rs);background:color-mix(in s
   #ask,#ask.mpe{max-width:calc(100vw - 24px)}
 }
 
-/* ===== Estilo NATAL (Configurações > Aparência > Estilo do app). Usa o layout Moderno por baixo (body.mod) e só acrescenta clima de Natal ===== */
-body.natal{background:radial-gradient(1200px 700px at 6% -10%,#d8392f66,transparent 64%),radial-gradient(1000px 640px at 106% 108%,#2fb45755,transparent 62%),#08120c}
-body.natal #sname{color:#ffe9a8}
-body.natal #sname::after{content:"🎄";margin-left:8px}
-body.natal #side,body.natal #mem,body.natal #main{border-color:#ffd23f30;box-shadow:0 10px 34px #0007,0 0 0 1px #ffd23f14}
-body.natal #sname,body.natal #vch b{text-shadow:0 0 12px #ffd23f55}
+/* ===== Estilo NATAL (Configurações > Aparência > Estilo do app). Usa o layout Moderno por baixo (body.mod) com as cores da pessoa e só acrescenta neve, luzinhas e gorrinhos ===== */
 /* gorrinho de Papai Noel nas fotos (lista de voz, lista de membros e o seu perfil embaixo) */
 body.natal .mem .av,body.natal .u .av,body.natal #meav{position:relative}
-body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{content:"";position:absolute;z-index:2;top:-50%;left:-18%;width:92%;height:92%;transform:rotate(-14deg);pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M10 44Q14 14 40 8Q36 22 54 44Z' fill='%23d8392f'/%3E%3Crect x='5' y='40' width='52' height='13' rx='6.5' fill='%23fff'/%3E%3Ccircle cx='42' cy='9' r='7' fill='%23fff'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 1px 1px #0008)}
+body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{content:"";position:absolute;z-index:2;top:-30%;left:48%;width:62%;height:62%;transform-origin:48% 83%;transform:rotate(45deg);pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M10 44Q14 14 40 8Q36 22 54 44Z' fill='%23d8392f'/%3E%3Crect x='5' y='40' width='52' height='13' rx='6.5' fill='%23fff'/%3E%3Ccircle cx='43' cy='10' r='9' fill='%23fff'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 1px 1px #0008)}
 /* luzinhas piscando no alto da tela e neve */
 #xl{position:fixed;top:0;left:0;right:0;height:22px;display:flex;justify-content:space-around;pointer-events:none;z-index:30}
 #xl::before{content:"";position:absolute;left:0;right:0;top:2px;height:2px;background:#05100a;opacity:.8}
@@ -1266,7 +1261,7 @@ body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{cont
 
       <div class="cc"><h3>Layout</h3>
         <div class="rw"><div class="rt"><b>Estilo do app</b><small>Clássico é o visual de sempre. Moderno tem cantos bem arredondados, painéis flutuantes e brilho na cor principal. Os botões continuam nos mesmos lugares.</small></div><div class="seg" id="lySeg"><button type="button" data-v="classic">Clássico</button><button type="button" data-v="modern">Moderno</button><button type="button" data-v="natal">🎄 Natal</button></div></div>
-        <div class="rw"><div class="rt"><b>Neve no estilo Natal</b><small>Neve caindo de leve na tela. Desligue se o PC estiver pesado. As luzinhas e os gorrinhos ficam sempre.</small></div><div class="seg" id="snSeg"><button type="button" data-v="1">Ligada</button><button type="button" data-v="0">Desligada</button></div></div>
+        <div class="rw"><div class="rt"><b>Neve no estilo Natal</b><small>Neve caindo de leve na tela. Desligue se o PC estiver pesado. As luzinhas e os gorrinhos ficam sempre. As cores continuam as que você escolheu.</small></div><div class="seg" id="snSeg"><button type="button" data-v="1">Ligada</button><button type="button" data-v="0">Desligada</button></div></div>
       </div>
 
       <div class="cc"><h3>Temas prontos</h3><div id="presets" style="padding:12px 0 16px"></div></div>
@@ -3712,12 +3707,12 @@ function xmasSet(on) {
 let xmT = 0;
 addEventListener('resize', () => { if (!document.body.classList.contains('natal')) return; clearTimeout(xmT); xmT = setTimeout(() => { snowFit(); lightsBuild(); }, 150); });
 function applyTheme() {
-  const nat = cfg.theme.layout === 'natal';   // no Natal as cores são fixas (vermelho + verde); as suas continuam salvas para quando voltar
-  const r = document.documentElement.style, accent = nat ? '#d8392f' : cfg.theme.accent, bg = nat ? '#14231b' : cfg.theme.bg;
+  const nat = cfg.theme.layout === 'natal';   // o Natal usa as cores que a pessoa já escolheu; só acrescenta neve, luzinhas e gorrinhos
+  const r = document.documentElement.style, { accent, bg } = cfg.theme;
   const mx = (p, c) => `color-mix(in srgb, ${bg} ${100 - p}%, ${c} ${p}%)`;
   r.setProperty('--ic', (cfg.ic || 20) + 'px'); r.setProperty('--blur', accent); r.setProperty('--main', bg); r.setProperty('--side', mx(12, '#000')); r.setProperty('--rail', mx(28, '#000'));
   r.setProperty('--input', mx(8, '#fff')); r.setProperty('--hover', mx(5, '#fff')); $('meta[name=theme-color]').content = bg;
-  r.setProperty('--fala', nat ? '#2fb457' : (cfg.theme.fala || accent));
+  r.setProperty('--fala', cfg.theme.fala || accent);
   r.setProperty('--onac', lum(accent) > .42 ? '#111' : '#fff');   // texto escuro em cima de cores claras (ex.: dourado)
   r.setProperty('--ff', (FONTS[cfg.theme.font] || FONTS.padrao)[1]);
   r.setProperty('--fsc', (+cfg.theme.fs || 100) / 100);
