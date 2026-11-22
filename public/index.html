@@ -1511,13 +1511,13 @@ const FRAMES = (() => {
       `<defs><filter id="b" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.2"/></filter><filter id="f" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
       ring(39, 2.4, '#2b2b33') + ring(37.3, .7, '#ffffff44') +
       `<g filter="url(#b)">` +
-      [[0, 0, 3.4], [.7, 3, 3.9], [1.5, 1, 3.2], [2.2, 4, 3.7], [2.9, 2, 3.5], [3.5, 5, 3.9]].map(([bg, k, d]) => `<circle cx="73.3" cy="62" r="1.5" fill="#e6e9ef"><animate attributeName="cy" values="62;24" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="cx" values="73.3;${76 + k};${71 - k};${77 + k * .6}" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="r" values="1.4;7" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.3;0" keyTimes="0;.2;.6;1" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/></circle>`).join('') + `</g>` +
-      `<g transform="translate(42 70) rotate(-12)">` +
+      [[0, 0, 3.4], [.7, 3, 3.9], [1.5, 1, 3.2], [2.2, 4, 3.7], [2.9, 2, 3.5], [3.5, 5, 3.9]].map(([bg, k, d]) => `<circle cx="26.5" cy="51.5" r="1.5" fill="#e6e9ef"><animate attributeName="cy" values="51.5;14" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="cx" values="26.5;${24 - k};${29 + k};${23 - k * .6}" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="r" values="1.4;7" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.3;0" keyTimes="0;.2;.6;1" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/></circle>`).join('') + `</g>` +
+      `<g transform="translate(58 60) scale(-1 1) rotate(-12)">` +
       `<rect x="0" y="-2.2" width="9" height="4.4" rx="1.2" fill="#d98a3d" stroke="#7a4a14" stroke-width=".6"/><path d="M2.4 -1.6V1.6M4.6 -1.6V1.6M6.8 -1.6V1.6" stroke="#8a5a1e" stroke-width=".5"/>` +
       `<rect x="9" y="-2.2" width="19" height="4.4" fill="#fbf8ee" stroke="#a09a88" stroke-width=".6"/><path d="M10.6 -2.2V2.2" stroke="#c9a24a" stroke-width=".8"/>` +
       `<rect x="28" y="-2.2" width="3.6" height="4.4" rx=".8" fill="#9b9ca3" stroke="#6f7077" stroke-width=".5"/>` +
       `<g filter="url(#f)"><circle cx="32.2" cy="0" r="4" fill="#ff5a1f" opacity=".35"><animate attributeName="r" values="3;5.6;3" dur="1.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".15;.5;.15" dur="1.4s" repeatCount="indefinite"/></circle><ellipse cx="32.2" cy="0" rx="1.9" ry="2.4" fill="#ff3b1f"><animate attributeName="fill" values="#ff3b1f;#ffb347;#ff3b1f" dur="1.4s" repeatCount="indefinite"/></ellipse></g></g>` +
-      spark(18, 30, 3, '#fff', 2.4, .2)],
+      spark(84, 32, 3, '#fff', 2.4, .2)],
     ['bigode', 'Bigodão',
       `<defs><linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f301a"/><stop offset="1" stop-color="#110a05"/></linearGradient></defs>` +
       ring(39, 3, '#6b3a1c') + ring(36.6, .8, '#ffffff55') + ring(41.8, .8, '#0008') +
