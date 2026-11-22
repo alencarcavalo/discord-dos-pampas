@@ -730,9 +730,10 @@ const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '
 // aceita JPEG (imagem reduzida) ou GIF animado (limite maior)
 const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:image/jpeg;base64,') && v.length < max) || (v.startsWith('data:image/gif;base64,') && v.length < maxGif)) ? v : '';
 // bordas de foto liberadas (ids iguais aos do index.html)
-const FRAMES = ['bandeira', 'erva', 'chimarrao', 'chapeu', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'termica', 'touro', 'ferradura', 'corrente', 'caveira', 'tinta', 'chamas', 'cartola', 'palha', 'neitzke', 'cuia-ouro', 'espora', 'brasa-viva', 'lua-noite', 'aurora', 'lenda-pampa', 'adm-guardiao', 'cuia-platina', 'oculos-escuro', 'cigarro', 'bigode', 'tapa-olho', 'fone'];
+const FRAMES = ['bandeira', 'erva', 'chimarrao', 'chapeu', 'neon', 'coracao', 'gato', 'termica', 'touro', 'ferradura', 'caveira', 'tinta', 'cartola', 'palha', 'neitzke', 'cuia-ouro', 'espora', 'brasa-viva', 'aurora', 'adm-guardiao', 'cuia-platina', 'oculos-escuro', 'cigarro', 'bigode', 'tapa-olho', 'fone', 'cigarro-ouro', 'barba'];
+const FRAME_OLD = { 'lua-noite': 'cigarro-ouro', 'lenda-pampa': 'barba' };   // bordas trocadas: quem usava ganha a nova (o servidor confere o requisito igual)
 // bordas EXCLUSIVAS: só quem cumpriu a missão (chegar no nível l do emblema b) pode usar. O servidor confere, então não dá para burlar.
-const FRAME_REQ = { 'cuia-ouro': { b: 'gaucho', l: 2 }, 'espora': { b: 'cine', l: 2 }, 'brasa-viva': { b: 'churras', l: 3 }, 'lua-noite': { b: 'coruja', l: 2 }, 'aurora': { b: 'madruga', l: 2 }, 'lenda-pampa': { b: 'lenda', l: 2 } };
+const FRAME_REQ = { 'cuia-ouro': { b: 'gaucho', l: 2 }, 'espora': { b: 'cine', l: 2 }, 'brasa-viva': { b: 'churras', l: 3 }, 'cigarro-ouro': { b: 'coruja', l: 2 }, 'aurora': { b: 'madruga', l: 2 }, 'barba': { b: 'lenda', l: 2 } };
 // bordas SÓ DE ADM: ninguém mais consegue usar (o servidor confere em setProf), nem por missão.
 const ADM_FRAMES = new Set(['adm-guardiao', 'cuia-platina']);
 const isAdmCid = cid => !!ADMIN_SENHA && !!cid && ADMINS.has(cid);   // ADM tem tudo liberado (emblemas no nível máximo e todas as bordas)
@@ -741,7 +742,7 @@ const numIn = (v, lo, hi, def) => (Number.isFinite(+v) && v !== null && v !== ''
 function setProf(ws, p) {
   p = p || {};
   ws.prof = { about: String(p.about || '').slice(0, 120), avatar: okImg(p.avatar, 60000, 5.8e6), banner: okImg(p.banner, 120000, 5.8e6),
-    color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '', frame: FRAMES.includes(p.frame) && frameOpen(ws.cid, p.frame) ? p.frame : '',
+    color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '', frame: FRAMES.includes(FRAME_OLD[p.frame] || p.frame) && frameOpen(ws.cid, FRAME_OLD[p.frame] || p.frame) ? (FRAME_OLD[p.frame] || p.frame) : '',
     avZ: numIn(p.avZ, .5, 3, 1), avX: numIn(p.avX, 0, 1, .5), avY: numIn(p.avY, 0, 1, .5), avAr: numIn(p.avAr, .2, 5, 1), avR: numIn(p.avR, -360, 360, 0) };
 }
 // ---------- emblemas e conquistas ----------
