@@ -730,7 +730,7 @@ const slug = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '
 // aceita JPEG (imagem reduzida) ou GIF animado (limite maior)
 const okImg = (v, max, maxGif) => typeof v === 'string' && ((v.startsWith('data:image/jpeg;base64,') && v.length < max) || (v.startsWith('data:image/gif;base64,') && v.length < maxGif)) ? v : '';
 // bordas de foto liberadas (ids iguais aos do index.html)
-const FRAMES = ['bandeira', 'erva', 'chimarrao', 'chapeu', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'termica', 'touro', 'ferradura', 'corrente', 'caveira', 'tinta', 'chamas', 'cartola', 'palha', 'neitzke', 'cuia-ouro', 'espora', 'brasa-viva', 'lua-noite', 'aurora', 'lenda-pampa', 'adm-guardiao', 'cuia-platina'];
+const FRAMES = ['bandeira', 'erva', 'chimarrao', 'chapeu', 'neon', 'coracao', 'coroa', 'gato', 'galaxia', 'termica', 'touro', 'ferradura', 'corrente', 'caveira', 'tinta', 'chamas', 'cartola', 'palha', 'neitzke', 'cuia-ouro', 'espora', 'brasa-viva', 'lua-noite', 'aurora', 'lenda-pampa', 'adm-guardiao', 'cuia-platina', 'oculos-escuro', 'cigarro', 'bigode', 'tapa-olho', 'fone'];
 // bordas EXCLUSIVAS: só quem cumpriu a missão (chegar no nível l do emblema b) pode usar. O servidor confere, então não dá para burlar.
 const FRAME_REQ = { 'cuia-ouro': { b: 'gaucho', l: 2 }, 'espora': { b: 'cine', l: 2 }, 'brasa-viva': { b: 'churras', l: 3 }, 'lua-noite': { b: 'coruja', l: 2 }, 'aurora': { b: 'madruga', l: 2 }, 'lenda-pampa': { b: 'lenda', l: 2 } };
 // bordas SÓ DE ADM: ninguém mais consegue usar (o servidor confere em setProf), nem por missão.
