@@ -1369,19 +1369,10 @@ const FRAMES = (() => {
     ['coracao', 'Corações',
       ring(38.5, 3, '#ff8fb8') +
       N(12, (i, a) => { const [x, y] = P(41.5, a); return `<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(a * 180 / Math.PI + 90).toFixed(0)}) scale(${i % 2 ? .85 : 1.05})" d="M0 -1.5C-1 -4.6 -5.6 -3.8 -5.6 -.2C-5.6 3.2 0 6 0 7.4C0 6 5.6 3.2 5.6 -.2C5.6 -3.8 1 -4.6 0 -1.5Z" fill="${i % 2 ? '#ff8fb8' : '#ff3d7f'}" stroke="#fff" stroke-width=".9"/>`; })],
-    ['coroa', 'Coroa',
-      `<defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="1" stop-color="#d49a12"/></linearGradient></defs>` +
-      ring(39, 3.5, 'url(#c)') +
-      `<path d="M29 17L31 3L41 11L50 0L59 11L69 3L71 17Z" fill="url(#c)" stroke="#8a6410" stroke-width="1" stroke-linejoin="round"/><rect x="29" y="13" width="42" height="4.5" fill="#b8860b"/>` +
-      `<circle cx="50" cy="2.5" r="2" fill="#ff4d6d"/><circle cx="31" cy="4" r="1.6" fill="#7be9ff"/><circle cx="69" cy="4" r="1.6" fill="#7be9ff"/><circle cx="50" cy="15.3" r="1.5" fill="#ff4d6d"/>`],
     ['gato', 'Orelhas de Gato',
       ring(39, 4, '#2b2b33') + ring(36.2, 1, '#ffffff55') +
       `<path d="M21 31L22 2L44 13Z" fill="#2b2b33" stroke="#15151a" stroke-width="1.2" stroke-linejoin="round"/><path d="M26 25L26.5 9L38 15Z" fill="#ff9ec4"/>` +
       `<path d="M79 31L78 2L56 13Z" fill="#2b2b33" stroke="#15151a" stroke-width="1.2" stroke-linejoin="round"/><path d="M74 25L73.5 9L62 15Z" fill="#ff9ec4"/>`],
-    ['galaxia', 'Galáxia',
-      `<defs><linearGradient id="x" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2ec5ff"/><stop offset=".5" stop-color="#6a3fd6"/><stop offset="1" stop-color="#e14ad8"/></linearGradient></defs>` +
-      spin(9, ring(39, 7, 'url(#x)')) + ring(35.7, 1, '#ffffff88') + ring(42.6, 1, '#1a1040') +
-      spark(16, 22, 4.5, '#fff', 2.0, 0) + spark(86, 30, 3.5, '#d9ccff', 2.5, .5) + spark(82, 84, 4, '#fff', 2.2, 1.0) + spark(20, 80, 3, '#bfeaff', 2.8, 1.4) + spark(50, 4, 3, '#fff', 1.9, .9)],
     ['termica', 'Térmica e Cuia',
       ring(39, 4.5, '#5f9a3f') + ring(36.2, 1, '#ffffff77') +
       N(14, (i, a) => { const [x, y] = P(41.6, a + .2); return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="2" ry="4.2" transform="rotate(${(a * 180 / Math.PI + 38).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i % 2 ? '#4da043' : '#7ccf55'}" stroke="#25521f" stroke-width=".5"/>`; }) +
@@ -1407,11 +1398,6 @@ const FRAMES = (() => {
       ring(39, 4.5, '#4b4e55') + ring(36.4, 1, '#ffffff55') + ring(41.7, .8, '#0008') +
       `<path d="M39 81A12 12 0 1 0 61 81" fill="none" stroke="#2a2d31" stroke-width="7.4" stroke-linecap="round"/><path d="M39 81A12 12 0 1 0 61 81" fill="none" stroke="#b9bfc7" stroke-width="5.4" stroke-linecap="round"/>` +
       [[41.2, 90.2], [45, 94.6], [50, 96.2], [55, 94.6], [58.8, 90.2]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#2a2d31"/>`).join('')],
-    ['corrente', 'Corrente de Aço',
-      ring(39, 7, '#23262a') + ring(42.4, .8, '#00000099') +
-      N(20, (i, a) => { const [x, y] = P(39, a), d = a * 180 / Math.PI + (i % 2 ? 90 : 0); return i % 2
-        ? `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="2.3" ry="3.4" transform="rotate(${d.toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="none" stroke="#7c838c" stroke-width="2.4"/>`
-        : `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5" ry="3" transform="rotate(${d.toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="none" stroke="#c4cad2" stroke-width="2.4"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5" ry="3" transform="rotate(${d.toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="none" stroke="#fff" stroke-width=".6" opacity=".6"/>`; })],
     ['caveira', 'Caveira de Boi',
       ring(39, 4, '#2b2118') + ring(36.4, 1, '#ffffff33') +
       `<path d="M44 87Q29 91 24 79Q34 85 45 83Z" fill="#efe6d2" stroke="#4a3a22" stroke-width="1.1" stroke-linejoin="round"/><path d="M56 87Q71 91 76 79Q66 85 55 83Z" fill="#efe6d2" stroke="#4a3a22" stroke-width="1.1" stroke-linejoin="round"/>` +
@@ -1425,11 +1411,6 @@ const FRAMES = (() => {
       skull(...P(38.5, -Math.PI * .28), 1.35, deg(-Math.PI * .28) + 90 + 8) +
       skull(...P(39.5, Math.PI * .45), .95, deg(Math.PI * .45) + 90 - 10) +
       skull(...P(40, -Math.PI * .78), .8, deg(-Math.PI * .78) + 90 + 6)],
-    ['chamas', 'Chamas Selvagens',
-      ring(34.6, 3.4, '#1a0a05') +
-      N(22, (i, a) => { const [x, y] = P(32.4, a), s = .62 + .3 * R(i + 4), d = (1.1 + R(i) * .8).toFixed(2); return `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(deg(a) + 90 + 16)})"><g><path d="M-6 0C-7 -9 -2 -12 -1 -21C3 -13 7 -9 6 0Z" fill="#e8321a"/><path d="M-4 0C-4.4 -6 -1.4 -9 0 -14C2 -9 4.4 -6 4 0Z" fill="#ff8a16"/><path d="M-2.2 0C-2.4 -3.6 -.8 -5.4 0 -8C1 -5.4 2.4 -3.6 2.2 0Z" fill="#ffe27a"/><animateTransform attributeName="transform" type="scale" values="${s} ${s};${s} ${(s * 1.22).toFixed(2)};${(s * 1.06).toFixed(2)} ${(s * .9).toFixed(2)};${s} ${s}" dur="${d}s" repeatCount="indefinite"/></g></g>`; }) +
-      skull(50, 11, 1.05, 0) +
-      N(9, (i, a) => { const [x, y] = P(44 + 4 * R(i), a * 1.0 + R(i + 7)), r = .7 + .7 * R(i + 1); return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="#ffd23f"><animate attributeName="cy" values="${f1(y)};${f1(y - 9)}" dur="${(1.4 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="${(1.4 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/></circle>`; })],
     ['cartola', 'Cartola',
       ring(39, 2.6, '#2a1d40') + ring(36.6, .8, '#ffffff44') +
       `<g transform="rotate(-8 50 19)"><ellipse cx="50" cy="19.5" rx="29" ry="5.8" fill="#101013" stroke="#000" stroke-width="1"/><ellipse cx="50" cy="20.2" rx="27.6" ry="4.8" fill="none" stroke="#45454d" stroke-width=".7"/>` +
@@ -1464,23 +1445,33 @@ const FRAMES = (() => {
       ring(39, 6.5, '#1c0a05') + ring(42.2, .8, '#ff6a13aa') + ring(35.8, .8, '#ff6a13aa') +
       `<g filter="url(#f)">` + spin(12, ring(39, 3.4, '#ff5a1f', 'stroke-dasharray="5 7" stroke-linecap="round"')) + spin(20, ring(39, 1.4, '#ffd23f', 'stroke-dasharray="2 12" stroke-linecap="round"')) + `</g>` +
       N(14, (i, a) => { const [x, y] = P(40 + 4 * R(i), a), r = .8 + .8 * R(i + 1); return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="#ffb347"><animate attributeName="cy" values="${f1(y)};${f1(y - 10)}" dur="${(1.3 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="${(1.3 + R(i + 2)).toFixed(2)}s" begin="${(R(i + 8) * 1.5).toFixed(2)}s" repeatCount="indefinite"/></circle>`; })],
-    ['lua-noite', 'Lua da Madrugada',
-      `<defs><mask id="m"><rect width="100" height="100" fill="#fff"/><circle cx="57" cy="8" r="8.5" fill="#000"/></mask><linearGradient id="n" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b1f4b"/><stop offset="1" stop-color="#5b3fa8"/></linearGradient></defs>` +
-      ring(39, 6, 'url(#n)') + ring(36.2, .9, '#c9d4ffaa') + ring(41.8, .9, '#0a0c24') +
-      `<circle cx="50" cy="8" r="9.5" fill="#ffe9a8" mask="url(#m)"/>` +
-      N(10, (i, a) => { const d = (a * 180 / Math.PI + 90) % 360; if (d > 335 || d < 25) return ''; const [x, y] = P(39, a - Math.PI / 2 + .2); return `<g>${star(x, y, 3.2, 1.3, '#fff')}<animate attributeName="opacity" values="1;.2;1" dur="${(1.6 + R(i) * 1.6).toFixed(2)}s" begin="${(R(i + 5) * 2).toFixed(2)}s" repeatCount="indefinite"/></g>`; }) +
-      spark(14, 74, 3, '#c9d4ff', 2.3, .4) + spark(88, 30, 3, '#c9d4ff', 2.7, 1.2)],
+    ['cigarro-ouro', 'Cigarro de Ouro',
+      `<defs><filter id="b" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.2"/></filter><filter id="f" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#f5c542"/><stop offset=".75" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient><linearGradient id="v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".35" stop-color="#f5c542"/><stop offset=".7" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient></defs>` +
+      spin(9, ring(39, 5, 'url(#g)')) + ring(36.3, 1, '#fff9') + ring(41.8, 1, '#6b4e0a') +
+      `<g filter="url(#b)">` +
+      [[0, 0, 3.4], [.7, 3, 3.9], [1.5, 1, 3.2], [2.2, 4, 3.7], [2.9, 2, 3.5], [3.5, 5, 3.9]].map(([bg, k, d]) => `<circle cx="8.5" cy="55" r="1.2" fill="#fff1c2"><animate attributeName="cy" values="55;16" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="cx" values="8.5;${11 + k * .6};${9.5 + k * .4};${13 + k * .5}" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="r" values="1.2;5.5" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.3;0" keyTimes="0;.2;.6;1" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/></circle>`).join('') + `</g>` +
+      `<g transform="translate(31 62) scale(-.72 .72) rotate(-14)">` +
+      `<rect x="0" y="-2.2" width="9" height="4.4" rx="1.2" fill="#8a5a14" stroke="#4a2f06" stroke-width=".6"/><path d="M2.4 -1.6V1.6M4.6 -1.6V1.6M6.8 -1.6V1.6" stroke="#4a2f06" stroke-width=".5"/>` +
+      `<rect x="9" y="-2.2" width="19" height="4.4" fill="url(#v)" stroke="#6b4e0a" stroke-width=".6"/><path d="M10.6 -2.2V2.2" stroke="#fff3b0" stroke-width=".8"/>` +
+      `<rect x="28" y="-2.2" width="3.6" height="4.4" rx=".8" fill="#9b9ca3" stroke="#6f7077" stroke-width=".5"/>` +
+      `<g filter="url(#f)"><circle cx="32.2" cy="0" r="4" fill="#ff5a1f" opacity=".35"><animate attributeName="r" values="3;5.6;3" dur="1.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".15;.5;.15" dur="1.4s" repeatCount="indefinite"/></circle><ellipse cx="32.2" cy="0" rx="1.9" ry="2.4" fill="#ff3b1f"><animate attributeName="fill" values="#ff3b1f;#ffb347;#ff3b1f" dur="1.4s" repeatCount="indefinite"/></ellipse></g></g>` +
+      [[0, 8.5], [1.1, 11], [2, 7]].map(([bg, x]) => `<circle cx="${x}" cy="55" r=".9" fill="#ffd23f" filter="url(#f)"><animate attributeName="cy" values="55;22" dur="2.6s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="2.6s" begin="${bg}s" repeatCount="indefinite"/></circle>`).join('') +
+      spark(84, 32, 3.4, '#fff6c8', 2.4, .2) + spark(82, 74, 3, '#fff', 2.2, 1.2) + spark(20, 84, 3, '#fff6c8', 2.6, 1.7)],
     ['aurora', 'Aurora Pampeana',
       `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cffcb"/><stop offset=".35" stop-color="#4d9de0"/><stop offset=".7" stop-color="#c77dff"/><stop offset="1" stop-color="#7cffcb"/></linearGradient></defs>` +
       `<g filter="url(#f)">` + spin(8, ring(39, 5.5, 'url(#a)')) + `</g>` + ring(35.8, .8, '#ffffffaa') +
       `<g>` + ring(44, 1.3, '#c9ffe9', 'stroke-dasharray="2 7" stroke-linecap="round"') + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="16s" repeatCount="indefinite"/></g>` +
       spark(16, 24, 4, '#fff', 2.1, 0) + spark(86, 70, 3.6, '#d9fff0', 2.5, .8) + spark(24, 86, 3, '#fff', 2.8, 1.5)],
-    ['lenda-pampa', 'Lenda do Pampa',
-      `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="x" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7bd5"/><stop offset=".35" stop-color="#7b3cff"/><stop offset=".7" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff7bd5"/></linearGradient><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="1" stop-color="#d49a12"/></linearGradient></defs>` +
-      `<g filter="url(#f)">` + spin(6, ring(39, 6.5, 'url(#x)')) + `</g>` + ring(35.7, 1, '#fff9') + ring(42.5, 1, '#2a0f4d') +
-      `<g>` + N(8, (i, a) => { const [x, y] = P(46, a + .4); return star(x, y, 3, 1.3, '#ffe27a'); }) + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="14s" repeatCount="indefinite"/></g>` +
-      `<path d="M29 17L31 3L41 11L50 0L59 11L69 3L71 17Z" fill="url(#c)" stroke="#8a6410" stroke-width="1" stroke-linejoin="round"/><rect x="29" y="13" width="42" height="4.5" fill="#b8860b"/><circle cx="50" cy="9" r="2.2" fill="#7be9ff" stroke="#fff" stroke-width=".6"/>` +
-      spark(12, 34, 4, '#fff', 1.8, 0) + spark(90, 48, 3.6, '#ffd9f5', 2.3, .6) + spark(80, 88, 4, '#fff', 2, 1.1) + spark(18, 82, 3, '#fff6c8', 2.6, 1.6)],
+    ['barba', 'Barba de Lenda',
+      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#f5c542"/><stop offset=".75" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4e28"/><stop offset=".5" stop-color="#4a2c14"/><stop offset="1" stop-color="#241208"/></linearGradient><linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a30"/><stop offset="1" stop-color="#2b170a"/></linearGradient></defs>` +
+      spin(12, ring(39, 3.2, 'url(#g)')) + ring(36.6, .8, '#ffffff66') + ring(41.8, .8, '#6b4e0a') +
+      `<g>` +
+      `<path fill-rule="evenodd" d="M21 48C19 62 24 78 36 88C42 93 46 97 50 98C54 97 58 93 64 88C76 78 81 62 79 48C76 56 71 61 66 62Q50 57 34 62C29 61 24 56 21 48ZM42 70A8 3 0 1 0 58 70A8 3 0 1 0 42 70Z" fill="url(#b)" stroke="#120904" stroke-width="1" stroke-linejoin="round"/>` +
+      `<path d="M30 66C29 76 33 86 42 93M38 70C37 80 41 90 47 95M50 77V96M62 70C63 80 59 90 53 95M70 66C71 76 67 86 58 93" fill="none" stroke="#b58450" stroke-width=".9" stroke-linecap="round" opacity=".5"/>` +
+      `<path d="M50 59.5C46 56.5 38 55.5 31 58.5C26 60.6 23 58.5 20.5 54C20.5 62 26.5 68.5 36 66.4C42 65 46.5 63.5 50 64C53.5 63.5 58 65 64 66.4C73.5 68.5 79.5 62 79.5 54C77 58.5 74 60.6 69 58.5C62 55.5 54 56.5 50 59.5Z" fill="url(#h)" stroke="#0a0603" stroke-width="1" stroke-linejoin="round"/>` +
+      `<path d="M30 60C38 57.5 45 59 49 61M70 60C62 57.5 55 59 51 61" fill="none" stroke="#b58450" stroke-width="1" stroke-linecap="round" opacity=".55"/>` +
+      `<animateTransform attributeName="transform" type="translate" values="0 0;0 1.2;0 0" dur="3s" repeatCount="indefinite"/></g>` +
+      spark(13, 30, 4, '#fff', 2, 0) + spark(88, 36, 3.6, '#ffe9a8', 2.4, .6) + spark(86, 80, 3.4, '#fff', 2.2, 1.2) + spark(14, 78, 3, '#ffe9a8', 2.6, 1.7)],
     ['adm-guardiao', 'Escudo Negro ADM',
       `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="k" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050506"/><stop offset=".3" stop-color="#2c2e35"/><stop offset=".48" stop-color="#b9bdc8"/><stop offset=".62" stop-color="#1b1c21"/><stop offset="1" stop-color="#000"/></linearGradient><linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d3f48"/><stop offset=".45" stop-color="#111216"/><stop offset="1" stop-color="#000"/></linearGradient><linearGradient id="c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#8f95a1"/><stop offset=".65" stop-color="#eef1f5"/><stop offset="1" stop-color="#5d636e"/></linearGradient></defs>` +
       ring(39, 7, '#050506') + spin(11, ring(39, 6.4, 'url(#k)')) + ring(42.7, 1, 'url(#c)') + ring(35.5, .9, '#ffffffaa') +
@@ -1511,9 +1502,9 @@ const FRAMES = (() => {
       `<defs><filter id="b" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.2"/></filter><filter id="f" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
       ring(39, 2.4, '#2b2b33') + ring(37.3, .7, '#ffffff44') +
       `<g filter="url(#b)">` +
-      [[0, 0, 3.4], [.7, 3, 3.9], [1.5, 1, 3.2], [2.2, 4, 3.7], [2.9, 2, 3.5], [3.5, 5, 3.9]].map(([bg, k, d]) => `<circle cx="26.5" cy="51.5" r="1.5" fill="#e6e9ef"><animate attributeName="cy" values="51.5;14" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="cx" values="26.5;${24 - k};${29 + k};${23 - k * .6}" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="r" values="1.4;7" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.3;0" keyTimes="0;.2;.6;1" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/></circle>`).join('') + `</g>` +
-      `<g transform="translate(58 60) scale(-1 1) rotate(-12)">` +
-      `<rect x="0" y="-2.2" width="9" height="4.4" rx="1.2" fill="#d98a3d" stroke="#7a4a14" stroke-width=".6"/><path d="M2.4 -1.6V1.6M4.6 -1.6V1.6M6.8 -1.6V1.6" stroke="#8a5a1e" stroke-width=".5"/>` +
+      [[0, 0, 3.4], [.7, 3, 3.9], [1.5, 1, 3.2], [2.2, 4, 3.7], [2.9, 2, 3.5], [3.5, 5, 3.9]].map(([bg, k, d]) => `<circle cx="8.5" cy="55" r="1.2" fill="#e6e9ef"><animate attributeName="cy" values="55;16" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="cx" values="8.5;${11 + k * .6};${9.5 + k * .4};${13 + k * .5}" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="r" values="1.2;5.5" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.3;0" keyTimes="0;.2;.6;1" dur="${d}s" begin="${bg}s" repeatCount="indefinite"/></circle>`).join('') + `</g>` +
+      `<g transform="translate(31 62) scale(-.72 .72) rotate(-14)">` +
+      `<rect x="0" y="-2.2" width="9" height="4.4" rx="1.2" fill="#d98a3d" stroke="#7a4a14" stroke-width=".6"/><path d="M2.4 -1.6V1.6M4.6 -1.6V1.6M6.8 -1.6V1.6" stroke="#7a4a14" stroke-width=".5"/>` +
       `<rect x="9" y="-2.2" width="19" height="4.4" fill="#fbf8ee" stroke="#a09a88" stroke-width=".6"/><path d="M10.6 -2.2V2.2" stroke="#c9a24a" stroke-width=".8"/>` +
       `<rect x="28" y="-2.2" width="3.6" height="4.4" rx=".8" fill="#9b9ca3" stroke="#6f7077" stroke-width=".5"/>` +
       `<g filter="url(#f)"><circle cx="32.2" cy="0" r="4" fill="#ff5a1f" opacity=".35"><animate attributeName="r" values="3;5.6;3" dur="1.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".15;.5;.15" dur="1.4s" repeatCount="indefinite"/></circle><ellipse cx="32.2" cy="0" rx="1.9" ry="2.4" fill="#ff3b1f"><animate attributeName="fill" values="#ff3b1f;#ffb347;#ff3b1f" dur="1.4s" repeatCount="indefinite"/></ellipse></g></g>` +
@@ -1546,10 +1537,12 @@ const FRAME_CSS = '.av[data-frame]:not(.pav){position:relative}.av[data-frame]::
   FRAMES.map(f => `.av[data-frame="${f.id}"]::after{background-image:url("${f.url}")}`).join('');
 document.head.append(Object.assign(document.createElement('style'), { textContent: FRAME_CSS }));
 const frameOk = id => FRAMES.some(f => f.id === id);
+const FRAME_OLD = { 'lua-noite': 'cigarro-ouro', 'lenda-pampa': 'barba' };   // bordas que foram trocadas: quem usava ganha a nova
 const ADM_FR = new Set(['adm-guardiao', 'cuia-platina']);   // só aparecem no seletor para ADM; qualquer um vê quando o ADM usa
 function paintAv(el, n, p) {
   p = p || {};
-  if (frameOk(p.frame)) el.dataset.frame = p.frame; else delete el.dataset.frame;
+  const fid = FRAME_OLD[p.frame] || p.frame;
+  if (frameOk(fid)) el.dataset.frame = fid; else delete el.dataset.frame;
   let rot = 0;
   if (p.avatar) {   // zoom, posição e giro escolhidos pela pessoa (1 = a foto inteira preenchendo o círculo; menos que 1 = afastada)
     const z = Math.min(3, Math.max(.5, +p.avZ || 1)), ar = Math.min(5, Math.max(.2, +p.avAr || 1));
@@ -4519,7 +4512,7 @@ function fillFrames() {   // grade de bordas: cada botão mostra a sua foto (ou 
   const g = $('#frGrid'); g.replaceChildren();
   [{ id: '', name: 'Sem borda' }, ...FRAMES.filter(f => !ADM_FR.has(f.id) || (ACH && ACH.adm))].forEach(f => {
     const lk = frLocked(f.id), fq = lk && ACH.frames.find(x => x.id === f.id);
-    const b = document.createElement('button'); b.type = 'button'; b.className = ((ed.frame || '') === f.id ? 'on' : '') + (lk ? ' trv' : ''); b.title = lk ? frMission(fq) : f.name;
+    const b = document.createElement('button'); b.type = 'button'; b.className = (((FRAME_OLD[ed.frame] || ed.frame) || '') === f.id ? 'on' : '') + (lk ? ' trv' : ''); b.title = lk ? frMission(fq) : f.name;
     const a = document.createElement('div'); a.className = 'av'; paintAv(a, $('#pNome').value || myName, { ...ed, frame: f.id });
     const t = document.createElement('span'); t.textContent = (lk ? '🔒 ' : '') + f.name; b.append(a, t);
     b.onclick = () => { if (lk) { toast(frMission(fq)); return; } ed.frame = f.id; fillFrames(); renderPrev(); };
