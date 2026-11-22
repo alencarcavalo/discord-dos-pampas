@@ -1105,7 +1105,7 @@ body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{cont
             <option value="1">Meme 1 · risada ao entrar, "nese auuu" ao sair</option>
             <option value="2">Meme 2 · "de novo" ao entrar, "aaaaaaa" ao sair</option>
             <option value="3">Meme 3 · "tão me empurrando" ao entrar, "que nojo" ao sair</option>
-            <option value="4">🎄 Natal · guizos e sininhos ao entrar e ao sair</option>
+            <option value="4" hidden>🎄 Natal (automático no estilo Natal)</option>
           </select></div>
         <div class="rw"><div class="rc"><button type="button" class="sec" id="packIn">▶ Ouvir o de entrar</button><button type="button" class="sec" id="packOut">▶ Ouvir o de sair</button></div></div>
       </div>
@@ -4584,9 +4584,9 @@ $('#fontSel').onchange = e => setTheme({ font: e.target.value });
 $('#faReset').onclick = () => setTheme({ fala: '' });
 document.querySelectorAll('#lySeg button').forEach(b => b.onclick = async () => {
   const v = b.dataset.v, was = cfg.theme.layout; setTheme({ layout: v });
-  // ao entrar no Natal troca o som de entrar/sair para o de Natal (se ainda estava no padrão); ao sair, volta
-  if (v === 'natal' && was !== 'natal' && cfg.pack === 'padrao') { cfg.pack = '4'; saveCfg(); $('#packSel').value = '4'; await loadCustom(); sfx('entra'); }
-  else if (v !== 'natal' && was === 'natal' && cfg.pack === '4') { cfg.pack = 'padrao'; saveCfg(); $('#packSel').value = 'padrao'; await loadCustom(); }
+  // ao escolher o Natal, o som de entrar/sair vira o de Natal (guarda o que a pessoa usava); ao sair do Natal, volta para o que ela usava
+  if (v === 'natal' && was !== 'natal' && cfg.pack !== '4') { cfg.packPrev = cfg.pack || 'padrao'; cfg.pack = '4'; saveCfg(); $('#packSel').value = '4'; await loadCustom(); sfx('entra'); }
+  else if (v !== 'natal' && was === 'natal' && cfg.pack === '4') { cfg.pack = PACKS[cfg.packPrev] || cfg.packPrev === 'padrao' ? cfg.packPrev : 'padrao'; saveCfg(); $('#packSel').value = cfg.pack; await loadCustom(); }
 });
 document.querySelectorAll('#snSeg button').forEach(b => b.onclick = () => setTheme({ snow: b.dataset.v === '1' }));
 $('#thReset').onclick = () => { cfg.theme = { ...DEF.theme }; cfg.ic = DEF.ic; applyTheme(); saveCfg(); fillTheme(); toast('Visual padrão restaurado.'); };
