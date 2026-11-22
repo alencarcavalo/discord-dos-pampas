@@ -1470,6 +1470,23 @@ const FRAMES = (() => {
       `<g>` + N(8, (i, a) => { const [x, y] = P(46, a + .4); return star(x, y, 3, 1.3, '#ffe27a'); }) + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="14s" repeatCount="indefinite"/></g>` +
       `<path d="M29 17L31 3L41 11L50 0L59 11L69 3L71 17Z" fill="url(#c)" stroke="#8a6410" stroke-width="1" stroke-linejoin="round"/><rect x="29" y="13" width="42" height="4.5" fill="#b8860b"/><circle cx="50" cy="9" r="2.2" fill="#7be9ff" stroke="#fff" stroke-width=".6"/>` +
       spark(12, 34, 4, '#fff', 1.8, 0) + spark(90, 48, 3.6, '#ffd9f5', 2.3, .6) + spark(80, 88, 4, '#fff', 2, 1.1) + spark(18, 82, 3, '#fff6c8', 2.6, 1.6)],
+    ['adm-guardiao', 'Guardião ADM',
+      `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a68"/><stop offset=".5" stop-color="#c8102e"/><stop offset="1" stop-color="#5a0614"/></linearGradient><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#f5c542"/><stop offset=".75" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient></defs>` +
+      ring(39, 7, '#14040a') + ring(42.6, 1, '#f5c542') + ring(35.6, 1, '#ffe9a8cc') +
+      `<g filter="url(#f)">` + spin(9, ring(39, 4.2, 'url(#r)', 'stroke-dasharray="15 6" stroke-linecap="round"')) + `</g>` +
+      `<g>` + ring(45.2, 1.5, '#f5c542', 'stroke-dasharray="1.5 7" stroke-linecap="round"') + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="18s" repeatCount="indefinite"/></g>` +
+      `<g filter="url(#f)"><path d="M50 0.8L63 5.2V13.2Q63 21.6 50 27.4Q37 21.6 37 13.2V5.2Z" fill="url(#r)" stroke="url(#g)" stroke-width="1.6" stroke-linejoin="round"/></g>` +
+      `<path d="M50 4.2L59.6 7.4V13Q59.6 19 50 23.6Q40.4 19 40.4 13V7.4Z" fill="none" stroke="#ffe9a8" stroke-width=".6" opacity=".75"/>` +
+      star(50, 13.6, 6.2, 2.6, 'url(#g)') +
+      spark(13, 30, 4, '#fff', 2, 0) + spark(88, 40, 3.6, '#ffe9a8', 2.4, .6) + spark(84, 82, 3.4, '#fff', 2.2, 1.2) + spark(16, 76, 3, '#ffe9a8', 2.6, 1.7)],
+    ['cuia-platina', 'Cuia de Platina',
+      `<defs><linearGradient id="p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".3" stop-color="#cfe3f2"/><stop offset=".6" stop-color="#8fa4b8"/><stop offset=".82" stop-color="#f4fbff"/><stop offset="1" stop-color="#9bb0c4"/></linearGradient><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
+      `<g filter="url(#f)">` + spin(10, ring(39, 5, 'url(#p)')) + `</g>` + ring(36.3, 1, '#ffffffcc') + ring(41.8, 1, '#4a5a6c') +
+      `<g transform="translate(50 87)"><path d="M6 -6L17 -21" stroke="#eef6fc" stroke-width="2.2" stroke-linecap="round"/><circle cx="17.4" cy="-21.4" r="2" fill="#eef6fc"/>` +
+      `<path d="M-16 -6Q-16 11 0 11Q16 11 16 -6Z" fill="url(#p)" stroke="#4a5a6c" stroke-width="1.3"/><path d="M-12.4 -2Q-11.4 5.4 -6 8.2" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".85"/>` +
+      `<ellipse cx="0" cy="-6" rx="16" ry="4.2" fill="#3f7a2e" stroke="#4a5a6c" stroke-width="1.3"/><ellipse cx="0" cy="-6.6" rx="11" ry="2.2" fill="#5fa043" opacity=".7"/>` +
+      `<text x="0" y="6.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="7.4" fill="#1f2b3a" stroke="#ffffff" stroke-width=".35" textLength="19" lengthAdjust="spacingAndGlyphs">ADM</text></g>` +
+      spark(15, 28, 4, '#fff', 2, 0) + spark(87, 34, 3.5, '#e6f3ff', 2.4, .7) + spark(84, 74, 3, '#fff', 2.2, 1.3) + spark(13, 66, 3, '#e6f3ff', 2.6, 1.8)],
   ];
   return L.map(([id, name, body]) => ({ id, name, url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`) }));
 })();
@@ -1477,6 +1494,7 @@ const FRAME_CSS = '.av[data-frame]:not(.pav){position:relative}.av[data-frame]::
   FRAMES.map(f => `.av[data-frame="${f.id}"]::after{background-image:url("${f.url}")}`).join('');
 document.head.append(Object.assign(document.createElement('style'), { textContent: FRAME_CSS }));
 const frameOk = id => FRAMES.some(f => f.id === id);
+const ADM_FR = new Set(['adm-guardiao', 'cuia-platina']);   // só aparecem no seletor para ADM; qualquer um vê quando o ADM usa
 function paintAv(el, n, p) {
   p = p || {};
   if (frameOk(p.frame)) el.dataset.frame = p.frame; else delete el.dataset.frame;
@@ -4447,7 +4465,7 @@ function card(id, anchor) {
 let ed = {};
 function fillFrames() {   // grade de bordas: cada botão mostra a sua foto (ou letra) com a borda
   const g = $('#frGrid'); g.replaceChildren();
-  [{ id: '', name: 'Sem borda' }, ...FRAMES].forEach(f => {
+  [{ id: '', name: 'Sem borda' }, ...FRAMES.filter(f => !ADM_FR.has(f.id) || (ACH && ACH.adm))].forEach(f => {
     const lk = frLocked(f.id), fq = lk && ACH.frames.find(x => x.id === f.id);
     const b = document.createElement('button'); b.type = 'button'; b.className = ((ed.frame || '') === f.id ? 'on' : '') + (lk ? ' trv' : ''); b.title = lk ? frMission(fq) : f.name;
     const a = document.createElement('div'); a.className = 'av'; paintAv(a, $('#pNome').value || myName, { ...ed, frame: f.id });
