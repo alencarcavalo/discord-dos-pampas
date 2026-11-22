@@ -1328,6 +1328,14 @@ const FRAMES = (() => {
   };
   const blob = (rf, M) => { const p = Array.from({ length: M }, (_, i) => { const a = i / M * 2 * Math.PI, r = rf(i); return [50 + r * Math.cos(a), 50 + r * Math.sin(a)]; }); const m = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; let d = 'M' + m(p[M - 1], p[0]).map(f1).join(' '); p.forEach((q, i) => { const e = m(q, p[(i + 1) % M]); d += `Q${f1(q[0])} ${f1(q[1])} ${f1(e[0])} ${f1(e[1])}`; }); return d + 'Z'; };
   const deg = a => a * 180 / Math.PI;
+  const cuia = (x, y, s, o) => `<g transform="translate(${x} ${y}) scale(${s})">` +
+    `<path d="M-11.5 0C-17.5 5 -18.5 15 -10.5 20.5Q0 24.5 10.5 20.5C18.5 15 17.5 5 11.5 0Z" fill="${o.body}" stroke="${o.line}" stroke-width="1.3" stroke-linejoin="round"/>` +
+    `<path d="M-13.4 6Q-14.2 13 -9.4 17.6" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".42"/>` +
+    `<path d="M-11.8 .8Q0 6.8 11.8 .8" fill="none" stroke="${o.line}" stroke-width="3.8" stroke-linecap="round"/><path d="M-11.8 .8Q0 6.8 11.8 .8" fill="none" stroke="${o.metal}" stroke-width="2.4" stroke-linecap="round"/>` +
+    `<ellipse cx="0" cy="0" rx="12" ry="3.6" fill="${o.metal}" stroke="${o.line}" stroke-width="1.1"/><ellipse cx="0" cy="0" rx="10" ry="2.5" fill="#2f5a22"/>` +
+    `<path d="M-9.4 .5Q-7 -4.9 0 -4.7Q7 -4.9 9.4 .5Q0 3.1 -9.4 .5Z" fill="#6d9f2e" stroke="#2f5a22" stroke-width=".8" stroke-linejoin="round"/><circle cx="-4.2" cy="-1.6" r=".6" fill="#a6d85a"/><circle cx="-1" cy="-3" r=".55" fill="#a6d85a"/><circle cx="4.6" cy="-1.8" r=".6" fill="#4d7a22"/>` +
+    `<path d="M3 -2.5L14.5 -19.5" stroke="#4f5862" stroke-width="3.1" stroke-linecap="round"/><path d="M3 -2.5L14.5 -19.5" stroke="#f1f4f7" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="15.6" cy="-20.9" rx="3" ry="1.7" transform="rotate(-55 15.6 -20.9)" fill="#dfe5ea" stroke="#4f5862" stroke-width=".8"/>` +
+    (o.text || '') + `</g>`;
   const C1 = 2 * Math.PI * 39, seg = C1 / 3;
   const L = [
     ['bandeira', 'Bandeira do RS',
@@ -1339,13 +1347,11 @@ const FRAMES = (() => {
       ring(39, 2.5, '#2f6b2c') +
       N(20, (i, a) => { const [x, y] = P(41.5, a); return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="3.4" ry="7" transform="rotate(${(a * 180 / Math.PI - 90 + 38).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i % 2 ? '#4da043' : '#7ccf55'}" stroke="#25521f" stroke-width=".6"/>`; })],
     ['chimarrao', 'Chimarrão',
+      `<defs><linearGradient id="w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d79a58"/><stop offset=".5" stop-color="#9a6232"/><stop offset="1" stop-color="#5a3515"/></linearGradient><linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#b7c0c9"/><stop offset=".7" stop-color="#eef2f6"/><stop offset="1" stop-color="#7c838c"/></linearGradient></defs>` +
       ring(39, 4.5, '#5f9a3f') + ring(36.2, 1, '#ffffff88') +
-      `<path d="M63 69Q63 90 77 90Q91 90 91 69Z" fill="#9a6232" stroke="#5a3515" stroke-width="1.4"/>` +
-      `<path d="M65 76Q77 83 89 76" fill="none" stroke="#d8dde2" stroke-width="2.2"/>` +
-      `<ellipse cx="77" cy="69" rx="14" ry="4.5" fill="#6b8e23" stroke="#3f5a12" stroke-width="1.2"/>` +
-      `<path d="M78 69L92 47" stroke="#e5e8ec" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="92.5" cy="46.5" rx="2.6" ry="1.6" transform="rotate(-55 92.5 46.5)" fill="#cfd3d8"/>` +
-      `<path d="M70 62Q67 56 70 51Q73 46 70 41" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"><animate attributeName="opacity" values=".15;.8;.15" dur="2.4s" repeatCount="indefinite"/></path>` +
-      `<path d="M78 60Q75 54 78 49Q81 44 78 39" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"><animate attributeName="opacity" values=".8;.15;.8" dur="2.4s" repeatCount="indefinite"/></path>`],
+      cuia(76, 72, .85, { body: 'url(#w)', line: '#3a210d', metal: 'url(#m)' }) +
+      `<g transform="translate(-1 3)"><path d="M70 62Q67 56 70 51Q73 46 70 41" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"><animate attributeName="opacity" values=".15;.8;.15" dur="2.4s" repeatCount="indefinite"/></path>` +
+      `<path d="M76 60Q73 54 76 49Q79 44 76 39" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"><animate attributeName="opacity" values=".8;.15;.8" dur="2.4s" repeatCount="indefinite"/></path></g>`],
     ['chapeu', 'Chapéu Gaúcho',
       ring(39, 3, '#6b4423') +
       `<g transform="rotate(-9 50 20)"><path d="M34 20Q34 0 50 0Q66 0 66 20Z" fill="#1d1d1f"/><rect x="34" y="14.5" width="32" height="4.5" fill="#c8372d"/><ellipse cx="50" cy="20.5" rx="30" ry="6" fill="#111"/><ellipse cx="50" cy="19.5" rx="30" ry="5.2" fill="none" stroke="#3a3a3d" stroke-width=".8"/></g>`],
@@ -1439,10 +1445,10 @@ const FRAMES = (() => {
       `<rect x="75" y="5" width="20.5" height="15.6" fill="none" stroke="#0007" stroke-width=".7"/>` +
       `<animateTransform attributeName="transform" type="rotate" values="-3 96 34;3 96 34;-3 96 34" dur="3s" repeatCount="indefinite"/></g>`],
     ['cuia-ouro', 'Cuia de Ouro',
-      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#f5c542"/><stop offset=".75" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient></defs>` +
+      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#f5c542"/><stop offset=".75" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient><linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#b7c0c9"/><stop offset=".7" stop-color="#eef2f6"/><stop offset="1" stop-color="#7c838c"/></linearGradient></defs>` +
       spin(9, ring(39, 5, 'url(#g)')) + ring(36.3, 1, '#fff9') + ring(41.8, 1, '#6b4e0a') +
-      `<g transform="translate(50 90)"><path d="M3 -5L12 -17" stroke="#e8edf2" stroke-width="2" stroke-linecap="round"/><circle cx="12.4" cy="-17.4" r="1.8" fill="#e8edf2"/><path d="M-10 -5Q-10 9 0 9Q10 9 10 -5Z" fill="url(#g)" stroke="#6b4e0a" stroke-width="1.2"/><ellipse cx="0" cy="-5" rx="10" ry="3" fill="#3f7a2e" stroke="#6b4e0a" stroke-width="1.2"/></g>` +
-      spark(16, 28, 4, '#fff', 2, 0) + spark(86, 36, 3.5, '#fff6c8', 2.4, .7) + spark(82, 78, 3, '#fff', 2.2, 1.3) + spark(14, 70, 3, '#fff6c8', 2.6, 1.8)],
+      cuia(50, 75, .95, { body: 'url(#g)', line: '#6b4e0a', metal: 'url(#m)' }) +
+      spark(16, 28, 4, '#fff', 2, 0) + spark(86, 36, 3.5, '#fff6c8', 2.4, .7) + spark(84, 66, 3, '#fff', 2.2, 1.3) + spark(14, 70, 3, '#fff6c8', 2.6, 1.8)],
     ['espora', 'Espora de Prata',
       `<defs><linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#9aa3ad"/><stop offset=".65" stop-color="#eef2f6"/><stop offset="1" stop-color="#6d7782"/></linearGradient></defs>` +
       ring(39, 4.5, 'url(#s)') + ring(36.6, .9, '#fffc') + ring(41.4, .9, '#2a2f35') +
@@ -1470,23 +1476,22 @@ const FRAMES = (() => {
       `<g>` + N(8, (i, a) => { const [x, y] = P(46, a + .4); return star(x, y, 3, 1.3, '#ffe27a'); }) + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="14s" repeatCount="indefinite"/></g>` +
       `<path d="M29 17L31 3L41 11L50 0L59 11L69 3L71 17Z" fill="url(#c)" stroke="#8a6410" stroke-width="1" stroke-linejoin="round"/><rect x="29" y="13" width="42" height="4.5" fill="#b8860b"/><circle cx="50" cy="9" r="2.2" fill="#7be9ff" stroke="#fff" stroke-width=".6"/>` +
       spark(12, 34, 4, '#fff', 1.8, 0) + spark(90, 48, 3.6, '#ffd9f5', 2.3, .6) + spark(80, 88, 4, '#fff', 2, 1.1) + spark(18, 82, 3, '#fff6c8', 2.6, 1.6)],
-    ['adm-guardiao', 'Guardião ADM',
-      `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a68"/><stop offset=".5" stop-color="#c8102e"/><stop offset="1" stop-color="#5a0614"/></linearGradient><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#f5c542"/><stop offset=".75" stop-color="#b8860b"/><stop offset="1" stop-color="#ffe27a"/></linearGradient></defs>` +
-      ring(39, 7, '#14040a') + ring(42.6, 1, '#f5c542') + ring(35.6, 1, '#ffe9a8cc') +
-      `<g filter="url(#f)">` + spin(9, ring(39, 4.2, 'url(#r)', 'stroke-dasharray="15 6" stroke-linecap="round"')) + `</g>` +
-      `<g>` + ring(45.2, 1.5, '#f5c542', 'stroke-dasharray="1.5 7" stroke-linecap="round"') + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="18s" repeatCount="indefinite"/></g>` +
-      `<g filter="url(#f)"><path d="M50 0.8L63 5.2V13.2Q63 21.6 50 27.4Q37 21.6 37 13.2V5.2Z" fill="url(#r)" stroke="url(#g)" stroke-width="1.6" stroke-linejoin="round"/></g>` +
-      `<path d="M50 4.2L59.6 7.4V13Q59.6 19 50 23.6Q40.4 19 40.4 13V7.4Z" fill="none" stroke="#ffe9a8" stroke-width=".6" opacity=".75"/>` +
-      star(50, 13.6, 6.2, 2.6, 'url(#g)') +
-      spark(13, 30, 4, '#fff', 2, 0) + spark(88, 40, 3.6, '#ffe9a8', 2.4, .6) + spark(84, 82, 3.4, '#fff', 2.2, 1.2) + spark(16, 76, 3, '#ffe9a8', 2.6, 1.7)],
+    ['adm-guardiao', 'Escudo Negro ADM',
+      `<defs><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="k" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050506"/><stop offset=".3" stop-color="#2c2e35"/><stop offset=".48" stop-color="#b9bdc8"/><stop offset=".62" stop-color="#1b1c21"/><stop offset="1" stop-color="#000"/></linearGradient><linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d3f48"/><stop offset=".45" stop-color="#111216"/><stop offset="1" stop-color="#000"/></linearGradient><linearGradient id="c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#8f95a1"/><stop offset=".65" stop-color="#eef1f5"/><stop offset="1" stop-color="#5d636e"/></linearGradient></defs>` +
+      ring(39, 7, '#050506') + spin(11, ring(39, 6.4, 'url(#k)')) + ring(42.7, 1, 'url(#c)') + ring(35.5, .9, '#ffffffaa') +
+      `<g filter="url(#f)">` + spin(6, ring(39, 1.9, '#fff', 'stroke-dasharray="9 236" stroke-linecap="round" opacity=".85"')) + `</g>` +
+      `<g>` + ring(45.2, 1.3, '#c9ccd4', 'stroke-dasharray="1.5 7" stroke-linecap="round"') + `<animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="18s" repeatCount="indefinite"/></g>` +
+      `<path d="M33 71Q41.5 71 50 68Q58.5 71 67 71V80.5Q67 92 50 99.5Q33 92 33 80.5Z" fill="url(#s)" stroke="url(#c)" stroke-width="1.7" stroke-linejoin="round"/>` +
+      `<path d="M36.2 73.6Q42.5 73.6 50 71.2Q57.5 73.6 63.8 73.6V80.4Q63.8 90 50 96Q36.2 90 36.2 80.4Z" fill="none" stroke="#ffffff" stroke-width=".55" opacity=".5"/>` +
+      `<path d="M37 74Q41 74 46 72.6L38 92Q37 87 37 80Z" fill="#fff" opacity=".1"/>` +
+      star(50, 77.2, 3.3, 1.4, 'url(#c)') +
+      `<text x="50" y="89.4" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="10" fill="#fff" stroke="#8f95a1" stroke-width=".35" textLength="22" lengthAdjust="spacingAndGlyphs">ADM</text>` +
+      spark(13, 30, 4, '#fff', 2, 0) + spark(88, 38, 3.6, '#dfe3ea', 2.4, .6) + spark(16, 66, 3, '#fff', 2.6, 1.7) + spark(86, 70, 3.2, '#fff', 2.2, 1.2)],
     ['cuia-platina', 'Cuia de Platina',
-      `<defs><linearGradient id="p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".3" stop-color="#cfe3f2"/><stop offset=".6" stop-color="#8fa4b8"/><stop offset=".82" stop-color="#f4fbff"/><stop offset="1" stop-color="#9bb0c4"/></linearGradient><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
+      `<defs><linearGradient id="p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#cfe3f2"/><stop offset=".6" stop-color="#8fa4b8"/><stop offset=".82" stop-color="#f4fbff"/><stop offset="1" stop-color="#9bb0c4"/></linearGradient><linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6eff7"/><stop offset=".4" stop-color="#6f8196"/><stop offset=".7" stop-color="#f4fbff"/><stop offset="1" stop-color="#5a6b7e"/></linearGradient><filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
       `<g filter="url(#f)">` + spin(10, ring(39, 5, 'url(#p)')) + `</g>` + ring(36.3, 1, '#ffffffcc') + ring(41.8, 1, '#4a5a6c') +
-      `<g transform="translate(50 87)"><path d="M6 -6L17 -21" stroke="#eef6fc" stroke-width="2.2" stroke-linecap="round"/><circle cx="17.4" cy="-21.4" r="2" fill="#eef6fc"/>` +
-      `<path d="M-16 -6Q-16 11 0 11Q16 11 16 -6Z" fill="url(#p)" stroke="#4a5a6c" stroke-width="1.3"/><path d="M-12.4 -2Q-11.4 5.4 -6 8.2" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".85"/>` +
-      `<ellipse cx="0" cy="-6" rx="16" ry="4.2" fill="#3f7a2e" stroke="#4a5a6c" stroke-width="1.3"/><ellipse cx="0" cy="-6.6" rx="11" ry="2.2" fill="#5fa043" opacity=".7"/>` +
-      `<text x="0" y="6.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="7.4" fill="#1f2b3a" stroke="#ffffff" stroke-width=".35" textLength="19" lengthAdjust="spacingAndGlyphs">ADM</text></g>` +
-      spark(15, 28, 4, '#fff', 2, 0) + spark(87, 34, 3.5, '#e6f3ff', 2.4, .7) + spark(84, 74, 3, '#fff', 2.2, 1.3) + spark(13, 66, 3, '#e6f3ff', 2.6, 1.8)],
+      cuia(50, 75, .95, { body: 'url(#p)', line: '#3f4f61', metal: 'url(#m)', text: '<text x="0" y="15.4" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="7.8" fill="#1f2b3a" stroke="#fff" stroke-width=".3" textLength="18" lengthAdjust="spacingAndGlyphs">ADM</text>' }) +
+      spark(15, 28, 4, '#fff', 2, 0) + spark(87, 34, 3.5, '#e6f3ff', 2.4, .7) + spark(85, 66, 3, '#fff', 2.2, 1.3) + spark(13, 66, 3, '#e6f3ff', 2.6, 1.8)],
   ];
   return L.map(([id, name, body]) => ({ id, name, url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`) }));
 })();
