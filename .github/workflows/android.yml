@@ -47,10 +47,10 @@ jobs:
       - name: Icone do app
         working-directory: mobile
         continue-on-error: true
-        run: |
+                run: |
+          sudo apt-get install -y imagemagick
           mkdir -p resources
           convert ../public/icon-512.png -resize 1024x1024 resources/icon-only.png
-          cp resources/icon-only.png resources/icon-foreground.png
           npx capacitor-assets generate --android --iconBackgroundColor '#101821'
       - name: Permissoes de microfone e camera
         working-directory: mobile
