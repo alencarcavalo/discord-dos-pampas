@@ -25,8 +25,7 @@ jobs:
               "@capacitor/android": "^6.2.0",
               "@capacitor/cli": "^6.2.0",
               "@capacitor/core": "^6.2.0"
-            },
-            "devDependencies": { "@capacitor/assets": "^3.0.5" }
+            }
           }
           EOF
           cat > capacitor.config.json <<'EOF'
@@ -45,14 +44,14 @@ jobs:
           npm install
           npx cap add android
       - name: Icone do app
-        working-directory: mobile
-        continue-on-error: true
         run: |
-          sudo apt-get install -y imagemagick
-          mkdir -p resources
-          convert ../public/icon-512.png -resize 1024x1024 resources/icon-only.png
-          cp resources/icon-only.png resources/icon-foreground.png
-          npx capacitor-assets generate --android --iconBackgroundColor '#101821'
+          res=mobile/android/app/src/main/res
+          for d in $res/mipmap-*dpi; do
+            cp public/icon-512.png $d/ic_launcher.png
+            cp public/icon-512.png $d/ic_launcher_round.png
+            cp public/icon-512.png $d/ic_launcher_foreground.png
+          done
+          rm -rf $res/mipmap-anydpi-v26
       - name: Permissoes de microfone e camera
         working-directory: mobile
         run: |
