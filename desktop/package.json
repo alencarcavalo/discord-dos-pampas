@@ -1,6 +1,6 @@
 {
   "name": "discord-dos-pampas-desktop",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "App de computador do Pampa Chat",
   "main": "main.js",
   "author": "Turma dos Pampas",
@@ -15,9 +15,9 @@
     "publish": { "provider": "github", "owner": "alencarcavalo", "repo": "discord-dos-pampas", "releaseType": "release" },
     "appId": "br.pampas.discord",
     "productName": "Pampa Chat",
-    "files": ["main.js", "preload.js", "splash.html", "build/icon.png"],
+    "files": ["main.js", "preload.js", "splash.html", "build/icon.png", "build/logo.png"],
     "directories": { "buildResources": "build" },
-    "win": { "target": "nsis", "icon": "build/icon.png" },
+    "win": { "target": "nsis", "icon": "build/icon.ico" },
     "nsis": { "oneClick": true, "perMachine": false },
     "artifactName": "Pampa-Chat-Setup.exe"
   }
