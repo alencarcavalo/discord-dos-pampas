@@ -5,9 +5,10 @@
 <script>try{if(window.pampas)document.documentElement.classList.add('dsk');if((localStorage.getItem('pampas-nome')||'').trim())document.documentElement.classList.add('auto','spl')}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>Pampa Chat</title>
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/png" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=2">
+<link rel="shortcut icon" href="/icon-192.png?v=2">
+<link rel="apple-touch-icon" href="/icon-192.png?v=2">
 <meta name="theme-color" content="#1e1f22">
 <style>
 :root{--rail:#1e1f22;--side:#2b2d31;--main:#313338;--input:#383a40;--hover:#35373c;--txt:#dbdee1;--mut:#949ba4;--blur:#5865f2;--verde:#23a559;--verm:#f23f43;--pampa:#c8372d;--fala:#5865f2;--onac:#fff}
@@ -4497,6 +4498,7 @@ function card(id, anchor) {
   const al = actLines(u, true); if (al.length) sec('Atividade', ...al);
   if (u.room) { const t = document.createElement('p'); t.textContent = '🔊 ' + label(u.room); sec('Na chamada', t); }
   if (isAdm && id !== me && !isOff) { const b = document.createElement('button'); b.className = 'go'; b.style.background = '#da373c'; b.textContent = '🛡️ Expulsar do servidor'; b.onclick = async () => { if (await askYes('Expulsar ' + u.name + ' do servidor? A pessoa pode entrar de novo.', 'Expulsar')) { send({ type: 'kick', id }); w.remove(); } }; bx.append(b); }
+  if (isAdm && isOff) { const b = document.createElement('button'); b.className = 'go'; b.style.background = '#da373c'; b.textContent = '🛡️ Remover da lista (offline)'; b.onclick = async () => { if (await askYes('Remover ' + u.name + ' da lista de membros? Se a pessoa entrar de novo, volta para a lista.', 'Remover')) { send({ type: 'forget', pid: u.pid }); w.remove(); } }; bx.append(b); }
   if (id === me) { const b = document.createElement('button'); b.className = 'go'; b.textContent = 'Editar perfil'; b.onclick = () => { w.remove(); $('#bCfg').click(); }; bx.append(b); }
   c.append(bn, av, bx); w.append(c); document.body.append(w);
   const close = () => { w.remove(); document.removeEventListener('keydown', esc, true); };
