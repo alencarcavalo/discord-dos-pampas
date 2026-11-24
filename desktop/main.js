@@ -208,18 +208,23 @@ app.whenReady().then(() => {
       }
       if (pending) return cb({});   // já tem um seletor aberto: ignora pedido repetido
       const res = waitPick();
-      // 1) lista rápida (só nomes, sem miniaturas): o seletor aparece na hora
-      const quick = await desktopCapturer.getSources({ types: TYPES, thumbnailSize: { width: 0, height: 0 }, fetchWindowIcons: false });
-      if (!quick.length) { if (pending) pending(null); await res; return cb({}); }
+      const FULL = { types: TYPES, thumbnailSize: { width: 320, height: 180 }, fetchWindowIcons: true };
+      // 1) lista rápida (miniatura mínima, sem ícones): o seletor mostra os nomes na hora
+      let quick = null, usedFull = false;
+      try { quick = await desktopCapturer.getSources({ types: TYPES, thumbnailSize: { width: 1, height: 1 }, fetchWindowIcons: false }); } catch (e) { console.error('lista rápida falhou:', e && e.message); }
+      if (!pending) return cb({});   // a pessoa cancelou enquanto procurava
+      if (!quick || !quick.length) { quick = await desktopCapturer.getSources(FULL); usedFull = true; }   // plano B: lista completa (mais lenta)
+      if (!pending) return cb({});
+      if (!quick.length) { pending(null); await res; return cb({}); }
       const toList = srcs => srcs.map(s => ({
         id: s.id, name: s.name, screen: s.id.startsWith('screen:'),
-        thumb: s.thumbnail && !s.thumbnail.isEmpty() ? s.thumbnail.toDataURL() : '',
+        thumb: s.thumbnail && !s.thumbnail.isEmpty() && s.thumbnail.getSize().width > 8 ? s.thumbnail.toDataURL() : '',
         icon: s.appIcon && !s.appIcon.isEmpty() ? s.appIcon.toDataURL() : '',
       }));
       let all = quick;
       win.webContents.send('pick-sources', toList(quick));
       // 2) miniaturas e ícones (demora uns segundos): chegam depois, sem travar o seletor
-      desktopCapturer.getSources({ types: TYPES, thumbnailSize: { width: 320, height: 180 }, fetchWindowIcons: true }).then(full => {
+      if (!usedFull) desktopCapturer.getSources(FULL).then(full => {
         if (!pending || !full.length) return;
         all = full; win.webContents.send('pick-sources', toList(full));
       }).catch(() => {});
@@ -227,7 +232,12 @@ app.whenReady().then(() => {
       const src = pick && (all.find(s => s.id === pick.id) || quick.find(s => s.id === pick.id));
       if (!src) return cb({});
       cb(pick.audio ? { video: src, audio: 'loopback' } : { video: src });
-    } catch { if (pending) pending(null); cb({}); }
+    } catch (e) {
+      console.error('compartilhar tela:', e);
+      if (pending) pending(null);
+      win.webContents.executeJavaScript('window.__pkErr&&window.__pkErr(' + JSON.stringify(String((e && e.message) || e).slice(0, 120)) + ')').catch(() => {});   // mostra o motivo no aviso do app
+      cb({});
+    }
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
