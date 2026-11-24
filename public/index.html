@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<script>try{if((localStorage.getItem('pampas-nome')||'').trim())document.documentElement.classList.add('auto','spl')}catch(e){}</script>
+<script>try{if(window.pampas)document.documentElement.classList.add('dsk');if((localStorage.getItem('pampas-nome')||'').trim())document.documentElement.classList.add('auto','spl')}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>Pampa Chat</title>
 <link rel="manifest" href="/manifest.webmanifest">
@@ -445,6 +445,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 /* ---------- abertura animada (aparece no lugar da tela de login quando a entrada é automática) ---------- */
 #splash{display:none;position:fixed;inset:0;z-index:2000;place-items:center;overflow:hidden;background:#0d0a14;color:#fff;transition:opacity .6s ease,transform .6s ease,filter .6s ease}
 html.spl #splash{display:grid}
+html.dsk #splash{display:none!important}   /* no app de computador a abertura é só a janelinha; o site não repete a animação */
 html.auto #login{display:none!important}
 #splash{--rsv:#12a94a;--rsr:#e8141f;--rsa:#ffd100}
 #splash::before{content:"";position:absolute;inset:-35%;background:linear-gradient(118deg,var(--rsv) 0 34%,var(--rsr) 34% 66%,var(--rsa) 66% 100%);filter:blur(46px) saturate(1.1);opacity:.55;animation:spWave 9s ease-in-out infinite alternate}
@@ -5173,6 +5174,7 @@ const splash = { t0: Date.now(), done: false, el: $('#splash') };
 const splashStop = () => { clearTimeout(splash.slow); clearTimeout(splash.give); };
 function splashDone() {   // conectou: deixa a animação aparecer um pouquinho e some revelando o app
   if (splash.done) return; splash.done = true; splashStop();
+  if (document.documentElement.classList.contains('dsk')) { document.documentElement.classList.remove('auto', 'spl'); return; }   // app de computador: entra direto, sem esperar
   setTimeout(() => {
     splash.el.classList.add('out');
     setTimeout(() => document.documentElement.classList.remove('auto', 'spl'), 700);
@@ -5186,7 +5188,6 @@ function splashFail() {   // não deu para entrar sozinho (senha errada, servido
 }
 try {
   if (($('#nome').value || '').trim()) {
-    splash.slow = setTimeout(() => { const c = $('#spCap'); if (c) c.textContent = 'Acordando o servidor, tchê… pode levar um minutinho'; }, 7000);
     splash.give = setTimeout(splashFail, 45000);
     $('#login').requestSubmit();
     if (!ws) splashFail();   // o formulário não passou na validação
