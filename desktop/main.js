@@ -25,12 +25,10 @@ function load() {
 
 // ---------- seletor de tela / janela ----------
 let pending = null;
-function askPicker(list) {
+function waitPick() {   // espera a escolha da pessoa (ou ela cancelar)
   return new Promise(resolve => {
-    if (pending) pending(null);
     const t = setTimeout(() => { pending = null; resolve(null); }, 120000);
     pending = r => { clearTimeout(t); pending = null; resolve(r); };
-    win.webContents.send('pick-sources', list);
   });
 }
 ipcMain.on('pick-result', (e, r) => { if (pending) pending(r && typeof r.id === 'string' ? { id: r.id, audio: !!r.audio } : null); });
@@ -201,24 +199,35 @@ app.whenReady().then(() => {
   session.defaultSession.setDisplayMediaRequestHandler(async (req, cb) => {
     try {
       const ready = await win.webContents.executeJavaScript('!!window.__pickerReady').catch(() => false);
-      const sources = await desktopCapturer.getSources({
-        types: ['screen', 'window'], thumbnailSize: { width: 320, height: 180 }, fetchWindowIcons: true,
-      });
-      if (!sources.length) return cb({});
+      const TYPES = ['screen', 'window'];
       if (!ready) { // página antiga sem seletor: tela principal, como antes
-        const scr = sources.find(s => s.id.startsWith('screen:')) || sources[0];
+        const all = await desktopCapturer.getSources({ types: TYPES, thumbnailSize: { width: 320, height: 180 }, fetchWindowIcons: true });
+        if (!all.length) return cb({});
+        const scr = all.find(s => s.id.startsWith('screen:')) || all[0];
         return cb({ video: scr, audio: 'loopback' });
       }
-      const list = sources.map(s => ({
+      if (pending) return cb({});   // já tem um seletor aberto: ignora pedido repetido
+      const res = waitPick();
+      // 1) lista rápida (só nomes, sem miniaturas): o seletor aparece na hora
+      const quick = await desktopCapturer.getSources({ types: TYPES, thumbnailSize: { width: 0, height: 0 }, fetchWindowIcons: false });
+      if (!quick.length) { if (pending) pending(null); await res; return cb({}); }
+      const toList = srcs => srcs.map(s => ({
         id: s.id, name: s.name, screen: s.id.startsWith('screen:'),
         thumb: s.thumbnail && !s.thumbnail.isEmpty() ? s.thumbnail.toDataURL() : '',
         icon: s.appIcon && !s.appIcon.isEmpty() ? s.appIcon.toDataURL() : '',
       }));
-      const pick = await askPicker(list);
-      const src = pick && sources.find(s => s.id === pick.id);
+      let all = quick;
+      win.webContents.send('pick-sources', toList(quick));
+      // 2) miniaturas e ícones (demora uns segundos): chegam depois, sem travar o seletor
+      desktopCapturer.getSources({ types: TYPES, thumbnailSize: { width: 320, height: 180 }, fetchWindowIcons: true }).then(full => {
+        if (!pending || !full.length) return;
+        all = full; win.webContents.send('pick-sources', toList(full));
+      }).catch(() => {});
+      const pick = await res;
+      const src = pick && (all.find(s => s.id === pick.id) || quick.find(s => s.id === pick.id));
       if (!src) return cb({});
       cb(pick.audio ? { video: src, audio: 'loopback' } : { video: src });
-    } catch { cb({}); }
+    } catch { if (pending) pending(null); cb({}); }
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
