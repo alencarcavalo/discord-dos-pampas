@@ -3383,7 +3383,7 @@ $('#bTela').onclick = async () => {
     if (!window.__pickerReady) { const q = await askQuality(); if (!q) return; cfg.sq = q; saveCfg(); if (!$('#cfg').hidden) fillVoz(); }   // no app, a qualidade já é escolhida na janela de escolher a tela
     pkOpenNow();
     await startShare();
-  } catch (e) { console.error(e); pkAbort(); note('Compartilhamento de tela cancelado.'); }
+  } catch (e) { console.error(e); pkAbort(); note('Compartilhamento de tela cancelado.' + (pkErr ? ' (' + pkErr + ')' : (e && e.name && e.name !== 'NotAllowedError' ? ' (' + e.name + ')' : ''))); pkErr = ''; }
   finally { shareBusy = false; }
 };
 $('#bTrocar').onclick = swapShare;
@@ -5182,16 +5182,20 @@ function pkOpenNow() {   // abre o seletor NA HORA (em "procurando...") enquanto
   if (!window.__pickerReady || pkActive) return;
   pkActive = true; pkLoading = true; pkList = []; pkSel = null; pkKind = 'screen';
   pkQv = SQ[cfg.sq] ? cfg.sq : '720p30'; paintPkQ(); renderPicker(); $('#picker').hidden = false;
+  clearTimeout(pkSlow); pkSlow = setTimeout(() => { const n = document.querySelector('#pkGrid .none.ld'); if (n) n.textContent = 'Está demorando… se não aparecer, clique em Cancelar e tente de novo.'; }, 8000);
 }
-function pkAbort() { pkActive = false; pkLoading = false; $('#picker').hidden = true; }
-function closePicker(r) { pkActive = false; pkLoading = false; $('#picker').hidden = true; window.pampas.pickResult(r); }
+let pkErr = '', pkSlow = 0;
+window.__pkErr = m => { pkErr = m; };   // o app de computador avisa aqui o motivo quando não consegue listar as telas
+function pkAbort() { pkActive = false; pkLoading = false; clearTimeout(pkSlow); $('#picker').hidden = true; }
+function closePicker(r) { pkActive = false; pkLoading = false; clearTimeout(pkSlow); $('#picker').hidden = true; window.pampas.pickResult(r); }
 document.querySelectorAll('#pkTabs [data-k]').forEach(b => b.onclick = () => { pkKind = b.dataset.k; renderPicker(); });
 $('#pkOk').onclick = () => { cfg.sq = pkQv; saveCfg(); if (!$('#cfg').hidden) fillVoz(); closePicker({ id: pkSel, audio: $('#pkAud').checked }); };   // a qualidade escolhida aqui vale para a transmissão (applyShareQ roda logo depois)
 $('#pkNo').onclick = () => closePicker(null);
 addEventListener('keydown', e => { if ($('#picker').hidden) return; if (e.key === 'Escape') closePicker(null); else if (e.key === 'Enter' && !$('#pkOk').disabled && !(e.target.closest && e.target.closest('#pkNo'))) { e.preventDefault(); $('#pkOk').click(); } });
 if (window.pampas && pampas.onPick) {
   pampas.onPick(list => {   // chega 2 vezes: primeiro só os nomes (rápido), depois com miniaturas e ícones
-    if (!pkActive) { pkActive = true; pkSel = null; pkKind = 'screen'; pkQv = SQ[cfg.sq] ? cfg.sq : '720p30'; paintPkQ(); }
+    if (!pkActive) { window.pampas.pickResult(null); return; }   // chegou depois de cancelar: descarta
+    clearTimeout(pkSlow);
     pkList = list; pkLoading = false;
     if (!pkSel || !list.some(s => s.id === pkSel)) { const f = list.find(s => s.screen) || list[0]; pkSel = f ? f.id : null; pkKind = f && !f.screen ? 'window' : 'screen'; }
     renderPicker(); $('#picker').hidden = false;
