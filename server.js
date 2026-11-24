@@ -313,7 +313,7 @@ const srv = http.createServer((req, res) => {
   fs.readFile(full, (err, data) => {
     if (err) { res.writeHead(500); return res.end('erro'); }
     res.setHeader('content-type', MIME[path.extname(full)] || 'application/octet-stream');
-    if (full.endsWith('.html')) res.setHeader('cache-control', 'no-cache');   // sempre confere se tem versão nova
+    if (full.endsWith('.html') || /(logo|icon-\d+)\.png$|\.webmanifest$|sw\.js$/.test(full)) res.setHeader('cache-control', 'no-cache');   // sempre confere se tem versão nova (inclui logo, ícones e manifest)
     res.end(data);
   });
 });
@@ -1027,6 +1027,12 @@ wss.on('connection', (ws, req) => {
       if (!t) return;
       send(t, { type: 'kicked', by: ws.nick });
       setTimeout(() => t.close(), 200);
+    } else if (m.type === 'forget') {   // ADM tira da lista uma pessoa OFFLINE (ex.: perfis de teste que ninguém mais acessa)
+      if (!ws.admin) return;
+      const pid = String(m.pid || '');
+      if (!MEMB.has(pid) || isOnlinePid(pid)) return;   // online: use "expulsar"
+      MEMB.delete(pid); markDirty('\0mb:' + pid); markDirty('\0mbl');
+      state();
     } else if (m.type === 'history') {
       const hh = hist.get(m.channel) || []; fixMids(hh);
       send(ws, { type: 'history', channel: m.channel, msgs: hh.map(x => pub(x, ws)) });
