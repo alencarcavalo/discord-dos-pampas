@@ -290,19 +290,46 @@ small{color:var(--mut)}
 #meterBar{height:100%;width:0;background:#7a7f87}#meterBar.open{background:var(--verde)}
 #meterThr{position:absolute;top:0;bottom:0;width:2px;background:var(--verm);left:0}
 #picker{position:fixed;inset:0;background:#000a;z-index:11;display:grid;place-items:center;padding:16px}
-.pk{background:var(--main);border-radius:10px;padding:20px;width:min(860px,100%);max-height:90vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 24px #000a}
-.pk h2{margin:0}
-.pkq{display:grid;gap:10px}
-.pkqr{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.pkqr>span{font-weight:600}
-.pkq .sec{min-width:92px;text-align:center}
-#pkHint{color:var(--mut);font-size:.82rem}
-#pkGrid{overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;min-height:140px}
-.pkc{background:var(--side);border-radius:8px;padding:8px;display:grid;gap:6px;text-align:left;border:2px solid transparent;align-content:start}
-.pkc:hover{background:var(--hover)}.pkc.on{border-color:var(--blur)}
-.pkc img.th{width:100%;aspect-ratio:16/9;object-fit:contain;background:#000;border-radius:4px}
-.pkc span{display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;font-size:.85rem}
-.pkc span img{width:16px;height:16px}
+.pk{background:var(--main);border-radius:18px;padding:24px 24px 20px;width:min(820px,100%);max-height:92vh;display:flex;flex-direction:column;gap:16px;box-shadow:0 12px 48px #000c,0 0 0 1px #ffffff12 inset;animation:pkIn .28s cubic-bezier(.2,1.1,.4,1)}
+@keyframes pkIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.pkh h2{margin:0;font-size:1.3rem}
+.pkh p{margin:4px 0 0;color:var(--mut);font-size:.88rem}
+.pkseg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--side);align-self:flex-start}
+.pkseg button{padding:8px 16px;border-radius:9px;font-weight:600;font-size:.9rem;background:none;color:var(--mut);transition:background .15s,color .15s}
+.pkseg button:hover{color:inherit}
+.pkseg button.on{background:var(--blur);color:var(--onac,#fff)}
+.pkseg b{font-weight:600;opacity:.7;margin-left:4px;font-size:.8rem}
+#pkGrid{overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;min-height:150px;padding:3px;align-content:start}
+#pkGrid .none{grid-column:1/-1;display:grid;place-items:center;color:var(--mut);padding:30px 0}
+.pkc{position:relative;background:var(--side);border-radius:14px;padding:8px;display:grid;gap:8px;text-align:left;border:2px solid transparent;align-content:start;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s}
+.pkc:hover{background:var(--hover);transform:translateY(-2px)}
+.pkc.on{border-color:var(--blur);box-shadow:0 0 0 4px color-mix(in srgb,var(--blur) 28%,transparent)}
+.pkc img.th{width:100%;aspect-ratio:16/9;object-fit:contain;background:#000;border-radius:8px;display:block}
+.pkc .ck2{position:absolute;top:14px;right:14px;width:24px;height:24px;border-radius:50%;background:var(--blur);color:var(--onac,#fff);display:grid;place-items:center;font-size:.85rem;font-weight:800;transform:scale(0);transition:transform .2s cubic-bezier(.2,1.5,.4,1);box-shadow:0 2px 8px #0008}
+.pkc.on .ck2{transform:scale(1)}
+.pkc span{display:flex;align-items:center;gap:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:.88rem;font-weight:600;padding:0 4px 2px}
+.pkc span img{width:18px;height:18px;flex:none}
+.pkqt{display:grid;gap:8px}
+.pkqt>label{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+#pkQ{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+#pkQ button{display:grid;gap:2px;justify-items:center;padding:10px 6px;border-radius:12px;background:var(--side);border:2px solid transparent;transition:background .15s,border-color .15s}
+#pkQ button:hover{background:var(--hover)}
+#pkQ button strong{font-size:.92rem}
+#pkQ button small{color:var(--mut);font-size:.74rem}
+#pkQ button.on{border-color:var(--blur);background:color-mix(in srgb,var(--blur) 16%,var(--side))}
+#pkHint{color:var(--mut);font-size:.82rem;min-height:1.1em}
+.pkf{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:4px}
+.pkaud{display:flex;align-items:center;gap:10px;cursor:pointer;margin-right:auto;font-size:.9rem;font-weight:600;user-select:none}
+.pkaud input{position:absolute;opacity:0;pointer-events:none}
+.pkaud i{position:relative;width:42px;height:24px;border-radius:99px;background:#80848e;transition:background .2s;flex:none}
+.pkaud i::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s cubic-bezier(.3,1.4,.5,1)}
+.pkaud input:checked+i{background:var(--blur)}
+.pkaud input:checked+i::after{transform:translateX(18px)}
+.pkaud input:focus-visible+i{outline:2px solid var(--blur);outline-offset:3px}
+.pkf .go{padding:11px 26px;border-radius:12px}
+.pkf .sec{padding:11px 20px;border-radius:12px}
+@media(max-width:620px){#pkQ{grid-template-columns:repeat(2,1fr)}.pk{padding:18px}}
+@media(prefers-reduced-motion:reduce){.pk{animation:none}}
 #updbar{position:fixed;top:0;left:0;right:0;z-index:12;background:var(--verde);color:#fff;display:flex;gap:12px;justify-content:center;align-items:center;padding:8px}
 #updbar button{background:#0003;padding:4px 12px;border-radius:6px}
 #chatw{display:flex;flex-direction:column;min-height:0;flex:1}
@@ -996,17 +1023,25 @@ body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{cont
 <div id="navbd" hidden></div>
 
 <div id="updbar" hidden><span id="updbarT"></span><button id="updbarGo">Reiniciar e atualizar</button><button id="updbarX">Depois</button></div>
-<div id="picker" hidden><div class="pk">
-  <h2>O que você quer compartilhar?</h2>
-  <div class="row" id="pkTabs"><button type="button" class="sec" data-k="screen">Telas inteiras</button><button type="button" class="sec" data-k="window">Janelas</button></div>
+<div id="picker" hidden><div class="pk" role="dialog" aria-modal="true" aria-labelledby="pkTitle">
+  <div class="pkh"><h2 id="pkTitle">Compartilhar tela</h2><p>Escolha o que a turma vai ver.</p></div>
+  <div class="pkseg" id="pkTabs"><button type="button" data-k="screen">🖥️ Telas<b id="pkN1"></b></button><button type="button" data-k="window">🗔 Janelas<b id="pkN2"></b></button></div>
   <div id="pkGrid"></div>
-  <label class="ck" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="pkAud" checked style="width:auto"> Compartilhar o som do computador</label>
-  <div class="pkq">
-    <div class="pkqr"><span>Resolução</span><div class="row" id="pkRes"><button type="button" class="sec" data-v="720p">720p</button><button type="button" class="sec" data-v="1080p">1080p</button></div></div>
-    <div class="pkqr"><span>Quadros por segundo</span><div class="row" id="pkFps"><button type="button" class="sec" data-v="30">30 fps</button><button type="button" class="sec" data-v="60">60 fps</button></div></div>
+  <div class="pkqt">
+    <label>Qualidade</label>
+    <div id="pkQ">
+      <button type="button" data-q="720p30"><strong>Leve</strong><small>720p · 30 fps</small></button>
+      <button type="button" data-q="720p60"><strong>Suave</strong><small>720p · 60 fps</small></button>
+      <button type="button" data-q="1080p30"><strong>Nítida</strong><small>1080p · 30 fps</small></button>
+      <button type="button" data-q="1080p60"><strong>Máxima</strong><small>1080p · 60 fps</small></button>
+    </div>
     <small id="pkHint"></small>
   </div>
-  <div class="row"><button type="button" class="go" id="pkOk" disabled>Compartilhar</button><button type="button" class="sec" id="pkNo">Cancelar</button></div>
+  <div class="pkf">
+    <label class="pkaud"><input type="checkbox" id="pkAud" checked><i></i><span>🔊 Compartilhar som do PC</span></label>
+    <button type="button" class="sec" id="pkNo">Cancelar</button>
+    <button type="button" class="go" id="pkOk" disabled>Compartilhar</button>
+  </div>
 </div></div>
 
 <div id="cfg" hidden>
@@ -1653,6 +1688,8 @@ const SND = {
   unmute:   [[390, 0, .09], [585, .05, .15]],
   deaf:     [[440, 0, .1], [330, .07, .1], [247, .14, .2]],
   undeaf:   [[330, 0, .1], [440, .07, .1], [587, .14, .22]],
+  live:     [[587, 0, .12], [880, .07, .12], [1319, .14, .5]],      // alguém começou a transmitir: subindo e brilhante
+  liveoff:  [[1319, 0, .1], [880, .07, .12], [587, .14, .4]],       // transmissão acabou: descendo
 };
 const custom = {};
 // Pacotes de sons de entrar/sair: cada pessoa escolhe nas Configurações > Voz o que quer ouvir (só no próprio aparelho).
@@ -1688,6 +1725,18 @@ function sfx(n) {
     const t = c.currentTime + .02;
     (SND[n] || []).forEach(([f, o, d]) => bell(c, f, t + o, d));
   } catch {}
+}
+
+// aviso + som quando alguém (ou você) começa/para de transmitir a tela na chamada em que você está
+let liveSet = new Set(), liveRoom = null;
+function liveWatch() {
+  const room = cur, now = new Set();
+  if (room) st.users.forEach(u => u.room === room && u.vs && u.vs.screen && now.add(u.id));
+  if (room && room === liveRoom) {   // na primeira leitura depois de entrar na sala só memoriza (não apita por transmissão que já estava rolando)
+    now.forEach(id => { if (liveSet.has(id)) return; const u = st.users.find(x => x.id === id); sfx('live'); toast(id === me ? '🔴 Você começou a transmitir' : '🔴 ' + (u ? u.name : 'Alguém') + ' começou a transmitir'); });
+    liveSet.forEach(id => { if (now.has(id)) return; const u = st.users.find(x => x.id === id); if (u && u.room === room) { sfx('liveoff'); if (id === me) toast('Você parou de transmitir'); } });
+  }
+  liveRoom = room; liveSet = now;
 }
 
 // ---------- quem está falando (borda piscando) e redução de eco ----------
@@ -2991,6 +3040,7 @@ function handle(m) {
     $('#meN').textContent = myName; prof[me] = cfg.prof; paintAv($('#meav'), myName, cfg.prof); loadCustom();
   } else if (m.type === 'state') {
     st = m; if (m.now) clkOff = m.now - Date.now();
+    try { liveWatch(); } catch {}
     if (cur && !chan(cur)) { dropAll(); }
     if (!view || (view.k !== 'm' && view.k !== 'w' && !chan(view.id))) { firstText(); } else { renderChans(); renderTop(); }
     renderMem();
@@ -5091,9 +5141,11 @@ $('#camPrevBtn').onclick = async () => {
 let pkList = [], pkSel = null, pkKind = 'screen';
 function renderPicker() {
   const g = $('#pkGrid'); g.replaceChildren();
+  $('#pkN1').textContent = pkList.filter(s => s.screen).length || ''; $('#pkN2').textContent = pkList.filter(s => !s.screen).length || '';
   pkList.filter(s => (pkKind === 'screen') === s.screen).forEach(s => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'pkc' + (pkSel === s.id ? ' on' : '');
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pkc' + (pkSel === s.id ? ' on' : ''); b.title = s.name;
     if (s.thumb) { const im = document.createElement('img'); im.className = 'th'; im.src = s.thumb; im.alt = ''; b.append(im); }
+    const ck = document.createElement('div'); ck.className = 'ck2'; ck.textContent = '✓'; b.append(ck);
     const sp = document.createElement('span');
     if (s.icon) { const ic = document.createElement('img'); ic.src = s.icon; ic.alt = ''; sp.append(ic); }
     sp.append(document.createTextNode(s.name)); b.append(sp);
@@ -5101,25 +5153,23 @@ function renderPicker() {
     b.ondblclick = () => { pkSel = s.id; $('#pkOk').click(); };
     g.append(b);
   });
-  if (!g.children.length) g.textContent = 'Nada por aqui.';
-  $('#pkOk').disabled = !pkSel;
+  if (!g.children.length) { const n = document.createElement('div'); n.className = 'none'; n.textContent = pkKind === 'screen' ? 'Nenhuma tela encontrada.' : 'Nenhuma janela aberta para compartilhar.'; g.append(n); }
+  const cur = pkList.find(s => s.id === pkSel);
+  $('#pkOk').disabled = !cur;
   document.querySelectorAll('#pkTabs [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === pkKind));
 }
 let pkQv = '720p30';   // qualidade escolhida na janela de compartilhar (resolução + fps)
-const PKQ_TXT = { '720p30': 'Leve: boa para PC fraco e internet normal.', '720p60': 'Equilibrada: movimento mais suave, usa um pouco mais do PC.', '1080p30': 'Equilibrada: imagem mais nítida, usa um pouco mais do PC.', '1080p60': 'Pesada: o melhor visual, mas exige PC e internet fortes.' };
+const PKQ_TXT = { '720p30': 'Boa para PC fraco e internet normal.', '720p60': 'Movimento mais suave; usa um pouco mais do PC.', '1080p30': 'Imagem mais nítida; usa um pouco mais do PC.', '1080p60': 'O melhor visual, mas exige PC e internet fortes.' };
 function paintPkQ() {
-  const res = pkQv.startsWith('1080') ? '1080p' : '720p', fps = pkQv.endsWith('60') ? '60' : '30';
-  document.querySelectorAll('#pkRes [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === res));
-  document.querySelectorAll('#pkFps [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === fps));
+  document.querySelectorAll('#pkQ [data-q]').forEach(b => b.classList.toggle('on', b.dataset.q === pkQv));
   $('#pkHint').textContent = PKQ_TXT[pkQv] || '';
 }
-document.querySelectorAll('#pkRes [data-v]').forEach(b => b.onclick = () => { pkQv = b.dataset.v + pkQv.slice(-2); paintPkQ(); });
-document.querySelectorAll('#pkFps [data-v]').forEach(b => b.onclick = () => { pkQv = (pkQv.startsWith('1080') ? '1080p' : '720p') + b.dataset.v; paintPkQ(); });
+document.querySelectorAll('#pkQ [data-q]').forEach(b => b.onclick = () => { pkQv = b.dataset.q; paintPkQ(); });
 function closePicker(r) { $('#picker').hidden = true; window.pampas.pickResult(r); }
 document.querySelectorAll('#pkTabs [data-k]').forEach(b => b.onclick = () => { pkKind = b.dataset.k; renderPicker(); });
 $('#pkOk').onclick = () => { cfg.sq = pkQv; saveCfg(); if (!$('#cfg').hidden) fillVoz(); closePicker({ id: pkSel, audio: $('#pkAud').checked }); };   // a qualidade escolhida aqui vale para a transmissão (applyShareQ roda logo depois)
 $('#pkNo').onclick = () => closePicker(null);
-addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#picker').hidden) closePicker(null); });
+addEventListener('keydown', e => { if ($('#picker').hidden) return; if (e.key === 'Escape') closePicker(null); else if (e.key === 'Enter' && !$('#pkOk').disabled && !(e.target.closest && e.target.closest('#pkNo'))) { e.preventDefault(); $('#pkOk').click(); } });
 if (window.pampas && pampas.onPick) {
   pampas.onPick(list => {
     pkList = list; pkKind = 'screen'; const f = list.find(s => s.screen) || list[0]; pkSel = f ? f.id : null;
