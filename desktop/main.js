@@ -98,6 +98,7 @@ setInterval(pollActivity, 20000);
 
 // ---------- janelinha de abertura (pequena, sem moldura, cantos arredondados) ----------
 const splashAt = Date.now();
+const SPLASH_MIN_MS = 4500;   // milissegundos que a abertura fica na tela, no mínimo
 function openSplash() {
   splash = new BrowserWindow({
     width: 440, height: 520, frame: false, transparent: true, hasShadow: false, resizable: false,
@@ -115,7 +116,7 @@ function revealMain() {   // a página já está pronta: mostra a janela grande 
   win.show(); win.focus(); setTimeout(syncBar, 700);
   if (splash && !splash.isDestroyed()) {
     splash.webContents.executeJavaScript("document.getElementById('splash').classList.add('out')").catch(() => {});
-    setTimeout(() => { if (splash && !splash.isDestroyed()) splash.close(); }, 450);
+    setTimeout(() => { if (splash && !splash.isDestroyed()) splash.close(); }, 850);
   }
 }
 let siteLoaded = false;
@@ -128,7 +129,7 @@ function waitPage() {   // espera a animação de entrada do próprio site termi
     const ok = giveUp || await win.webContents.executeJavaScript("document.readyState !== 'loading' && !document.documentElement.classList.contains('spl')").catch(() => false);
     if (!ok) return;
     clearInterval(iv);
-    setTimeout(revealMain, Math.max(0, 1800 - (Date.now() - splashAt)));   // a animação aparece pelo menos um pouquinho
+    setTimeout(revealMain, Math.max(0, SPLASH_MIN_MS - (Date.now() - splashAt)));   // tempo mínimo da animação de abertura (mude SPLASH_MIN_MS para mais ou menos)
   }, 300);
 }
 

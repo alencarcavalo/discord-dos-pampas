@@ -4,7 +4,7 @@
 <style>
 :root{--blur:#5865f2;--pampa:#c8372d}
 html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:"gg sans","Segoe UI",system-ui,sans-serif;user-select:none;-webkit-user-select:none}
-#splash{display:grid;position:fixed;inset:18px;border-radius:28px;place-items:center;overflow:hidden;-webkit-app-region:drag;box-shadow:0 12px 40px #000a,0 0 0 1px #ffffff14 inset;background:#0d0a14;color:#fff;transition:opacity .6s ease,transform .6s ease,filter .6s ease}
+#splash{display:grid;position:fixed;inset:18px;border-radius:28px;place-items:center;overflow:hidden;-webkit-app-region:drag;box-shadow:0 0 0 1px #ffffff14 inset;background:#0d0a14;color:#fff;transition:opacity .6s ease,transform .6s ease,filter .6s ease}
 #splash{--rsv:#12a94a;--rsr:#e8141f;--rsa:#ffd100}
 #splash::before{content:"";position:absolute;inset:-35%;background:linear-gradient(118deg,var(--rsv) 0 34%,var(--rsr) 34% 66%,var(--rsa) 66% 100%);filter:blur(46px) saturate(1.1);opacity:.55;animation:spWave 9s ease-in-out infinite alternate}
 #splash::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,#0d0a14e6 0,#0d0a14b0 36%,#0d0a1400 80%);pointer-events:none}
@@ -36,13 +36,34 @@ html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-famil
 @keyframes spEmber{0%{transform:translate(0,0) scale(1);opacity:0}10%{opacity:.95}50%{transform:translate(18px,-55vh) scale(.8)}100%{transform:translate(-12px,-105vh) scale(.3);opacity:0}}
 @keyframes spWave{from{transform:rotate(-5deg) scale(1.05) translate(-3%,2%)}to{transform:rotate(5deg) scale(1.15) translate(3%,-2%)}}
 @media (prefers-reduced-motion:reduce){#splash *,#splash::before,#splash::after{animation:none!important}#splash h1 span,#splash .cap,#splash .bar{opacity:1;transform:none}#splash .pt{display:none}}
+
+/* ---- abertura nova: logo mergulha, ondas de voz, letrinhas pulando e equalizador ---- */
+#splash{transition:opacity .8s ease,transform .8s ease,filter .8s ease}
+#splash.out{transform:scale(1.05);filter:blur(8px)}
+#splash::before{animation:spSlide 1.2s cubic-bezier(.2,.8,.2,1) both,spWave 9s ease-in-out 1.2s infinite alternate}
+#splash .lg img{animation:spDive 1.1s cubic-bezier(.2,1.2,.35,1) both,spFloat 3s ease-in-out 1.1s infinite}
+#splash .ring,#splash .lg::before,#splash .lg::after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid var(--rsv);background:none;-webkit-mask:none;mask:none;opacity:0;animation:spRipple 2.7s ease-out 1.0s infinite}
+#splash .lg::before{border-color:var(--rsa);animation-delay:1.9s}
+#splash .lg::after{border-color:var(--rsr);animation-delay:2.8s}
+#splash h1{padding:12px 0}
+#splash h1 span{animation:spRise .6s cubic-bezier(.2,.9,.3,1) both,spHop 2.8s ease-in-out calc(1.9s + var(--i)*.09s) infinite}
+#splash .bar{width:auto;height:30px;display:flex;align-items:center;gap:5px;background:none;overflow:visible}
+#splash .bar i{width:5px;height:100%;border-radius:4px;transform:scaleY(.2);background:var(--c,var(--rsv));animation:spEq 1s ease-in-out infinite;animation-delay:calc(var(--k)*-.11s)}
+#splash .bar i:nth-child(3n+2){--c:var(--rsa)}
+#splash .bar i:nth-child(3n){--c:var(--rsr)}
+@keyframes spSlide{from{opacity:0;transform:translateX(-110%) rotate(-5deg) scale(1.05)}to{opacity:.55;transform:rotate(-5deg) scale(1.05) translate(-3%,2%)}}
+@keyframes spDive{from{opacity:0;transform:translateY(-90px) scale(.5) rotate(-20deg);filter:blur(12px)}60%{opacity:1;transform:translateY(8px) scale(1.08) rotate(3deg);filter:none}to{opacity:1;transform:none;filter:none}}
+@keyframes spRipple{0%{opacity:.9;transform:scale(.7)}100%{opacity:0;transform:scale(2.3)}}
+@keyframes spHop{0%,45%,100%{transform:none}20%{transform:translateY(-7px)}}
+@keyframes spEq{0%,100%{transform:scaleY(.2)}50%{transform:scaleY(1)}}
+@media (prefers-reduced-motion:reduce){#splash .bar i{transform:scaleY(.6)}}
 </style></head><body>
 <div id="splash" aria-live="polite">
   <i class="pt" style="--x:8%;--s:5px;--d:9.0s;--w:0.0s"></i><i class="pt" style="--x:21%;--s:3px;--d:7.0s;--w:2.2s"></i><i class="pt" style="--x:34%;--s:6px;--d:11.0s;--w:0.8s"></i><i class="pt" style="--x:47%;--s:4px;--d:8.0s;--w:3.4s"></i><i class="pt" style="--x:60%;--s:5px;--d:10.0s;--w:1.5s"></i><i class="pt" style="--x:73%;--s:3px;--d:7.5s;--w:4.1s"></i><i class="pt" style="--x:86%;--s:6px;--d:12.0s;--w:0.3s"></i><i class="pt" style="--x:94%;--s:4px;--d:9.5s;--w:2.8s"></i><i class="pt" style="--x:15%;--s:4px;--d:10.5s;--w:5.2s"></i><i class="pt" style="--x:67%;--s:3px;--d:8.5s;--w:6.0s"></i>
   <div class="sp">
     <div class="lg"><div class="glow"></div><div class="ring"></div><img src="build/logo.png" alt=""></div>
     <h1 aria-label="Pampa Chat"><span style="--i:0">P</span><span style="--i:1">a</span><span style="--i:2">m</span><span style="--i:3">p</span><span style="--i:4">a</span><span class="w" style="--i:5"></span><span style="--i:6">C</span><span style="--i:7">h</span><span style="--i:8">a</span><span style="--i:9">t</span></h1>
-    <div class="bar"><i></i></div>
+    <div class="bar"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i></div>
     <div class="cap dots" id="spCap">Bah, tchê! Entrando</div>
   </div>
 </div>
