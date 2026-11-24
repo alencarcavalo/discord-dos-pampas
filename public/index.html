@@ -394,7 +394,7 @@ select{background:var(--input);border:0;border-radius:6px;padding:.6rem;color:in
 .msg .hd b.cl:hover{text-decoration:underline}
 .msg .av.cl:hover{filter:brightness(1.12)}
 #loginc img.logo{width:150px;height:auto;margin:0 auto;border-radius:0;background:none}
-#rail img{width:48px;height:48px;border-radius:16px;object-fit:cover}
+#rail img{width:48px;height:48px;border-radius:0;object-fit:contain}
 #mem{background:var(--side);padding:12px 8px;overflow:auto;border-left:1px solid color-mix(in srgb,var(--txt) 9%,transparent)}
 #mem h3{margin:4px 8px 8px;font-size:.75rem;color:var(--mut);text-transform:uppercase}
 .u{display:flex;align-items:center;gap:10px;padding:10px 10px;min-height:64px;margin-bottom:6px;border-radius:8px;background-size:cover;background-position:center}
@@ -688,7 +688,7 @@ html.auto #login{display:none!important}
   .campv .rc{margin-top:8px!important}
 }
 #rail{display:none}
-#sname::before{content:"";flex:none;width:26px;height:26px;margin-right:10px;border-radius:8px;background:url(/icon-192.png) center/cover}
+#sname::before{content:"";flex:none;width:26px;height:26px;margin-right:10px;border-radius:8px;background:url(/logo.png) center/contain no-repeat}
 /* ===== Layout MODERNO (Configurações > Aparência > Layout). Só CSS, ligado pela classe body.mod: sem ela, o app fica igual ao Clássico ===== */
 body.mod{--rd:22px;--rs:14px;background:radial-gradient(1200px 700px at 6% -10%,color-mix(in srgb,var(--blur) 55%,transparent),transparent 64%),radial-gradient(1000px 640px at 106% 108%,color-mix(in srgb,var(--fala,var(--blur)) 42%,transparent),transparent 62%),color-mix(in srgb,var(--main) 50%,#000)}
 body.mod #app{gap:14px;padding:14px;background:transparent}
@@ -924,7 +924,7 @@ body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{cont
 <div id="splash" aria-live="polite">
   <i class="pt" style="--x:8%;--s:5px;--d:9.0s;--w:0.0s"></i><i class="pt" style="--x:21%;--s:3px;--d:7.0s;--w:2.2s"></i><i class="pt" style="--x:34%;--s:6px;--d:11.0s;--w:0.8s"></i><i class="pt" style="--x:47%;--s:4px;--d:8.0s;--w:3.4s"></i><i class="pt" style="--x:60%;--s:5px;--d:10.0s;--w:1.5s"></i><i class="pt" style="--x:73%;--s:3px;--d:7.5s;--w:4.1s"></i><i class="pt" style="--x:86%;--s:6px;--d:12.0s;--w:0.3s"></i><i class="pt" style="--x:94%;--s:4px;--d:9.5s;--w:2.8s"></i><i class="pt" style="--x:15%;--s:4px;--d:10.5s;--w:5.2s"></i><i class="pt" style="--x:67%;--s:3px;--d:8.5s;--w:6.0s"></i>
   <div class="sp">
-    <div class="lg"><div class="glow"></div><div class="ring"></div><img src="/icon-512.png" alt=""></div>
+    <div class="lg"><div class="glow"></div><div class="ring"></div><img src="/logo.png" alt=""></div>
     <h1 aria-label="Pampa Chat"><span style="--i:0">P</span><span style="--i:1">a</span><span style="--i:2">m</span><span style="--i:3">p</span><span style="--i:4">a</span><span class="w" style="--i:5"></span><span style="--i:6">C</span><span style="--i:7">h</span><span style="--i:8">a</span><span style="--i:9">t</span></h1>
     <div class="bar"><i></i></div>
     <div class="cap dots" id="spCap">Entrando</div>
@@ -932,7 +932,7 @@ body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{cont
 </div>
 <form id="login">
   <div id="loginc">
-    <img class="logo" src="/icon-512.png" alt="">
+    <img class="logo" src="/logo.png" alt="">
     <h1>Pampa Chat</h1>
     <small>Voz, câmera, tela e chat pra turma.</small>
     <label>Como a turma te chama?<input id="nome" maxlength="24" required autocomplete="nickname"></label>
@@ -944,7 +944,7 @@ body.natal .mem .av::after,body.natal .u .av::after,body.natal #meav::after{cont
 </form>
 
 <div id="app" hidden>
-  <nav id="rail"><img src="/icon-192.png" alt="Pampa Chat" title="Pampa Chat"></nav>
+  <nav id="rail"><img src="/logo.png" alt="Pampa Chat" title="Pampa Chat"></nav>
   <section id="side">
     <div id="sname">Pampa Chat</div>
     <div id="chans"></div>
